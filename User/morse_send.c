@@ -191,7 +191,7 @@ void bufCovn(uint8_t theChar) {
         }
     } else if (theChar >= '0' && theChar <= '9') {
         for (j = 0; j < morse_code_map[(theChar - '0' + 26)].len; j++) {
-            i = ((uint8_t) (morse_code_map[(theChar - '0') + -26].code >> (7 - j))
+            i = ((uint8_t) (morse_code_map[(theChar - '0') + 26].code >> (7 - j))
                     & (uint8_t) 0x01);
             if (i) {
                 sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
