@@ -41,7 +41,7 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 SECONDARY_FLASH += \
-CH32V203USBKEY.hex \
+CH32V203USBKEY.hexAndbin \
 
 SECONDARY_LIST += \
 CH32V203USBKEY.lst \
@@ -57,8 +57,8 @@ all: CH32V203USBKEY.elf secondary-outputs
 CH32V203USBKEY.elf: $(OBJS) $(USER_OBJS)
 	@	@	riscv-none-embed-gcc -march=rv32imacxw -mabi=ilp32 -msmall-data-limit=8 -msave-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized  -g -T "C:\Users\lyj98\Documents\GitHub\CH32-CW-Keyboard\Ld\Link.ld" -nostartfiles -Xlinker --gc-sections -Wl,-Map,"CH32V203USBKEY.map" --specs=nano.specs --specs=nosys.specs -o "CH32V203USBKEY.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
-CH32V203USBKEY.hex: CH32V203USBKEY.elf
-	@	riscv-none-embed-objcopy -O ihex "CH32V203USBKEY.elf"  "CH32V203USBKEY.hex"
+CH32V203USBKEY.hexAndbin: CH32V203USBKEY.elf
+	@	riscv-none-embed-objcopy -O ihex "CH32V203USBKEY.elf"  "CH32V203USBKEY.hex" && riscv-none-embed-objcopy -O binary "CH32V203USBKEY.elf"  "CH32V203USBKEY.bin"
 	@	@
 CH32V203USBKEY.lst: CH32V203USBKEY.elf
 	@	riscv-none-embed-objdump --all-headers --demangle --disassemble -M xw "CH32V203USBKEY.elf" > "CH32V203USBKEY.lst"
@@ -66,12 +66,17 @@ CH32V203USBKEY.lst: CH32V203USBKEY.elf
 CH32V203USBKEY.siz: CH32V203USBKEY.elf
 	@	riscv-none-embed-size --format=berkeley "CH32V203USBKEY.elf"
 	@	@
+	$(MAKE) --no-print-directory post-build
+
 # 其他目标
 clean:
 	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) CH32V203USBKEY.elf
 	-@
+post-build:
+	-riscv-none-embed-objcopy -O ihex "CH32V203USBKEY.elf" "CH32V203USBKEY.hex" && riscv-none-embed-objcopy -O binary "CH32V203USBKEY.elf" "CH32V203USBKEY.bin"
+	-@
 secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
 
-.PHONY: all clean dependents
+.PHONY: all clean dependents post-build
 
 -include ../makefile.targets

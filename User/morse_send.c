@@ -34,7 +34,7 @@ struct MorseCodeMap {
         { 3, 0b11100000 }, //o  15
         { 4, 0b01100000 }, //p  16
         { 4, 0b11010000 }, //q  17
-        { 3, 0b10100000 }, //r  18
+        { 3, 0b01000000 }, //r  18
         { 3, 0b00000000 }, //s  19
         { 1, 0b10000000 }, //t  20
         { 3, 0b00100000 }, //u  21
@@ -191,7 +191,7 @@ void bufCovn(uint8_t theChar) {
         }
     } else if (theChar >= '0' && theChar <= '9') {
         for (j = 0; j < morse_code_map[(theChar - '0' + 26)].len; j++) {
-            i = ((uint8_t) (morse_code_map[(theChar - '0') + 26].code >> (7 - j))
+            i = ((uint8_t) (morse_code_map[(theChar - '0') + -26].code >> (7 - j))
                     & (uint8_t) 0x01);
             if (i) {
                 sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
