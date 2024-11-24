@@ -153,32 +153,55 @@ void InitGPIOs() {
 void ReadConfig() {
     struct Config *savedConfig;
     savedConfig = (struct Config *) (CONFIG_ADDR);
-    if (savedConfig->initial_startup != 0xab)    //确认是否初次启动，此处为初次启动
-            {
-        config.initial_startup = 0xab;
+    if (savedConfig->initial_startup != STARUP_FLAG)    //确认是否初次启动，此处为初次启动
+    {
+        config.initial_startup = STARUP_FLAG;
         config.mode = 0;
-        config.beeper = 0;
-        config.wpm = 20;
+        config.beeper = 0;  //not using beeper
+        config.wpm = DEF_WPM;
+        config.morse_config.dot_len = DEF_DOT_LEN;
+        config.morse_config.dash_len = DEF_DASH_LEN;
+        config.morse_config.break_len = DEF_BREAK_LEN;
+        config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
+        config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
         WriteConfig();
     } else {
         config.mode = savedConfig->mode;
         config.beeper = savedConfig->beeper;
         config.wpm = savedConfig->wpm;
+        config.morse_config.dot_len = savedConfig->morse_config.dot_len;
+        config.morse_config.dash_len = savedConfig->morse_config.dash_len;
+        config.morse_config.break_len = savedConfig->morse_config.break_len;
+        config.morse_config.letter_break_len =
+                savedConfig->morse_config.letter_break_len;
+        config.morse_config.word_break_len =
+                savedConfig->morse_config.word_break_len;
     }
 
-    memcpy(msg, (uint8_t *) (CONFIG_ADDR + 4), 12);
+    memcpy(msg, (uint8_t *) (CONFIG_ADDR + 16), 12);
 }
 
 void WriteConfig() {
+    uint8_t tmp[16] = { 0 };
+    int i;
     FLASH_Unlock();
 
     FLASH_ClearFlag( FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
-    FLASH_ErasePage(CONFIG_ADDR);
-    config.initial_startup = 0xab;
-    FLASH_ProgramWord(CONFIG_ADDR, *((uint32_t *) &config));
-    FLASH_ProgramWord(CONFIG_ADDR + 4, *((uint32_t *) msg));
-    FLASH_ProgramWord(CONFIG_ADDR + 8, *((uint32_t *) (msg + 4)));
-    FLASH_ProgramWord(CONFIG_ADDR + 12, *((uint32_t *) (msg + 8)));
+//    FLASH_ErasePage(CONFIG_ADDR);
+//    FLASH_ROM_ERASE(CONFIG_ADDR, 256);
+    FLASH_ErasePage_Fast(CONFIG_ADDR);
+
+    config.initial_startup = STARUP_FLAG;
+
+    memcpy(tmp, &config, sizeof(struct Config));
+
+    for (i = 0; i < 4; i++) {
+        FLASH_ProgramWord((CONFIG_ADDR + 4 * i), *((uint32_t *) (tmp + 4 * i)));
+    }
+
+    FLASH_ProgramWord(CONFIG_ADDR + 16, *((uint32_t *) msg));
+    FLASH_ProgramWord(CONFIG_ADDR + 20, *((uint32_t *) (msg + 4)));
+    FLASH_ProgramWord(CONFIG_ADDR + 24, *((uint32_t *) (msg + 8)));
 
     FLASH_Lock();
 }
@@ -186,12 +209,11 @@ void WriteConfig() {
 void ReadSavedMsg(uint8_t sn) {
     uint32_t addr;
 
-    if(sn < 4)
-    {
-         addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
-    }else if (sn < 8) {
+    if (sn < 4) {
+        addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
+    } else if (sn < 8) {
         addr = MSG_ADDR + 0x1000 + (sn - 4) * MSG_ZONE_SIZE;
-    }else {
+    } else {
         addr = MSG_ADDR + 0x2000 + (sn - 8) * MSG_ZONE_SIZE;
     }
 
@@ -210,8 +232,6 @@ void ReadSavedMsg(uint8_t sn) {
 }
 
 void WriteMsg(uint8_t sn) {
-//    int i;
-//    uint32_t addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
     uint32_t eraseAddr;
     uint8_t buff[0x0800];
 
@@ -222,7 +242,7 @@ void WriteMsg(uint8_t sn) {
 
     if (sn < 4)
         eraseAddr = MSG_ADDR;
-    else if(sn < 8)
+    else if (sn < 8)
         eraseAddr = MSG_ADDR + 0x1000;
     else
         eraseAddr = MSG_ADDR + 0x2000;
@@ -237,22 +257,17 @@ void WriteMsg(uint8_t sn) {
     if (sn < 4) {
         memcpy(buff + MSG_ZONE_SIZE * sn, inputBuff, inputBuffSize);
         *(uint32_t*) (buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = inputBuffSize;
-    } else if (sn < 8){
+    } else if (sn < 8) {
         memcpy(buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, inputBuffSize);
         *(uint32_t*) (buff + MSG_ZONE_SIZE * (sn - 4) + BUFFSIZE - 4) =
                 inputBuffSize;
-    }   else {
+    } else {
         memcpy(buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, inputBuffSize);
         *(uint32_t*) (buff + MSG_ZONE_SIZE * (sn - 8) + BUFFSIZE - 4) =
                 inputBuffSize;
     }
 
-//   for (i = 0; (i * 4) < 0x0800; i++) {
-//        FLASH_ProgramWord(eraseAddr + 4 * i, *(uint32_t *) (buff + 4 * i));
-//    }
-    FLASH_ROM_WRITE(eraseAddr, (uint32_t*)buff, 0x0800);
-//    for(i = 0; i < 4; i++)
-//        FLASH_ProgramPage_Fast(eraseAddr + 256 * i, (uint32_t *)(buff + 256 * i));
+    FLASH_ROM_WRITE(eraseAddr, (uint32_t*) buff, 0x0800);
 
     FLASH_Lock();
 
@@ -266,13 +281,102 @@ void WriteMsg(uint8_t sn) {
 }
 
 void DispWelcome() {
-    SSD1306_GotoXY(10, 10); // goto 10, 10
-    SSD1306_Puts("CW", &Font_11x18, 1); // print Hello
-    SSD1306_GotoXY(10, 30); // goto 10, 10
-    SSD1306_Puts("Keyboard", &Font_11x18, 1); // print Hello
+    SSD1306_GotoXY(10, 10);
+    SSD1306_Puts("CW", &Font_11x18, 1);
+    SSD1306_GotoXY(10, 30);
+    SSD1306_Puts("Keyboard", &Font_11x18, 1);
     SSD1306_GotoXY(20, 50);
     SSD1306_Puts("By DeVolt Elec.", &Font_7x10, 1);
+//    SSD1306_GotoXY(60, 50);
+//    SSD1306_Puts(VERSION, &Font_7x10, 1); //print Soft Version
     SSD1306_UpdateScreen(); // update screen
+}
+
+void Disp_Ver() {
+    char str[19];
+    SSD1306_GotoXY(30, 20);
+    sprintf(str, "%s", VERSION);
+    SSD1306_Puts(str, &Font_7x10, 1);
+}
+
+void Disp_Morse_Conf() {
+    char str[19];
+
+    SSD1306_GotoXY(0, 0);
+    sprintf(str, "DOT LEN");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 0 ? 0 : 1);
+    SSD1306_GotoXY(100, 0);
+    sprintf(str, "%d", config.morse_config.dot_len);
+    SSD1306_Puts(str, &Font_7x10, 1);
+
+    SSD1306_GotoXY(0, 10);
+    sprintf(str, "DASH LEN");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 1 ? 0 : 1);
+    SSD1306_GotoXY(100, 10);
+    sprintf(str, "%d", config.morse_config.dash_len);
+    SSD1306_Puts(str, &Font_7x10, 1);
+    SSD1306_GotoXY(0, 0);
+
+    SSD1306_GotoXY(0, 20);
+    sprintf(str, "BREAK LEN");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
+    SSD1306_GotoXY(100, 20);
+    sprintf(str, "%d", config.morse_config.break_len);
+    SSD1306_Puts(str, &Font_7x10, 1);
+
+    SSD1306_GotoXY(0, 30);
+    sprintf(str, "LETTER BREAK");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 3 ? 0 : 1);
+    SSD1306_GotoXY(100, 30);
+    sprintf(str, "%d", config.morse_config.letter_break_len);
+    SSD1306_Puts(str, &Font_7x10, 1);
+
+    SSD1306_GotoXY(0, 40);
+    sprintf(str, "WORD BREAK");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 4 ? 0 : 1);
+    SSD1306_GotoXY(100, 40);
+    sprintf(str, "%d", config.morse_config.word_break_len);
+    SSD1306_Puts(str, &Font_7x10, 1);
+
+    SSD1306_GotoXY(0, 50);
+    sprintf(str, "BACK");
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 5 ? 0 : 1);
+
+}
+
+void Disp_Menu() {
+    char str[19];
+    if (disp_ver) {
+        Disp_Ver();
+    } else if (disp_morse_conf) {
+        Disp_Morse_Conf();
+    } else {
+        SSD1306_GotoXY(0, 0);
+        sprintf(str, "MODE");
+        SSD1306_Puts(str, &Font_7x10, menu_item == 0 ? 0 : 1);
+        SSD1306_GotoXY(100, 0);
+        sprintf(str, "%s", config.mode == 1 ? "BUF" : "DIR");
+        SSD1306_Puts(str, &Font_7x10, 1);
+
+        SSD1306_GotoXY(0, 10);
+        sprintf(str, "BEEPER");
+        SSD1306_Puts(str, &Font_7x10, menu_item == 1 ? 0 : 1);
+        SSD1306_GotoXY(100, 10);
+        sprintf(str, "%s", config.beeper == 1 ? "YSE" : "NO");
+        SSD1306_Puts(str, &Font_7x10, 1);
+
+        SSD1306_GotoXY(0, 20);
+        sprintf(str, "MORSE CONF");
+        SSD1306_Puts(str, &Font_7x10, menu_item == 2 ? 0 : 1);
+
+        SSD1306_GotoXY(0, 30);
+        sprintf(str, "VERSON");
+        SSD1306_Puts(str, &Font_7x10, menu_item == 3 ? 0 : 1);
+
+        SSD1306_GotoXY(0, 50);
+        sprintf(str, "SAVE & EXIT");
+        SSD1306_Puts(str, &Font_7x10, menu_item == 4 ? 0 : 1);
+    }
 }
 
 void Disp() {
@@ -281,124 +385,128 @@ void Disp() {
 
     SSD1306_Fill(SSD1306_COLOR_BLACK);
 
-    SSD1306_GotoXY(0, 0);
-    sprintf(str, "WPM:%d", config.wpm);
-    SSD1306_Puts(str, &Font_7x10, 1);
-
-    if (config.beeper) {
-        SSD1306_GotoXY(113, 0);
-        SSD1306_Puts("B", &Font_7x10, 1);
-    }
-
-    SSD1306_GotoXY(42, 0);
-    sprintf(str, "S:%03d", sendCount);
-    SSD1306_Puts(str, &Font_7x10, 1);
-
-    SSD1306_GotoXY(77, 0);
-    if(stge == 1 && config.mode == 1)
-        sprintf(str, "L:%03d", outputBuffSize);
-    else
-        sprintf(str, "L:%03d", inputBuffSize);
-    SSD1306_Puts(str, &Font_7x10, 1);
-
-    if (keyboard_in) {
-        SSD1306_GotoXY(120, 0);
-        SSD1306_Puts("K", &Font_7x10, 1);
-    }
-
-    if (config.mode) {
-        SSD1306_DrawLine(64, 10, 64, 64, 1);
-        SSD1306_DrawLine(63, 10, 63, 64, 1);
-        SSD1306_DrawLine(0, 10, 128, 10, 1);
-
-        SSD1306_GotoXY(0, 11);
-        SSD1306_Puts("INPUT:", &Font_7x10, 0);
-
-        if (strlen(inputBuff) <= 9) {
-            SSD1306_GotoXY(0, 22);
-            SSD1306_Puts(inputBuff, &Font_7x10, 1);
-        } else if(strlen(inputBuff) < 9 * 4){
-            for (int i = 0; i < (strlen(inputBuff) / 9 + 1); i++) {
-                if (strlen(inputBuff + i * 9) <= 9) {
-                    strcpy(str, inputBuff + i * 9);
-
-                } else {
-                    memcpy(str, inputBuff + i * 9, 9);
-                    str[9] = '\0';
-                }
-                SSD1306_GotoXY(0, 22 + i * 10);
-                SSD1306_Puts(str, &Font_7x10, 1);
-            }
-        } else {
-            diff = strlen(inputBuff) / 9 - 3;
-            for (int i = diff; i < (strlen(inputBuff) / 9 + 1); i++) {
-                if (strlen(inputBuff + i * 9) <= 9) {
-                    strcpy(str, inputBuff + i * 9);
-
-                } else {
-                    memcpy(str, inputBuff + i * 9, 9);
-                    str[9] = '\0';
-                }
-                SSD1306_GotoXY(0, 22 + (i - diff) * 10);
-                SSD1306_Puts(str, &Font_7x10, 1);
-            }
-        }
-
-        SSD1306_GotoXY(64, 11);
-        SSD1306_Puts("SENDING:", &Font_7x10, 0);
-
-        if (strlen(outputBuff) <= 9) {
-            SSD1306_GotoXY(64, 22);
-            SSD1306_Puts(outputBuff, &Font_7x10, 1);
-        } else {
-            for (int i = 0; i < (strlen(outputBuff) / 9 + 1); i++) {
-                if (strlen(outputBuff + i * 9) <= 9) {
-                    strcpy(str, outputBuff + i * 9);
-
-                } else {
-                    memcpy(str, outputBuff + i * 9, 9);
-                    str[9] = '\0';
-                }
-                SSD1306_GotoXY(64, 22 + i * 10);
-                SSD1306_Puts(str, &Font_7x10, 1);
-            }
-        }
+    if (disp_menu) {
+        Disp_Menu();
     } else {
-        SSD1306_DrawLine(0, 10, 128, 10, 1);
-        SSD1306_GotoXY(0, 11);
-        SSD1306_Puts("INPUT:", &Font_7x10, 0);
+        SSD1306_GotoXY(0, 0);
+        sprintf(str, "WPM:%d", config.wpm);
+        SSD1306_Puts(str, &Font_7x10, 1);
 
-        if (strlen(inputBuff) <= 18) {
-            SSD1306_GotoXY(0, 22);
-            SSD1306_Puts(inputBuff, &Font_7x10, 1);
-        } else if(strlen(inputBuff) <= 18 * 4){
-            for (int i = 0; i < (strlen(inputBuff) / 18 + 1); i++) {
-                if (strlen(inputBuff + i * 18) <= 18) {
-                    strcpy(str, inputBuff + i * 18);
+        if (config.beeper) {
+            SSD1306_GotoXY(113, 0);
+            SSD1306_Puts("B", &Font_7x10, 1);
+        }
 
-                } else {
-                    memcpy(str, inputBuff + i * 18, 18);
-                    str[18] = '\0';
+        SSD1306_GotoXY(42, 0);
+        sprintf(str, "S:%03d", sendCount);
+        SSD1306_Puts(str, &Font_7x10, 1);
+
+        SSD1306_GotoXY(77, 0);
+        if (stge == 1 && config.mode == 1)
+            sprintf(str, "L:%03d", outputBuffSize);
+        else
+            sprintf(str, "L:%03d", inputBuffSize);
+        SSD1306_Puts(str, &Font_7x10, 1);
+
+        if (keyboard_in) {
+            SSD1306_GotoXY(120, 0);
+            SSD1306_Puts("K", &Font_7x10, 1);
+        }
+
+        if (config.mode) {
+            SSD1306_DrawLine(64, 10, 64, 64, 1);
+            SSD1306_DrawLine(63, 10, 63, 64, 1);
+            SSD1306_DrawLine(0, 10, 128, 10, 1);
+
+            SSD1306_GotoXY(0, 11);
+            SSD1306_Puts("INPUT:", &Font_7x10, 0);
+
+            if (strlen(inputBuff) <= 9) {
+                SSD1306_GotoXY(0, 22);
+                SSD1306_Puts(inputBuff, &Font_7x10, 1);
+            } else if (strlen(inputBuff) < 9 * 4) {
+                for (int i = 0; i < (strlen(inputBuff) / 9 + 1); i++) {
+                    if (strlen(inputBuff + i * 9) <= 9) {
+                        strcpy(str, inputBuff + i * 9);
+
+                    } else {
+                        memcpy(str, inputBuff + i * 9, 9);
+                        str[9] = '\0';
+                    }
+                    SSD1306_GotoXY(0, 22 + i * 10);
+                    SSD1306_Puts(str, &Font_7x10, 1);
                 }
-                SSD1306_GotoXY(0, 22 + i * 10);
-                SSD1306_Puts(str, &Font_7x10, 1);
+            } else {
+                diff = strlen(inputBuff) / 9 - 3;
+                for (int i = diff; i < (strlen(inputBuff) / 9 + 1); i++) {
+                    if (strlen(inputBuff + i * 9) <= 9) {
+                        strcpy(str, inputBuff + i * 9);
+
+                    } else {
+                        memcpy(str, inputBuff + i * 9, 9);
+                        str[9] = '\0';
+                    }
+                    SSD1306_GotoXY(0, 22 + (i - diff) * 10);
+                    SSD1306_Puts(str, &Font_7x10, 1);
+                }
+            }
+
+            SSD1306_GotoXY(64, 11);
+            SSD1306_Puts("SENDING:", &Font_7x10, 0);
+
+            if (strlen(outputBuff) <= 9) {
+                SSD1306_GotoXY(64, 22);
+                SSD1306_Puts(outputBuff, &Font_7x10, 1);
+            } else {
+                for (int i = 0; i < (strlen(outputBuff) / 9 + 1); i++) {
+                    if (strlen(outputBuff + i * 9) <= 9) {
+                        strcpy(str, outputBuff + i * 9);
+
+                    } else {
+                        memcpy(str, outputBuff + i * 9, 9);
+                        str[9] = '\0';
+                    }
+                    SSD1306_GotoXY(64, 22 + i * 10);
+                    SSD1306_Puts(str, &Font_7x10, 1);
+                }
             }
         } else {
-            diff = strlen(inputBuff) / 18 - 3;
-            for (int i = diff; i < (strlen(inputBuff) / 18 + 1); i++) {
-                if (strlen(inputBuff + i * 18) <= 18) {
-                    strcpy(str, inputBuff + i * 18);
+            SSD1306_DrawLine(0, 10, 128, 10, 1);
+            SSD1306_GotoXY(0, 11);
+            SSD1306_Puts("INPUT:", &Font_7x10, 0);
 
-                } else {
-                    memcpy(str, inputBuff + i * 18, 18);
-                    str[18] = '\0';
+            if (strlen(inputBuff) <= 18) {
+                SSD1306_GotoXY(0, 22);
+                SSD1306_Puts(inputBuff, &Font_7x10, 1);
+            } else if (strlen(inputBuff) <= 18 * 4) {
+                for (int i = 0; i < (strlen(inputBuff) / 18 + 1); i++) {
+                    if (strlen(inputBuff + i * 18) <= 18) {
+                        strcpy(str, inputBuff + i * 18);
+
+                    } else {
+                        memcpy(str, inputBuff + i * 18, 18);
+                        str[18] = '\0';
+                    }
+                    SSD1306_GotoXY(0, 22 + i * 10);
+                    SSD1306_Puts(str, &Font_7x10, 1);
                 }
-                SSD1306_GotoXY(0, 22 + (i - diff) * 10);
-                SSD1306_Puts(str, &Font_7x10, 1);
+            } else {
+                diff = strlen(inputBuff) / 18 - 3;
+                for (int i = diff; i < (strlen(inputBuff) / 18 + 1); i++) {
+                    if (strlen(inputBuff + i * 18) <= 18) {
+                        strcpy(str, inputBuff + i * 18);
+
+                    } else {
+                        memcpy(str, inputBuff + i * 18, 18);
+                        str[18] = '\0';
+                    }
+                    SSD1306_GotoXY(0, 22 + (i - diff) * 10);
+                    SSD1306_Puts(str, &Font_7x10, 1);
+                }
             }
         }
-    }
 
+    }
     SSD1306_UpdateScreen();
 }
 
@@ -433,10 +541,9 @@ void TIM4_IRQHandler(void) {
     if (TIM_GetITStatus( TIM4, TIM_IT_Update) != RESET) {
         /* Clear interrupt flag */
         TIM_ClearITPendingBit( TIM4, TIM_IT_Update);
-        if(GPIO_ReadOutputDataBit(LED_OUT_PORT, LED_OUT))
-        {
-            GPIO_WriteBit(LED_OUT_PORT, LED_OUT, Bit_RESET);}
-        else {
+        if (GPIO_ReadOutputDataBit(LED_OUT_PORT, LED_OUT)) {
+            GPIO_WriteBit(LED_OUT_PORT, LED_OUT, Bit_RESET);
+        } else {
             GPIO_WriteBit(LED_OUT_PORT, LED_OUT, Bit_SET);
         }
     }

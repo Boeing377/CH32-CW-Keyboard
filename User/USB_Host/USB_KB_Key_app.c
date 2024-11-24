@@ -25,6 +25,7 @@ struct __HOST_CTL HostCtl[DEF_TOTAL_ROOT_HUB * DEF_ONE_USB_SUP_DEV_TOTAL];
 
 void ReadSavedMsg(uint8_t sn);
 void WriteMsg(uint8_t sn);
+void WriteConfig();
 
 //0    1    2    3    4    5    6    7    8    9    a    b    c    d    e    f
 uint8_t codmap[] = { 0, 0, 0, 0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -107,87 +108,204 @@ void CombufDeal() {
     uint8_t New_Pressed[6], newFlag = 1;
     int i, j, newPressedNum = 0;
 
-    if(Com_Buf[2] != Com_Buf[7])
-    {
-    for (i = 2; i < 8; i++) {
-        if (Com_Buf[i] != 0) {
-            for (j = 2; j < 8; j++) {
-                if (Com_Buf[i] == Last_Com_Buf[j])
-                    newFlag = 0;
-            }
-            if (newFlag) {
-                if (Com_Buf[0] & 0x22) {
-                    New_Pressed[newPressedNum++] = codmapWithShift[Com_Buf[i]];
-                } else {
-                    New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
+    if (Com_Buf[2] != Com_Buf[7]) {
+        for (i = 2; i < 8; i++) {
+            if (Com_Buf[i] != 0) {
+                for (j = 2; j < 8; j++) {
+                    if (Com_Buf[i] == Last_Com_Buf[j])
+                        newFlag = 0;
+                }
+                if (newFlag) {
+                    if (Com_Buf[0] & 0x22) {
+                        New_Pressed[newPressedNum++] =
+                                codmapWithShift[Com_Buf[i]];
+                    } else if (Com_Buf[0] & 0x11) {       //左右ctrl键
+                        if (Com_Buf[i] == 0x10)          //m键
+                                {
+                            disp_menu = 1 - disp_menu;
+                        }
+                    } else {
+                        New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
+                    }
                 }
             }
+            newFlag = 1;
         }
-        newFlag = 1;
-    }
     }
 
     if (newPressedNum) {
         for (i = 0; i < newPressedNum; i++) {
-            if ((New_Pressed[i] >= 'a' && New_Pressed[i] <= 'z')
-                    || (New_Pressed[i] >= 'A' && New_Pressed[i] <= 'Z')
-                    || New_Pressed[i] == ' '
-                    || (New_Pressed[i] >= '0' && New_Pressed[i] <= '9')
-                    || New_Pressed[i] == '?' || New_Pressed[i] == '!'
-                    || New_Pressed[i] == '.' || New_Pressed[i] == ','
-                    || New_Pressed[i] == ':' || New_Pressed[i] == ';'
-                    || New_Pressed[i] == '+' || New_Pressed[i] == '-'
-                    || New_Pressed[i] == '/' || New_Pressed[i] == '=') {
-                inputBuff[inputBuffSize++] = New_Pressed[i];
-                inputBuff[inputBuffSize] = '\0';
-//                memset(inputBuff, '\0', BUFFSIZE);
+            if (disp_menu) {
+                if (New_Pressed[i] == 0x1) {     //按下下键
+                    if (disp_ver) {
+                        disp_ver = 0;
+                    } else if (disp_morse_conf) {
+                        if (morse_conf_item < 5)
+                            morse_conf_item++;
+                    } else if (menu_item < 4)
+                        menu_item++;
+                } else if (New_Pressed[i] == 0x2) {     //按下上键
+                    if (disp_ver) {
+                        disp_ver = 0;
+                    } else if (disp_morse_conf) {
+                        if (morse_conf_item > 0)
+                            morse_conf_item--;
+                    } else if (menu_item > 0)
+                        menu_item--;
+                } else if (New_Pressed[i] == 28) {     //按下左键
+                    if (disp_ver == 1) {
+                        disp_ver = 0;
+                    } else if (disp_morse_conf == 1) {
+                        if (morse_conf_item == 0) {
+                            if (config.morse_config.dot_len > 1)
+                                config.morse_config.dot_len--;
+                        }
+                        if (morse_conf_item == 1) {
+                            if (config.morse_config.dash_len > 1)
+                                config.morse_config.dash_len--;
+                        }
+                        if (morse_conf_item == 2) {
+                            if (config.morse_config.break_len > 1)
+                                config.morse_config.break_len--;
+                        }
+                        if (morse_conf_item == 3) {
+                            if (config.morse_config.letter_break_len > 1)
+                                config.morse_config.letter_break_len--;
+                        }
+                        if (morse_conf_item == 4) {
+                            if (config.morse_config.word_break_len > config.morse_config.letter_break_len + 1)
+                                config.morse_config.word_break_len--;
+                            else {
+                                if (config.morse_config.letter_break_len > 1)
+                                    config.morse_config.letter_break_len--;
+                                    config.morse_config.word_break_len = config.morse_config.letter_break_len + 1;
+                            }
+                        }
+                    } else {
+                        if (menu_item == 0)
+                            config.mode = 1 - config.mode;
+                        if (menu_item == 1)
+                            config.beeper = 1 - config.beeper;
+                    }
+                } else if (New_Pressed[i] == 29) {     //按下右键
+                    if (disp_ver == 1) {
+                        disp_ver = 0;
+                    } else if (disp_morse_conf == 1) {
+                        if (morse_conf_item == 0) {
+                            if (config.morse_config.dot_len < 20)
+                                config.morse_config.dot_len++;
+                        }
+                        if (morse_conf_item == 1) {
+                            if (config.morse_config.dash_len < 20)
+                                config.morse_config.dash_len++;
+                        }
+                        if (morse_conf_item == 2) {
+                            if (config.morse_config.break_len < 20)
+                                config.morse_config.break_len++;
+                        }
+                        if (morse_conf_item == 3) {
 
-                if (!config.mode) {
-                    if (!stge)
+                            if (config.morse_config.letter_break_len < config.morse_config.word_break_len - 1)
+                                config.morse_config.letter_break_len++;
+                            else {
+                                if (config.morse_config.word_break_len < 20)
+                                                                config.morse_config.word_break_len++;
+                                config.morse_config.letter_break_len = config.morse_config.word_break_len - 1;
+                            }
+                        }
+                        if (morse_conf_item == 4) {
+                            if (config.morse_config.word_break_len < 20)
+                                config.morse_config.word_break_len++;
+                        }
+                        if (morse_conf_item == 5) {
+                            disp_morse_conf = 0;
+                        }
+                    } else {
+                        if (menu_item == 0)
+                            config.mode = 1 - config.mode;
+                        if (menu_item == 1)
+                            config.beeper = 1 - config.beeper;
+                        if (menu_item == 2)
+                            disp_morse_conf = 1;
+                        if (menu_item == 3)
+                            disp_ver = 1;
+                        if (menu_item == 4)
+                        {
+                            disp_menu = 0;
+                            WriteConfig();
+                        }
+                    }
+                } else if (New_Pressed[i] == 31) {    //按下回车
+                    if (disp_ver == 1) {
+                        disp_ver = 0;
+                    } else if (disp_morse_conf == 1) {
+                        if (morse_conf_item == 5) {
+                            disp_morse_conf = 0;
+                        }
+                    } else {
+                        if (menu_item == 2)
+                            disp_morse_conf = 1;
+                        if (menu_item == 3)
+                            disp_ver = 1;
+                        if (menu_item == 4) {
+                            disp_menu = 0;
+                            WriteConfig();
+                        }
+                    }
+                }
+            } else {
+                if ((New_Pressed[i] >= 'a' && New_Pressed[i] <= 'z')
+                        || (New_Pressed[i] >= 'A' && New_Pressed[i] <= 'Z')
+                        || New_Pressed[i] == ' '
+                        || (New_Pressed[i] >= '0' && New_Pressed[i] <= '9')
+                        || New_Pressed[i] == '?' || New_Pressed[i] == '!'
+                        || New_Pressed[i] == '.' || New_Pressed[i] == ','
+                        || New_Pressed[i] == ':' || New_Pressed[i] == ';'
+                        || New_Pressed[i] == '+' || New_Pressed[i] == '-'
+                        || New_Pressed[i] == '/' || New_Pressed[i] == '=') {
+                    inputBuff[inputBuffSize++] = New_Pressed[i];
+                    inputBuff[inputBuffSize] = '\0';
+                    if (!config.mode) {
+                        if (!stge)
+                            starSending();
+                    }
+                } else if (New_Pressed[i] == 31) {      //按下回车
+                    if (config.mode) {
+                        memcpy(outputBuff, inputBuff, inputBuffSize);
+                        outputBuffSize = inputBuffSize;
+                        outputBuff[outputBuffSize] = '\0';
+                        inputBuffSize = 0;
+                        memset(inputBuff, '\0', BUFFSIZE);
                         starSending();
-                }
-
-            } else if (New_Pressed[i] == 31) {      //按下回车
-                if (config.mode) {
-                    memcpy(outputBuff, inputBuff, inputBuffSize);
-                    outputBuffSize = inputBuffSize;
-                    outputBuff[outputBuffSize] = '\0';
+                    }
+                } else if (New_Pressed[i] == 27) {      //按下esc
+                    endSending();
+                    memset(inputBuff, 0, 512);
                     inputBuffSize = 0;
-//                    inputBuff[inputBuffSize] = '\0';
                     memset(inputBuff, '\0', BUFFSIZE);
-                    starSending();
+                    sendCount = 0;
+                } else if (New_Pressed[i] == 127) {     //按下退格
+                    if (inputBuffSize > 0)
+                        inputBuffSize--;
+                    inputBuff[inputBuffSize] = '\0';
+                    if (inputBuffSize < sendCount)
+                        sendCount = inputBuffSize;
+                } else if (New_Pressed[i] == 0x1) {     //按下下键
+                    sub_wpm(1);
+                } else if (New_Pressed[i] == 0x2) {     //按下上键
+                    add_wpm(1);
+                } else if (New_Pressed[i] == 28) {     //按下左键
+                    sub_wpm(5);
+                } else if (New_Pressed[i] == 29) {     //按下右键
+                    add_wpm(5);
+                } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) { //读取F1-F12
+                    ReadSavedMsg(New_Pressed[i] - 3);
+                } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) { //存储F1-F12
+                    WriteMsg(New_Pressed[i] - 15);
+                    inputBuffSize = 0;
+                    sendCount = 0;
+                    memset(inputBuff, '\0', BUFFSIZE);
                 }
-            } else if (New_Pressed[i] == 27) {      //按下esc
-                endSending();
-                memset(inputBuff, 0, 512);
-                inputBuffSize = 0;
-//                inputBuff[inputBuffSize] = '\0';
-                memset(inputBuff, '\0', BUFFSIZE);
-                sendCount = 0;
-            } else if (New_Pressed[i] == 127) {     //按下退格
-                if (inputBuffSize > 0)
-                    inputBuffSize--;
-                inputBuff[inputBuffSize] = '\0';
-                if(inputBuffSize < sendCount)
-                    sendCount = inputBuffSize;
-//                memset(inputBuff, '\0', BUFFSIZE);
-//                sendCount = 0;
-            } else if (New_Pressed[i] == 0x1) {     //按下下键
-                sub_wpm(1);
-            } else if (New_Pressed[i] == 0x2) {     //按下上键
-                add_wpm(1);
-            } else if (New_Pressed[i] == 28) {     //按下左键
-                sub_wpm(5);
-            } else if (New_Pressed[i] == 29) {     //按下右键
-                add_wpm(5);
-            } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) {   //读取F1-F12
-                ReadSavedMsg(New_Pressed[i] - 3);
-            } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) {  //存储F1-F12
-                WriteMsg(New_Pressed[i] - 15);
-                inputBuffSize = 0;
-                sendCount = 0;
-//                inputBuff[0] = '\0';
-                memset(inputBuff, '\0', BUFFSIZE);
             }
         }
     }

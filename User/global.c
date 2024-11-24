@@ -9,13 +9,15 @@
 
 struct Config config;
 
-uint8_t stge = 0;   //当前状态 0：stb            1：sending
-uint8_t mode = 0;   //模式        0：按下立即输出         1：回车输出
-uint8_t beeper = 0; //蜂鸣器输出选择
-uint8_t wpm = 20;    //输出速度
+uint8_t stge = 0;           //当前状态           0：stb        1：sending
 uint8_t bufCovnMark = 0;
-uint8_t keyboard_in = 0;
+uint8_t keyboard_in = 0;    //键盘接入状态    0：未接入           1：已接入
 uint8_t saving = 0;
+uint8_t disp_menu = 0;
+uint8_t menu_item = 0;
+uint8_t disp_ver = 0;
+uint8_t disp_morse_conf = 0;
+uint8_t morse_conf_item = 0;
 int sendCount = 0;
 
 uint8_t msg[MSG_NUM];

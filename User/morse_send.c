@@ -12,7 +12,7 @@ void ReadConfig();
 void WriteConfig();
 
 uint32_t sendBufLen = 0;
-uint8_t sendbuf[26];    //max for 6 dash 3*6 + 5 + 3
+uint8_t sendbuf[256];    //max for 6 dash 6*20+5*20+20
 
 struct MorseCodeMap {
     uint8_t len;
@@ -159,19 +159,21 @@ void endSending() {
 }
 
 void bufCovn(uint8_t theChar) {
-    int i, j = 0, k = 0;
+    int i, j = 0, k = 0, l;
     if (theChar >= 'a' && theChar <= 'z') {
         for (j = 0; j < morse_code_map[theChar - 'a'].len; j++) {
             i = ((uint8_t) (morse_code_map[(theChar - 'a')].code >> (7 - j))
                     & (uint8_t) 0x01);
             if (i) {
-                sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                sendbuf[k + 3] = 0;
-                k = k + 4;
+                for (l = 0; l < config.morse_config.dash_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             } else {
-                sendbuf[k] = 1;
-                sendbuf[k + 1] = 0;
-                k = k + 2;
+                for (l = 0; l < config.morse_config.dot_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             }
         }
 
@@ -180,32 +182,38 @@ void bufCovn(uint8_t theChar) {
             i = ((uint8_t) (morse_code_map[(theChar - 'A')].code >> (7 - j))
                     & (uint8_t) 0x01);
             if (i) {
-                sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                sendbuf[k + 3] = 0;
-                k = k + 4;
+                for (l = 0; l < config.morse_config.dash_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             } else {
-                sendbuf[k] = 1;
-                sendbuf[k + 1] = 0;
-                k = k + 2;
+                for (l = 0; l < config.morse_config.dot_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             }
         }
     } else if (theChar >= '0' && theChar <= '9') {
         for (j = 0; j < morse_code_map[(theChar - '0' + 26)].len; j++) {
-            i = ((uint8_t) (morse_code_map[(theChar - '0') + 26].code >> (7 - j))
-                    & (uint8_t) 0x01);
+            i =
+                    ((uint8_t) (morse_code_map[(theChar - '0') + 26].code
+                            >> (7 - j)) & (uint8_t) 0x01);
             if (i) {
-                sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                sendbuf[k + 3] = 0;
-                k = k + 4;
+                for (l = 0; l < config.morse_config.dash_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             } else {
-                sendbuf[k] = 1;
-                sendbuf[k + 1] = 0;
-                k = k + 2;
+                for (l = 0; l < config.morse_config.dash_len; l++)
+                    sendbuf[k++] = 1;
+                for (l = 0; l < config.morse_config.break_len; l++)
+                    sendbuf[k++] = 0;
             }
         }
     } else if (theChar == ' ') {
-        sendbuf[k++] = 0;
-        sendbuf[k++] = 0;
+        for (l = 0; l < (config.morse_config.word_break_len
+                                - config.morse_config.letter_break_len); l++)
+            sendbuf[k++] = 0;
     } else {
         switch (theChar) {
         case '?':
@@ -213,13 +221,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[36].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[36].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -228,13 +238,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[37].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[37].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -243,13 +255,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[38].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[38].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -258,13 +272,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[39].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[39].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -273,13 +289,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[40].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[40].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -288,13 +306,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[41].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[41].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -303,13 +323,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[42].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[42].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -318,13 +340,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[43].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[43].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -333,13 +357,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[44].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[44].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -348,13 +374,15 @@ void bufCovn(uint8_t theChar) {
                 i = ((uint8_t) (morse_code_map[45].code >> (7 - j))
                         & (uint8_t) 0x01);
                 if ((morse_code_map[45].code >> 7 - j) & 0x01) {
-                    sendbuf[k] = sendbuf[k + 1] = sendbuf[k + 2] = 1;
-                    sendbuf[k + 3] = 0;
-                    k = k + 4;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 } else {
-                    sendbuf[k] = 1;
-                    sendbuf[k + 1] = 0;
-                    k = k + 2;
+                    for (l = 0; l < config.morse_config.dash_len; l++)
+                        sendbuf[k++] = 1;
+                    for (l = 0; l < config.morse_config.break_len; l++)
+                        sendbuf[k++] = 0;
                 }
             }
             break;
@@ -362,8 +390,11 @@ void bufCovn(uint8_t theChar) {
             break;
         }
     }
-    sendbuf[k] = 0;
-    k = k + 1;
+    if (theChar != ' ') {
+        k -= config.morse_config.break_len;
+        for (l = 0; l < config.morse_config.letter_break_len; l++)
+            sendbuf[k++] = 0;
+    }
     sendBufLen = k;
 }
 
@@ -375,30 +406,22 @@ void TIM2_IRQHandler(void) {
 
         if (bufCovnMark) {
             if (config.mode) {
-                bufCovn(outputBuff[sendCount]);
+                bufCovn(outputBuff[sendCount++]);
             } else {
-                bufCovn(inputBuff[sendCount]);
+                bufCovn(inputBuff[sendCount++]);
             }
-            sendCount++;
             bufCovnMark = 0;
         }
 
-        if (count < sendBufLen) {
-            if (sendbuf[count]) {
-                GPIO_WriteBit(KEY_OUT_PORT, KEY_OUT, Bit_SET);
-                if (config.beeper)
-                    GPIO_WriteBit(BEEP_OUT_PORT, BEEP_OUT, Bit_SET);
-            } else {
-                GPIO_WriteBit(KEY_OUT_PORT, KEY_OUT, Bit_RESET);
-                if (config.beeper)
-                    GPIO_WriteBit(BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
-            }
-            count++;
-        } else {
+        if (count >= sendBufLen) {
             count = 0;
+            GPIO_WriteBit(KEY_OUT_PORT, KEY_OUT, Bit_RESET);
+            if (config.beeper)
+                GPIO_WriteBit(BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
+
             if (config.mode) {
                 if (sendCount < outputBuffSize) {
-                    bufCovnMark = 1;
+                    bufCovn(outputBuff[sendCount++]);
                 } else {
                     sendCount = 0;
                     outputBuff[0] = '\0';
@@ -407,12 +430,23 @@ void TIM2_IRQHandler(void) {
                 }
             } else {
                 if (sendCount < inputBuffSize) {
-                    bufCovnMark = 1;
+                    bufCovn(inputBuff[sendCount++]);
                 } else {
                     endSending();
                 }
             }
+        }
 
+        if (count < sendBufLen && stge == 1) {
+            if (sendbuf[count++]) {
+                GPIO_WriteBit(KEY_OUT_PORT, KEY_OUT, Bit_SET);
+                if (config.beeper)
+                    GPIO_WriteBit(BEEP_OUT_PORT, BEEP_OUT, Bit_SET);
+            } else {
+                GPIO_WriteBit(KEY_OUT_PORT, KEY_OUT, Bit_RESET);
+                if (config.beeper)
+                    GPIO_WriteBit(BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
+            }
         }
     }
 }
