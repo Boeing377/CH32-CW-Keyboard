@@ -38,42 +38,42 @@ extern "C" {
 #ifndef DEF_USB_GEN_ENUM_CMD
 #define DEF_USB_GEN_ENUM_CMD
 /* Get Device Descriptor Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupGetDevDesc[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupGetDevDesc[] = {
 USB_REQ_TYP_IN, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_DEVICE, 0x00, 0x00,
         sizeof(USB_DEV_DESCR), 0x00 };
 
 /* Get Configuration Descriptor Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupGetCfgDesc[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupGetCfgDesc[] = {
 USB_REQ_TYP_IN, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_CONFIG, 0x00, 0x00,
         0x04, 0x00 };
 
 /* Get String Descriptor Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupGetStrDesc[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupGetStrDesc[] = {
 USB_REQ_TYP_IN, USB_GET_DESCRIPTOR, 0x00, USB_DESCR_TYP_STRING, 0x09, 0x04,
         0x04, 0x00 };
 
 /* Set USB Address Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupSetAddr[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupSetAddr[] = {
 USB_REQ_TYP_OUT, USB_SET_ADDRESS, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /* Set USB Configuration Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupSetConfig[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupSetConfig[] = {
 USB_REQ_TYP_OUT, USB_SET_CONFIGURATION, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /* Clear Endpoint STALL Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupClearEndpStall[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupClearEndpStall[] = {
 USB_REQ_TYP_OUT | USB_REQ_RECIP_ENDP, USB_CLEAR_FEATURE, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00 };
 
 /* Set Device Interface Command Packet */
-__attribute__((aligned(4)))   static const uint8_t SetupSetInterface[] = {
+__attribute__((aligned(4)))    static const uint8_t SetupSetInterface[] = {
 USB_REQ_RECIP_INTERF, USB_SET_INTERFACE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 #endif
 
 /*******************************************************************************/
 /* Variable Declaration */
-extern __attribute__((aligned(4)))   uint8_t USBFS_RX_Buf[];
-extern __attribute__((aligned(4)))   uint8_t USBFS_TX_Buf[];
+extern __attribute__((aligned(4)))    uint8_t USBFS_RX_Buf[];
+extern __attribute__((aligned(4)))    uint8_t USBFS_TX_Buf[];
 
 /*******************************************************************************/
 /* Function Declaration */

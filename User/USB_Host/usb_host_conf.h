@@ -33,7 +33,8 @@ extern "C" {
 #if ( DEF_DEBUG_PRINTF == 1 )
 #define DUG_PRINTF( format, arg... )    printf( format, ##arg )
 #else
-#define DUG_PRINTF( format, arg... )    do{ if( 0 )printf( format, ##arg ); }while( 0 );
+#define DUG_PRINTF( format, arg... )
+//#define DUG_PRINTF( format, arg... )    do{ if( 0 )printf( format, ##arg ); }while( 0 );
 #endif
 #define  DEAL_COM_BUF 1
 

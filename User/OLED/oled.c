@@ -103,7 +103,7 @@ void ssd1306_I2C_Write(uint8_t address, uint8_t reg, uint8_t data) {
     uint8_t dt[2];
     dt[0] = reg;
     dt[1] = data;
-    printf("i2c transmit addr %x, reg %x data %x\r\n", address, reg, data);
+//    printf("i2c transmit addr %x, reg %x data %x\r\n", address, reg, data);
     i2c_transmit(address, dt, 2);
 }
 
@@ -594,6 +594,9 @@ void SSD1306_Init() {
     Delay_Ms(100);
 
     SSD1306_WRITECOMMAND(0xAE); //display off
+
+    Delay_Ms(100);
+
     SSD1306_WRITECOMMAND(0x20); //Set Memory Addressing Mode
     SSD1306_WRITECOMMAND(0x10); //00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid
     SSD1306_WRITECOMMAND(0xB0); //Set Page Start Address for Page Addressing Mode,0-7
@@ -601,8 +604,10 @@ void SSD1306_Init() {
     SSD1306_WRITECOMMAND(0x00); //---set low column address
     SSD1306_WRITECOMMAND(0x10); //---set high column address
     SSD1306_WRITECOMMAND(0x40); //--set start line address
+
     SSD1306_WRITECOMMAND(0x81); //--set contrast control register
     SSD1306_WRITECOMMAND(0xFF);
+
     SSD1306_WRITECOMMAND(0xA1); //--set segment re-map 0 to 127
     SSD1306_WRITECOMMAND(0xA6); //--set normal display
     SSD1306_WRITECOMMAND(0xA8); //--set multiplex ratio(1 to 64) - CHECK
@@ -610,16 +615,24 @@ void SSD1306_Init() {
     SSD1306_WRITECOMMAND(0xA4); //-set display offset
     SSD1306_WRITECOMMAND(0xD3); //-not offset
     SSD1306_WRITECOMMAND(0x00); //--set display clock divide ratio/oscillator frequency
+
     SSD1306_WRITECOMMAND(0xD5); //--set divide ratio
     SSD1306_WRITECOMMAND(0xF0); //--set pre-charge period
+
     SSD1306_WRITECOMMAND(0xD9); //
-    SSD1306_WRITECOMMAND(0x22); //--set com pins hardware configuration
+    SSD1306_WRITECOMMAND(0xf1); //--set com pins hardware configuration
+
     SSD1306_WRITECOMMAND(0xDA); //--set vcomh
-    SSD1306_WRITECOMMAND(0x12); //0x20,0.77xVcc
+    SSD1306_WRITECOMMAND(0x12); //
+
     SSD1306_WRITECOMMAND(0xDB); //--set DC-DC enable
-    SSD1306_WRITECOMMAND(0x20); //
+    SSD1306_WRITECOMMAND(0x20); //  0x20,0.77xVcc
+
     SSD1306_WRITECOMMAND(0x8D); //--turn on SSD1306 panel
     SSD1306_WRITECOMMAND(0x14);
+
+    Delay_Ms(100);
+
     SSD1306_WRITECOMMAND(0xAF);
 
 //    printf("clear screen\r\n");

@@ -56,16 +56,18 @@ int main(void) {
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
     SystemCoreClockUpdate();
     Delay_Init();
+#if DEBUG
     USART_Printf_Init(115200);
     printf("SystemClk:%d\r\n", SystemCoreClock);
     printf("ChipID:%08x\r\n", DBGMCU_GetCHIPID());
     printf("BG6VSK made USB keyboard electric key\r\n");
-
+#endif
     /*Init TIM2&3*/
     TIM2_Init(3999, (60 * SystemCoreClock / (1000 * 1000) - 1));
     TIM3_Init(9, SystemCoreClock / 1000 - 1);
+#if DEBUG
     printf("TIM OK\r\n");
-
+#endif
     /*Init GPIO*/
     InitGPIOs();
 
@@ -164,18 +166,20 @@ void ReadConfig() {
         config.morse_config.break_len = DEF_BREAK_LEN;
         config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
+        config.morse_config.cut_num = 0;
         WriteConfig();
     } else {
         config.mode = savedConfig->mode;
         config.beeper = savedConfig->beeper;
         config.wpm = savedConfig->wpm;
-        config.morse_config.dot_len = savedConfig->morse_config.dot_len;
-        config.morse_config.dash_len = savedConfig->morse_config.dash_len;
-        config.morse_config.break_len = savedConfig->morse_config.break_len;
+        config.morse_config.dot_len = DEF_DOT_LEN;
+        config.morse_config.dash_len = DEF_DASH_LEN;
+        config.morse_config.break_len = DEF_BREAK_LEN;
         config.morse_config.letter_break_len =
-                savedConfig->morse_config.letter_break_len;
+                DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len =
                 savedConfig->morse_config.word_break_len;
+        config.morse_config.cut_num = savedConfig->morse_config.cut_num;
     }
 
     memcpy(msg, (uint8_t *) (CONFIG_ADDR + 16), 12);
@@ -303,44 +307,74 @@ void Disp_Morse_Conf() {
     char str[19];
 
     SSD1306_GotoXY(0, 0);
-    sprintf(str, "DOT LEN");
+    sprintf(str, "Word Split");
     SSD1306_Puts(str, &Font_7x10, morse_conf_item == 0 ? 0 : 1);
-    SSD1306_GotoXY(100, 0);
-    sprintf(str, "%d", config.morse_config.dot_len);
+    SSD1306_GotoXY(86, 0);
+    switch(config.morse_config.word_break_len)
+    {
+    case 7:
+        sprintf(str, "Short");
+        break;
+    case 10:
+        sprintf(str, "Mid");
+        break;
+    case 14:
+        sprintf(str, "Long");
+        break;
+    default:
+        sprintf(str, "ERR");
+    }
     SSD1306_Puts(str, &Font_7x10, 1);
 
     SSD1306_GotoXY(0, 10);
-    sprintf(str, "DASH LEN");
+    sprintf(str, "Cut Num");
     SSD1306_Puts(str, &Font_7x10, morse_conf_item == 1 ? 0 : 1);
-    SSD1306_GotoXY(100, 10);
-    sprintf(str, "%d", config.morse_config.dash_len);
+    SSD1306_GotoXY(86, 10);
+    switch(config.morse_config.cut_num)
+    {
+    case 0:
+        sprintf(str, "OFF");
+        break;
+    case 1:
+        sprintf(str, "Mod A");
+        break;
+    case 2:
+        sprintf(str, "Mod B");
+        break;
+    case 3:
+        sprintf(str, "Mod C");
+        break;
+    default:
+        sprintf(str, "ERR");
+        break;
+    }
     SSD1306_Puts(str, &Font_7x10, 1);
     SSD1306_GotoXY(0, 0);
 
-    SSD1306_GotoXY(0, 20);
-    sprintf(str, "BREAK LEN");
-    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
-    SSD1306_GotoXY(100, 20);
-    sprintf(str, "%d", config.morse_config.break_len);
-    SSD1306_Puts(str, &Font_7x10, 1);
-
-    SSD1306_GotoXY(0, 30);
-    sprintf(str, "LETTER BREAK");
-    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 3 ? 0 : 1);
-    SSD1306_GotoXY(100, 30);
-    sprintf(str, "%d", config.morse_config.letter_break_len);
-    SSD1306_Puts(str, &Font_7x10, 1);
-
-    SSD1306_GotoXY(0, 40);
-    sprintf(str, "WORD BREAK");
-    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 4 ? 0 : 1);
-    SSD1306_GotoXY(100, 40);
-    sprintf(str, "%d", config.morse_config.word_break_len);
-    SSD1306_Puts(str, &Font_7x10, 1);
+//    SSD1306_GotoXY(0, 20);
+//    sprintf(str, "BREAK LEN");
+//    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
+//    SSD1306_GotoXY(100, 20);
+//    sprintf(str, "%d", config.morse_config.break_len);
+//    SSD1306_Puts(str, &Font_7x10, 1);
+//
+//    SSD1306_GotoXY(0, 30);
+//    sprintf(str, "LETTER BREAK");
+//    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 3 ? 0 : 1);
+//    SSD1306_GotoXY(100, 30);
+//    sprintf(str, "%d", config.morse_config.letter_break_len);
+//    SSD1306_Puts(str, &Font_7x10, 1);
+//
+//    SSD1306_GotoXY(0, 40);
+//    sprintf(str, "WORD BREAK");
+//    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 4 ? 0 : 1);
+//    SSD1306_GotoXY(100, 40);
+//    sprintf(str, "%d", config.morse_config.word_break_len);
+//    SSD1306_Puts(str, &Font_7x10, 1);
 
     SSD1306_GotoXY(0, 50);
     sprintf(str, "BACK");
-    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 5 ? 0 : 1);
+    SSD1306_Puts(str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
 
 }
 
@@ -362,7 +396,7 @@ void Disp_Menu() {
         sprintf(str, "BEEPER");
         SSD1306_Puts(str, &Font_7x10, menu_item == 1 ? 0 : 1);
         SSD1306_GotoXY(100, 10);
-        sprintf(str, "%s", config.beeper == 1 ? "YSE" : "NO");
+        sprintf(str, "%s", config.beeper == 1 ? "ON" : "OFF");
         SSD1306_Puts(str, &Font_7x10, 1);
 
         SSD1306_GotoXY(0, 20);
@@ -370,7 +404,7 @@ void Disp_Menu() {
         SSD1306_Puts(str, &Font_7x10, menu_item == 2 ? 0 : 1);
 
         SSD1306_GotoXY(0, 30);
-        sprintf(str, "VERSON");
+        sprintf(str, "VERSION");
         SSD1306_Puts(str, &Font_7x10, menu_item == 3 ? 0 : 1);
 
         SSD1306_GotoXY(0, 50);

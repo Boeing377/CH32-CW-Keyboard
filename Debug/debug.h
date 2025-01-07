@@ -25,6 +25,8 @@ extern "C" {
 #define DEBUG_UART2    2
 #define DEBUG_UART3    3
 
+#define DEBUG 0
+
 /* DEBUG UATR Definition */
 #ifndef DEBUG
 #define DEBUG   DEBUG_UART1

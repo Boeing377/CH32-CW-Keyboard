@@ -10,7 +10,7 @@
 
 #include "ch32v20x.h"
 
-#define VERSION     "Ver 1.1.1"
+#define VERSION     "Ver 1.1.4"
 
 #define STARUP_FLAG 0x12
 
@@ -44,14 +44,14 @@
 
 #define MSG_NUM 12
 
-struct Morse_Config
-{
+struct Morse_Config {
     uint8_t dot_len;
     uint8_t dash_len;
     uint8_t break_len;
     uint8_t letter_break_len;
     uint8_t word_break_len;
-    };
+    uint8_t cut_num;
+};
 
 struct Config {
     uint8_t beeper;
@@ -64,7 +64,8 @@ struct Config {
 extern struct Config config;
 extern uint8_t msg[];
 
-extern uint8_t stge, bufCovnMark, keyboard_in, saving, disp_menu, menu_item,disp_ver ,disp_morse_conf,morse_conf_item;
+extern uint8_t stge, bufCovnMark, keyboard_in, saving, disp_menu, menu_item,
+        disp_ver, disp_morse_conf, morse_conf_item;
 extern uint8_t inputBuff[], outputBuff[];
 extern int sendCount;
 extern uint32_t inputBuffSize, outputBuffSize;

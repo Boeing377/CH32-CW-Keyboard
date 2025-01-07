@@ -140,7 +140,7 @@ void CombufDeal() {
                     if (disp_ver) {
                         disp_ver = 0;
                     } else if (disp_morse_conf) {
-                        if (morse_conf_item < 5)
+                        if (morse_conf_item < 2)
                             morse_conf_item++;
                     } else if (menu_item < 4)
                         menu_item++;
@@ -157,29 +157,14 @@ void CombufDeal() {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
                         if (morse_conf_item == 0) {
-                            if (config.morse_config.dot_len > 1)
-                                config.morse_config.dot_len--;
+                            if(config.morse_config.word_break_len == 10)
+                                config.morse_config.word_break_len = 7;
+                            else if(config.morse_config.word_break_len == 14)
+                                config.morse_config.word_break_len = 10;
                         }
                         if (morse_conf_item == 1) {
-                            if (config.morse_config.dash_len > 1)
-                                config.morse_config.dash_len--;
-                        }
-                        if (morse_conf_item == 2) {
-                            if (config.morse_config.break_len > 1)
-                                config.morse_config.break_len--;
-                        }
-                        if (morse_conf_item == 3) {
-                            if (config.morse_config.letter_break_len > 1)
-                                config.morse_config.letter_break_len--;
-                        }
-                        if (morse_conf_item == 4) {
-                            if (config.morse_config.word_break_len > config.morse_config.letter_break_len + 1)
-                                config.morse_config.word_break_len--;
-                            else {
-                                if (config.morse_config.letter_break_len > 1)
-                                    config.morse_config.letter_break_len--;
-                                    config.morse_config.word_break_len = config.morse_config.letter_break_len + 1;
-                            }
+                            if (config.morse_config.cut_num > 0)
+                            config.morse_config.cut_num -= 1;
                         }
                     } else {
                         if (menu_item == 0)
@@ -192,32 +177,16 @@ void CombufDeal() {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
                         if (morse_conf_item == 0) {
-                            if (config.morse_config.dot_len < 20)
-                                config.morse_config.dot_len++;
+                            if(config.morse_config.word_break_len == 7)
+                                config.morse_config.word_break_len = 10;
+                            else if(config.morse_config.word_break_len == 10)
+                                config.morse_config.word_break_len = 14;
                         }
                         if (morse_conf_item == 1) {
-                            if (config.morse_config.dash_len < 20)
-                                config.morse_config.dash_len++;
+                            if (config.morse_config.cut_num < 3)
+                            config.morse_config.cut_num += 1;
                         }
                         if (morse_conf_item == 2) {
-                            if (config.morse_config.break_len < 20)
-                                config.morse_config.break_len++;
-                        }
-                        if (morse_conf_item == 3) {
-
-                            if (config.morse_config.letter_break_len < config.morse_config.word_break_len - 1)
-                                config.morse_config.letter_break_len++;
-                            else {
-                                if (config.morse_config.word_break_len < 20)
-                                                                config.morse_config.word_break_len++;
-                                config.morse_config.letter_break_len = config.morse_config.word_break_len - 1;
-                            }
-                        }
-                        if (morse_conf_item == 4) {
-                            if (config.morse_config.word_break_len < 20)
-                                config.morse_config.word_break_len++;
-                        }
-                        if (morse_conf_item == 5) {
                             disp_morse_conf = 0;
                         }
                     } else {
@@ -229,8 +198,7 @@ void CombufDeal() {
                             disp_morse_conf = 1;
                         if (menu_item == 3)
                             disp_ver = 1;
-                        if (menu_item == 4)
-                        {
+                        if (menu_item == 4) {
                             disp_menu = 0;
                             WriteConfig();
                         }
@@ -239,7 +207,7 @@ void CombufDeal() {
                     if (disp_ver == 1) {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
-                        if (morse_conf_item == 5) {
+                        if (morse_conf_item == 2) {
                             disp_morse_conf = 0;
                         }
                     } else {
