@@ -26,19 +26,19 @@ extern "C" {
 #ifndef DEF_HID_DED_CMD
 #define DEF_HID_DED_CMD
 /* Set Protocol Command Packet */
-__attribute__((aligned(4)))    static const uint8_t SetupSetprotocol[] = { 0x21,
+__attribute__((aligned(4)))      static const uint8_t SetupSetprotocol[] = { 0x21,
         0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /* Set Idle Command Packet */
-__attribute__((aligned(4)))    static const uint8_t SetupSetidle[] = { 0x21, 0x0A,
+__attribute__((aligned(4)))      static const uint8_t SetupSetidle[] = { 0x21, 0x0A,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /* Set Report Command Packet */
-__attribute__((aligned(4)))    static const uint8_t SetupSetReport[] = { 0x21, 0x09,
+__attribute__((aligned(4)))      static const uint8_t SetupSetReport[] = { 0x21, 0x09,
         0x00, 0x02, 0x00, 0x00, 0x01, 0x00 };
 
 /* Get Report Descriptor Command Packet */
-__attribute__((aligned(4)))    static const uint8_t SetupGetHidDes[] = { 0x81, 0x06,
+__attribute__((aligned(4)))      static const uint8_t SetupGetHidDes[] = { 0x81, 0x06,
         0x00, 0x22, 0x00, 0x00, 0x00, 0x00 };
 #endif
 

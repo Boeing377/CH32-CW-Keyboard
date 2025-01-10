@@ -7,12 +7,11 @@
 
 #ifndef USER_GLOBAL_H_
 #define USER_GLOBAL_H_
-
 #include "ch32v20x.h"
 
-#define VERSION     "Ver 1.1.4"
+#define VERSION     "Ver 1.1.5"
 
-#define STARUP_FLAG 0x12
+#define STARUP_FLAG 0x15
 
 #define KEY_OUT     GPIO_Pin_1
 #define BEEP_OUT    GPIO_Pin_9
@@ -37,6 +36,8 @@
 #define DEF_WORD_BREAK_LEN      7
 
 #define BUFFSIZE 512
+#define INPUTZONE_SIZE 1000
+#define MAXSAVEBUFSIZE 508
 
 #define CONFIG_ADDR 0x0800CF00
 #define MSG_ADDR 0x0800D000
@@ -64,8 +65,8 @@ struct Config {
 extern struct Config config;
 extern uint8_t msg[];
 
-extern uint8_t stge, bufCovnMark, keyboard_in, saving, disp_menu, menu_item,
-        disp_ver, disp_morse_conf, morse_conf_item;
+extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
+        menu_item, disp_ver, disp_morse_conf, morse_conf_item;
 extern uint8_t inputBuff[], outputBuff[];
 extern int sendCount;
 extern uint32_t inputBuffSize, outputBuffSize;

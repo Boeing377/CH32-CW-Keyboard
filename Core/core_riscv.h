@@ -194,7 +194,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_DisableIRQ(
  * @return  1 - Interrupt Pending Enable
  *          0 - Interrupt Pending Disable
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t NVIC_GetStatusIRQ(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetStatusIRQ(
         IRQn_Type IRQn) {
     return ((uint32_t) (
             (NVIC->ISR[(uint32_t) (IRQn) >> 5]
@@ -211,7 +211,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t NVIC_GetStatusIRQ
  * @return  1 - Interrupt Pending Enable
  *          0 - Interrupt Pending Disable
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t NVIC_GetPendingIRQ(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetPendingIRQ(
         IRQn_Type IRQn) {
     return ((uint32_t) (
             (NVIC->IPR[(uint32_t) (IRQn) >> 5]
@@ -256,7 +256,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_ClearPendingIRQ(
  * @return  1 - Interrupt Active
  *          0 - Interrupt No Active
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t NVIC_GetActive(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetActive(
         IRQn_Type IRQn) {
     return ((uint32_t) (
             (NVIC->IACTR[(uint32_t) (IRQn) >> 5]
@@ -386,7 +386,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SystemReset(void) 
  *
  * @return  return memory value + add value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOADD_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOADD_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 
@@ -406,7 +406,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOADD_W(
  *
  * @return  return memory value & and value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOAND_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOAND_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 
@@ -426,7 +426,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOAND_W(
  *
  * @return  the bigger value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOMAX_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMAX_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 
@@ -446,7 +446,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOMAX_W(
  *             
  * @return  return the bigger value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOMAXU_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOMAXU_W(
         volatile uint32_t *addr, uint32_t value) {
     uint32_t result;
 
@@ -466,7 +466,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOMAXU_W(
  *
  * @return  the smaller value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOMIN_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMIN_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 
@@ -486,7 +486,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOMIN_W(
  *
  * @return  the smaller value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOMINU_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOMINU_W(
         volatile uint32_t *addr, uint32_t value) {
     uint32_t result;
 
@@ -506,7 +506,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOMINU_W(
  * 
  * @return  return memory value | and value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOOR_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOOR_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 
@@ -525,7 +525,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOOR_W(
  *
  * @return  return the original value in memory
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOSWAP_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOSWAP_W(
         volatile uint32_t *addr, uint32_t newval) {
     uint32_t result;
 
@@ -545,7 +545,7 @@ __attribute__( ( always_inline ))    RV_STATIC_INLINE uint32_t __AMOSWAP_W(
  *
  * @return  return memory value ^ and value
  */
-__attribute__( ( always_inline ))    RV_STATIC_INLINE int32_t __AMOXOR_W(
+__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOXOR_W(
         volatile int32_t *addr, int32_t value) {
     int32_t result;
 

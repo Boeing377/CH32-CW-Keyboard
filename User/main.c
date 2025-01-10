@@ -176,7 +176,7 @@ void ReadConfig() {
         config.morse_config.dash_len = DEF_DASH_LEN;
         config.morse_config.break_len = DEF_BREAK_LEN;
         config.morse_config.letter_break_len =
-                DEF_LETTER_BREAK_LEN;
+        DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len =
                 savedConfig->morse_config.word_break_len;
         config.morse_config.cut_num = savedConfig->morse_config.cut_num;
@@ -238,6 +238,7 @@ void ReadSavedMsg(uint8_t sn) {
 void WriteMsg(uint8_t sn) {
     uint32_t eraseAddr;
     uint8_t buff[0x0800];
+    uint32_t saveingBuffSize;
 
     saving = 1;
     TIM_Cmd( TIM4, ENABLE);
@@ -258,17 +259,21 @@ void WriteMsg(uint8_t sn) {
     FLASH_ClearFlag( FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
     FLASH_ErasePage(eraseAddr);
 
+    saveingBuffSize = inputBuffSize;
+    if(saveingBuffSize > MAXSAVEBUFSIZE)
+        saveingBuffSize = MAXSAVEBUFSIZE;
+
     if (sn < 4) {
-        memcpy(buff + MSG_ZONE_SIZE * sn, inputBuff, inputBuffSize);
-        *(uint32_t*) (buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = inputBuffSize;
+        memcpy(buff + MSG_ZONE_SIZE * sn, inputBuff, saveingBuffSize);
+        *(uint32_t*) (buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = saveingBuffSize;
     } else if (sn < 8) {
-        memcpy(buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, inputBuffSize);
+        memcpy(buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, saveingBuffSize);
         *(uint32_t*) (buff + MSG_ZONE_SIZE * (sn - 4) + BUFFSIZE - 4) =
-                inputBuffSize;
+                saveingBuffSize;
     } else {
-        memcpy(buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, inputBuffSize);
+        memcpy(buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, saveingBuffSize);
         *(uint32_t*) (buff + MSG_ZONE_SIZE * (sn - 8) + BUFFSIZE - 4) =
-                inputBuffSize;
+                saveingBuffSize;
     }
 
     FLASH_ROM_WRITE(eraseAddr, (uint32_t*) buff, 0x0800);
@@ -310,8 +315,7 @@ void Disp_Morse_Conf() {
     sprintf(str, "Word Split");
     SSD1306_Puts(str, &Font_7x10, morse_conf_item == 0 ? 0 : 1);
     SSD1306_GotoXY(86, 0);
-    switch(config.morse_config.word_break_len)
-    {
+    switch (config.morse_config.word_break_len) {
     case 7:
         sprintf(str, "Short");
         break;
@@ -330,8 +334,7 @@ void Disp_Morse_Conf() {
     sprintf(str, "Cut Num");
     SSD1306_Puts(str, &Font_7x10, morse_conf_item == 1 ? 0 : 1);
     SSD1306_GotoXY(86, 10);
-    switch(config.morse_config.cut_num)
-    {
+    switch (config.morse_config.cut_num) {
     case 0:
         sprintf(str, "OFF");
         break;
@@ -442,9 +445,9 @@ void Disp() {
             sprintf(str, "L:%03d", inputBuffSize);
         SSD1306_Puts(str, &Font_7x10, 1);
 
-        if (keyboard_in) {
+        if (caps_lock_stg) {
             SSD1306_GotoXY(120, 0);
-            SSD1306_Puts("K", &Font_7x10, 1);
+            SSD1306_Puts("C", &Font_7x10, 1);
         }
 
         if (config.mode) {

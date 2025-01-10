@@ -116,16 +116,42 @@ void CombufDeal() {
                         newFlag = 0;
                 }
                 if (newFlag) {
+                    if (Com_Buf[i] == DEF_KEY_CAPS)
+                    {
+                        caps_lock_stg = 1 - caps_lock_stg;
+                    }
                     if (Com_Buf[0] & 0x22) {
-                        New_Pressed[newPressedNum++] =
-                                codmapWithShift[Com_Buf[i]];
+                        if (caps_lock_stg == 0)
+                            New_Pressed[newPressedNum++] =
+                                    codmapWithShift[Com_Buf[i]];
+                        else {
+                            if ((Com_Buf[i] > 0x03)
+                                    && (Com_Buf[i] < 0x1E))
+                                New_Pressed[newPressedNum++] =
+                                        codmap[Com_Buf[i]];
+                            else {
+                                New_Pressed[newPressedNum++] =
+                                        codmapWithShift[Com_Buf[i]];
+                            }
+                        }
                     } else if (Com_Buf[0] & 0x11) {       //左右ctrl键
                         if (Com_Buf[i] == 0x10)          //m键
                                 {
                             disp_menu = 1 - disp_menu;
                         }
                     } else {
-                        New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
+                        if (caps_lock_stg == 0)
+                            New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
+                        else {
+                            if ((Com_Buf[i] > 0x03)
+                                    && (Com_Buf[i] < 0x1E))
+                                New_Pressed[newPressedNum++] =
+                                        codmapWithShift[Com_Buf[i]];
+                            else {
+                                New_Pressed[newPressedNum++] =
+                                        codmap[Com_Buf[i]];
+                            }
+                        }
                     }
                 }
             }
@@ -157,14 +183,14 @@ void CombufDeal() {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
                         if (morse_conf_item == 0) {
-                            if(config.morse_config.word_break_len == 10)
+                            if (config.morse_config.word_break_len == 10)
                                 config.morse_config.word_break_len = 7;
-                            else if(config.morse_config.word_break_len == 14)
+                            else if (config.morse_config.word_break_len == 14)
                                 config.morse_config.word_break_len = 10;
                         }
                         if (morse_conf_item == 1) {
                             if (config.morse_config.cut_num > 0)
-                            config.morse_config.cut_num -= 1;
+                                config.morse_config.cut_num -= 1;
                         }
                     } else {
                         if (menu_item == 0)
@@ -177,14 +203,14 @@ void CombufDeal() {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
                         if (morse_conf_item == 0) {
-                            if(config.morse_config.word_break_len == 7)
+                            if (config.morse_config.word_break_len == 7)
                                 config.morse_config.word_break_len = 10;
-                            else if(config.morse_config.word_break_len == 10)
+                            else if (config.morse_config.word_break_len == 10)
                                 config.morse_config.word_break_len = 14;
                         }
                         if (morse_conf_item == 1) {
                             if (config.morse_config.cut_num < 3)
-                            config.morse_config.cut_num += 1;
+                                config.morse_config.cut_num += 1;
                         }
                         if (morse_conf_item == 2) {
                             disp_morse_conf = 0;
@@ -231,11 +257,14 @@ void CombufDeal() {
                         || New_Pressed[i] == ':' || New_Pressed[i] == ';'
                         || New_Pressed[i] == '+' || New_Pressed[i] == '-'
                         || New_Pressed[i] == '/' || New_Pressed[i] == '=') {
-                    inputBuff[inputBuffSize++] = New_Pressed[i];
-                    inputBuff[inputBuffSize] = '\0';
-                    if (!config.mode) {
-                        if (!stge)
-                            starSending();
+                    if (inputBuffSize < INPUTZONE_SIZE-1)        //避免溢出
+                    {
+                        inputBuff[inputBuffSize++] = New_Pressed[i];
+                        inputBuff[inputBuffSize] = '\0';
+                        if (!config.mode) {
+                            if (!stge)
+                                starSending();
+                        }
                     }
                 } else if (New_Pressed[i] == 31) {      //按下回车
                     if (config.mode) {
@@ -1131,8 +1160,7 @@ uint8_t USBH_EnumHubDevice(void) {
             RootHubDev.bPortNum = ((PUSB_HUB_DESCR) Com_Buf)->bNbrPorts;
             if (RootHubDev.bPortNum > DEF_NEXT_HUB_PORT_NUM_MAX) {
                 RootHubDev.bPortNum = DEF_NEXT_HUB_PORT_NUM_MAX;
-            }
-            DUG_PRINTF("RootHubDev.bPortNum: %02x\r\n", RootHubDev.bPortNum);
+            }DUG_PRINTF("RootHubDev.bPortNum: %02x\r\n", RootHubDev.bPortNum);
             break;
         } else {
             /* Determine whether the maximum number of retries has been reached, and retry if not reached */
@@ -1437,6 +1465,9 @@ void KB_AnalyzeKeyValue(uint8_t index, uint8_t intf_num, uint8_t *pbuf,
             if (memchr(pbuf, DEF_KEY_CAPS, len)) {
                 HostCtl[index].Interface[intf_num].SetReport_Value ^= (1
                         << bit_pos);
+//                caps_lock_stg =
+//                        HostCtl[index].Interface[intf_num].SetReport_Value
+//                                & 0x02;
             }
         } else if (i == 0x03) {
             if (memchr(pbuf, DEF_KEY_SCROLL, len)) {
@@ -1572,8 +1603,7 @@ void USBH_MainDeal(void) {
                     DUG_PRINTF("Unknown. ")
                     ;
                     break;
-                }
-                DUG_PRINTF("End Enum.\r\n");
+                }DUG_PRINTF("End Enum.\r\n");
 
                 RootHubDev.bStatus = ROOT_DEV_SUCCESS;
             }

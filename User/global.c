@@ -12,6 +12,7 @@ struct Config config;
 uint8_t stge = 0;           //当前状态           0：stb        1：sending
 uint8_t bufCovnMark = 0;
 uint8_t keyboard_in = 0;    //键盘接入状态    0：未接入           1：已接入
+uint8_t caps_lock_stg = 0;
 uint8_t saving = 0;
 uint8_t disp_menu = 0;
 uint8_t menu_item = 0;
@@ -22,7 +23,7 @@ int sendCount = 0;
 
 uint8_t msg[MSG_NUM];
 
-uint8_t inputBuff[BUFFSIZE], outputBuff[BUFFSIZE];  //键入buffer和输出buffer
+uint8_t inputBuff[INPUTZONE_SIZE], outputBuff[INPUTZONE_SIZE];  //键入buffer和输出buffer
 
 uint32_t inputBuffSize = 0, outputBuffSize = 0;
 
