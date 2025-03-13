@@ -9,7 +9,7 @@
 #define USER_GLOBAL_H_
 #include "ch32v20x.h"
 
-#define VERSION     "Ver 1.1.5"
+#define VERSION     "Ver 1.1.5a"
 
 #define STARUP_FLAG 0x15
 
@@ -18,12 +18,14 @@
 #define LED_OUT     GPIO_Pin_12
 #define KEY_1_IN    GPIO_Pin_13
 #define KEY_2_IN    GPIO_Pin_14
+#define POWBOTTON_OUT GPIO_Pin_3
 
 #define KEY_OUT_PORT    GPIOA
 #define BEEP_OUT_PORT   GPIOB
 #define LED_OUT_PORT    GPIOB
 #define KEY_1_IN_PORT   GPIOB
 #define KEY_2_IN_PORT   GPIOB
+#define POWBOTTON_PORT  GPIOA
 
 #define MAX_WPM 99
 #define MIN_WPN 1

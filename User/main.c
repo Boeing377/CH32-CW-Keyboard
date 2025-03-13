@@ -150,6 +150,11 @@ void InitGPIOs() {
     GPIO_InitStructure.GPIO_Pin = KEY_1_IN | KEY_2_IN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+    GPIO_InitStructure.GPIO_Pin = POWBOTTON_OUT;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 void ReadConfig() {
@@ -241,9 +246,9 @@ void WriteMsg(uint8_t sn) {
     uint32_t saveingBuffSize;
 
     saving = 1;
-    TIM_Cmd( TIM4, ENABLE);
+//    TIM_Cmd( TIM4, ENABLE);
     /* Enable timer3 interrupt */
-    NVIC_EnableIRQ(TIM4_IRQn);
+//    NVIC_EnableIRQ(TIM4_IRQn);
 
     if (sn < 4)
         eraseAddr = MSG_ADDR;
@@ -283,8 +288,8 @@ void WriteMsg(uint8_t sn) {
     msg[sn] = 0xcd;
     WriteConfig();
 
-    TIM_Cmd( TIM4, DISABLE);
-    NVIC_DisableIRQ(TIM4_IRQn);
+//    TIM_Cmd( TIM4, DISABLE);
+//    NVIC_DisableIRQ(TIM4_IRQn);
 
     saving = 0;
 }
@@ -572,16 +577,26 @@ void TIM4_Init(uint16_t arr, uint16_t psc) {
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+
+    TIM_Cmd(TIM4, ENABLE);
+    NVIC_EnableIRQ(TIM4_IRQn);
 }
 
 void TIM4_IRQHandler(void) {
     if (TIM_GetITStatus( TIM4, TIM_IT_Update) != RESET) {
         /* Clear interrupt flag */
         TIM_ClearITPendingBit( TIM4, TIM_IT_Update);
-        if (GPIO_ReadOutputDataBit(LED_OUT_PORT, LED_OUT)) {
-            GPIO_WriteBit(LED_OUT_PORT, LED_OUT, Bit_RESET);
-        } else {
-            GPIO_WriteBit(LED_OUT_PORT, LED_OUT, Bit_SET);
+        static int powbutton_timer;
+        if(powbutton_timer > 0)
+            powbutton_timer --;
+        else{
+            if (GPIO_ReadOutputDataBit(POWBOTTON_PORT, POWBOTTON_OUT)) {
+                GPIO_WriteBit(POWBOTTON_PORT, POWBOTTON_OUT, Bit_RESET);
+                powbutton_timer = 490;
+            } else {
+                GPIO_WriteBit(POWBOTTON_PORT, POWBOTTON_OUT, Bit_SET);
+                powbutton_timer = 10;
+            }
         }
     }
 }
