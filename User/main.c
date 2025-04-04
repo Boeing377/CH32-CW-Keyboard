@@ -592,10 +592,10 @@ void TIM4_IRQHandler(void) {
         else{
             if (GPIO_ReadOutputDataBit(POWBOTTON_PORT, POWBOTTON_OUT)) {
                 GPIO_WriteBit(POWBOTTON_PORT, POWBOTTON_OUT, Bit_RESET);
-                powbutton_timer = 490;
+                powbutton_timer = 15;
             } else {
                 GPIO_WriteBit(POWBOTTON_PORT, POWBOTTON_OUT, Bit_SET);
-                powbutton_timer = 10;
+                powbutton_timer = 235;
             }
         }
     }
