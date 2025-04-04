@@ -16,8 +16,8 @@
 
 /*******************************************************************************/
 /* Variable Definition */
-__attribute__((aligned(4)))   uint8_t USBFS_RX_Buf[USBFS_MAX_PACKET_SIZE]; // IN, must even address
-__attribute__((aligned(4)))   uint8_t USBFS_TX_Buf[USBFS_MAX_PACKET_SIZE]; // OUT, must even address
+__attribute__((aligned(4)))      uint8_t USBFS_RX_Buf[USBFS_MAX_PACKET_SIZE]; // IN, must even address
+__attribute__((aligned(4)))      uint8_t USBFS_TX_Buf[USBFS_MAX_PACKET_SIZE]; // OUT, must even address
 
 /*********************************************************************
  * @fn      USBFS_RCC_Init

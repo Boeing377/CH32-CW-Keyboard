@@ -85,6 +85,7 @@ void Delay_Ms(uint32_t n) {
  *
  * @return  None
  */
+#if DEBUG
 void USART_Printf_Init(uint32_t baudrate) {
     GPIO_InitTypeDef GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
@@ -140,7 +141,7 @@ void USART_Printf_Init(uint32_t baudrate) {
 
 #endif
 }
-
+#endif
 /*********************************************************************
  * @fn      SDI_Printf_Enable
  *

@@ -88,8 +88,7 @@ extern FontDef_t Font_11x18;
 /**
  * @brief  16 x 26 pixels font size structure
  */
-extern FontDef_t Font_16x26;
-
+//extern FontDef_t Font_16x26;
 /**
  * @}
  */
