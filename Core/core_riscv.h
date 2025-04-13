@@ -6,7 +6,7 @@
  * Description        : RISC-V V4 Core Peripheral Access Layer Header File for CH32V20x
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #ifndef __CORE_RISCV_H__
@@ -18,33 +18,33 @@ extern "C" {
 
 /* IO definitions */
 #ifdef __cplusplus
-#define     __I     volatile                /*  defines 'read only' permissions      */
+#define __I volatile       /*  defines 'read only' permissions      */
 #else
-#define     __I     volatile const          /*  defines 'read only' permissions     */
+#define __I volatile const /*  defines 'read only' permissions     */
 #endif
-#define       __O     volatile                /*  defines 'write only' permissions     */
-#define       __IO    volatile                /*  defines 'read / write' permissions   */
+#define __O volatile       /*  defines 'write only' permissions     */
+#define __IO volatile      /*  defines 'read / write' permissions   */
 
 /* Standard Peripheral Library old types (maintained for legacy purpose) */
-typedef __I uint64_t vuc64; /* Read Only */
-typedef __I uint32_t vuc32; /* Read Only */
-typedef __I uint16_t vuc16; /* Read Only */
-typedef __I uint8_t vuc8; /* Read Only */
+typedef __I uint64_t vuc64;  /* Read Only */
+typedef __I uint32_t vuc32;  /* Read Only */
+typedef __I uint16_t vuc16;  /* Read Only */
+typedef __I uint8_t vuc8;    /* Read Only */
 
 typedef const uint64_t uc64; /* Read Only */
 typedef const uint32_t uc32; /* Read Only */
 typedef const uint16_t uc16; /* Read Only */
-typedef const uint8_t uc8; /* Read Only */
+typedef const uint8_t uc8;   /* Read Only */
 
-typedef __I int64_t vsc64; /* Read Only */
-typedef __I int32_t vsc32; /* Read Only */
-typedef __I int16_t vsc16; /* Read Only */
-typedef __I int8_t vsc8; /* Read Only */
+typedef __I int64_t vsc64;   /* Read Only */
+typedef __I int32_t vsc32;   /* Read Only */
+typedef __I int16_t vsc16;   /* Read Only */
+typedef __I int8_t vsc8;     /* Read Only */
 
-typedef const int64_t sc64; /* Read Only */
-typedef const int32_t sc32; /* Read Only */
-typedef const int16_t sc16; /* Read Only */
-typedef const int8_t sc8; /* Read Only */
+typedef const int64_t sc64;  /* Read Only */
+typedef const int32_t sc32;  /* Read Only */
+typedef const int16_t sc16;  /* Read Only */
+typedef const int8_t sc8;    /* Read Only */
 
 typedef __IO uint64_t vu64;
 typedef __IO uint32_t vu32;
@@ -67,18 +67,22 @@ typedef int16_t s16;
 typedef int8_t s8;
 
 typedef enum {
-    NoREADY = 0, READY = !NoREADY
+    NoREADY = 0,
+    READY = !NoREADY
 } ErrorStatus;
 
 typedef enum {
-    DISABLE = 0, ENABLE = !DISABLE
+    DISABLE = 0,
+    ENABLE = !DISABLE
 } FunctionalState;
 
 typedef enum {
-    RESET = 0, SET = !RESET
-} FlagStatus, ITStatus;
+    RESET = 0,
+    SET = !RESET
+} FlagStatus,
+    ITStatus;
 
-#define   RV_STATIC_INLINE  static  inline
+#define RV_STATIC_INLINE static inline
 
 /* memory mapped structure for Program Fast Interrupt Controller (PFIC) */
 typedef struct {
@@ -115,13 +119,13 @@ typedef struct {
     __IO uint64_t CMP;
 } SysTick_Type;
 
-#define PFIC            ((PFIC_Type *) 0xE000E000 )
-#define NVIC            PFIC
-#define NVIC_KEY1       ((uint32_t)0xFA050000)
-#define	NVIC_KEY2		((uint32_t)0xBCAF0000)
-#define	NVIC_KEY3		((uint32_t)0xBEEF0000)
+#define PFIC ((PFIC_Type *)0xE000E000)
+#define NVIC PFIC
+#define NVIC_KEY1 ((uint32_t)0xFA050000)
+#define NVIC_KEY2 ((uint32_t)0xBCAF0000)
+#define NVIC_KEY3 ((uint32_t)0xBEEF0000)
 
-#define SysTick         ((SysTick_Type *) 0xE000F000)
+#define SysTick ((SysTick_Type *)0xE000F000)
 
 /*********************************************************************
  * @fn      __enable_irq
@@ -130,8 +134,10 @@ typedef struct {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void __enable_irq() {
-    __asm volatile ("csrs 0x800, %0" : : "r" (0x88) );
+__attribute__ ((always_inline)) RV_STATIC_INLINE void __enable_irq() {
+    __asm volatile ("csrs 0x800, %0"
+                    :
+                    : "r"(0x88));
 }
 
 /*********************************************************************
@@ -141,8 +147,10 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void __enable_irq() {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void __disable_irq() {
-    __asm volatile ("csrc 0x800, %0" : : "r" (0x88) );
+__attribute__ ((always_inline)) RV_STATIC_INLINE void __disable_irq() {
+    __asm volatile ("csrc 0x800, %0"
+                    :
+                    : "r"(0x88));
 }
 
 /*********************************************************************
@@ -152,7 +160,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void __disable_irq() {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void __NOP() {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void __NOP() {
     __asm volatile ("nop");
 }
 
@@ -165,9 +173,9 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void __NOP() {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_EnableIRQ(
-        IRQn_Type IRQn) {
-    NVIC->IENR[((uint32_t) (IRQn) >> 5)] = (1 << ((uint32_t) (IRQn) & 0x1F));
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_EnableIRQ (
+    IRQn_Type IRQn) {
+    NVIC->IENR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn)&0x1F));
 }
 
 /*********************************************************************
@@ -179,9 +187,9 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_EnableIRQ(
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_DisableIRQ(
-        IRQn_Type IRQn) {
-    NVIC->IRER[((uint32_t) (IRQn) >> 5)] = (1 << ((uint32_t) (IRQn) & 0x1F));
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_DisableIRQ (
+    IRQn_Type IRQn) {
+    NVIC->IRER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn)&0x1F));
 }
 
 /*********************************************************************
@@ -194,11 +202,9 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_DisableIRQ(
  * @return  1 - Interrupt Pending Enable
  *          0 - Interrupt Pending Disable
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetStatusIRQ(
-        IRQn_Type IRQn) {
-    return ((uint32_t) (
-            (NVIC->ISR[(uint32_t) (IRQn) >> 5]
-                    & (1 << ((uint32_t) (IRQn) & 0x1F))) ? 1 : 0));
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t NVIC_GetStatusIRQ (
+    IRQn_Type IRQn) {
+    return ((uint32_t)((NVIC->ISR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn)&0x1F))) ? 1 : 0));
 }
 
 /*********************************************************************
@@ -211,11 +217,9 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetStatusI
  * @return  1 - Interrupt Pending Enable
  *          0 - Interrupt Pending Disable
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetPendingIRQ(
-        IRQn_Type IRQn) {
-    return ((uint32_t) (
-            (NVIC->IPR[(uint32_t) (IRQn) >> 5]
-                    & (1 << ((uint32_t) (IRQn) & 0x1F))) ? 1 : 0));
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t NVIC_GetPendingIRQ (
+    IRQn_Type IRQn) {
+    return ((uint32_t)((NVIC->IPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn)&0x1F))) ? 1 : 0));
 }
 
 /*********************************************************************
@@ -227,9 +231,9 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetPending
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SetPendingIRQ(
-        IRQn_Type IRQn) {
-    NVIC->IPSR[((uint32_t) (IRQn) >> 5)] = (1 << ((uint32_t) (IRQn) & 0x1F));
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_SetPendingIRQ (
+    IRQn_Type IRQn) {
+    NVIC->IPSR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn)&0x1F));
 }
 
 /*********************************************************************
@@ -241,9 +245,9 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SetPendingIRQ(
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_ClearPendingIRQ(
-        IRQn_Type IRQn) {
-    NVIC->IPRR[((uint32_t) (IRQn) >> 5)] = (1 << ((uint32_t) (IRQn) & 0x1F));
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_ClearPendingIRQ (
+    IRQn_Type IRQn) {
+    NVIC->IPRR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn)&0x1F));
 }
 
 /*********************************************************************
@@ -256,11 +260,9 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_ClearPendingIRQ(
  * @return  1 - Interrupt Active
  *          0 - Interrupt No Active
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetActive(
-        IRQn_Type IRQn) {
-    return ((uint32_t) (
-            (NVIC->IACTR[(uint32_t) (IRQn) >> 5]
-                    & (1 << ((uint32_t) (IRQn) & 0x1F))) ? 1 : 0));
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t NVIC_GetActive (
+    IRQn_Type IRQn) {
+    return ((uint32_t)((NVIC->IACTR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn)&0x1F))) ? 1 : 0));
 }
 
 /*********************************************************************
@@ -279,9 +281,9 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t NVIC_GetActive(
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SetPriority(
-        IRQn_Type IRQn, uint8_t priority) {
-    NVIC->IPRIOR[(uint32_t) (IRQn)] = priority;
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_SetPriority (
+    IRQn_Type IRQn, uint8_t priority) {
+    NVIC->IPRIOR[(uint32_t)(IRQn)] = priority;
 }
 
 /*********************************************************************
@@ -291,8 +293,8 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SetPriority(
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void __WFI(void) {
-    NVIC->SCTLR &= ~(1 << 3);	// wfi
+__attribute__ ((always_inline)) RV_STATIC_INLINE void __WFI (void) {
+    NVIC->SCTLR &= ~(1 << 3);  // wfi
     asm volatile ("wfi");
 }
 
@@ -303,7 +305,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void __WFI(void) {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void _SEV(void) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void _SEV (void) {
     NVIC->SCTLR |= (1 << 5);
 }
 
@@ -314,7 +316,7 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void _SEV(void) {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void _WFE(void) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void _WFE (void) {
     uint32_t tmp = NVIC->SCTLR;
     tmp &= ~(1 << 5);
     tmp |= (1 << 3);
@@ -329,11 +331,11 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void _WFE(void) {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void __WFE(void) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void __WFE (void) {
     _SEV();
     _WFE();
     _WFE();
-    if (*(vu32*) (0x40023800) & (1 << 6)) {
+    if (*(vu32 *)(0x40023800) & (1 << 6)) {
         NVIC->SCTLR |= (1 << 5);
     }
 }
@@ -350,8 +352,8 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void __WFE(void) {
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void SetVTFIRQ(
-        uint32_t addr, IRQn_Type IRQn, uint8_t num, FunctionalState NewState) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void SetVTFIRQ (
+    uint32_t addr, IRQn_Type IRQn, uint8_t num, FunctionalState NewState) {
     if (num > 3)
         return;
 
@@ -371,13 +373,13 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void SetVTFIRQ(
  *
  * @return  none
  */
-__attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SystemReset(void) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE void NVIC_SystemReset (void) {
     NVIC->CFGR = NVIC_KEY3 | (1 << 7);
 }
 
 /*********************************************************************
  * @fn      __AMOADD_W
- *   
+ *
  * @brief   Atomic Add with 32bit value
  *          Atomically ADD 32bit value with value in memory using amoadd.d.
  *
@@ -386,12 +388,14 @@ __attribute__( ( always_inline ) ) RV_STATIC_INLINE void NVIC_SystemReset(void) 
  *
  * @return  return memory value + add value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOADD_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOADD_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amoadd.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amoadd.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -406,12 +410,14 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOADD_W(
  *
  * @return  return memory value & and value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOAND_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOAND_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amoand.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amoand.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -426,12 +432,14 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOAND_W(
  *
  * @return  the bigger value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMAX_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOMAX_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amomax.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amomax.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -443,15 +451,17 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMAX_W(
  *
  * @param   addr - Address pointer to data, address need to be 4byte aligned
  *          value - value to be compared
- *             
+ *
  * @return  return the bigger value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOMAXU_W(
-        volatile uint32_t *addr, uint32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t __AMOMAXU_W (
+    volatile uint32_t *addr, uint32_t value) {
     uint32_t result;
 
-    __asm volatile ("amomaxu.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amomaxu.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -466,12 +476,14 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOMAXU_W(
  *
  * @return  the smaller value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMIN_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOMIN_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amomin.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amomin.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -486,32 +498,36 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOMIN_W(
  *
  * @return  the smaller value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOMINU_W(
-        volatile uint32_t *addr, uint32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t __AMOMINU_W (
+    volatile uint32_t *addr, uint32_t value) {
     uint32_t result;
 
-    __asm volatile ("amominu.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amominu.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
 /*********************************************************************
  * @fn      __AMOOR_W
- *  
+ *
  * @brief   Atomic OR with 32bit value
  *          Atomically OR 32bit value with value in memory using amoor.d.
  *
  * @param   addr - Address pointer to data, address need to be 4byte aligned
  *          value - value to be ORed
- * 
+ *
  * @return  return memory value | and value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOOR_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOOR_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amoor.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amoor.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
@@ -525,12 +541,14 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOOR_W(
  *
  * @return  return the original value in memory
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOSWAP_W(
-        volatile uint32_t *addr, uint32_t newval) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE uint32_t __AMOSWAP_W (
+    volatile uint32_t *addr, uint32_t newval) {
     uint32_t result;
 
-    __asm volatile ("amoswap.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(newval) : "memory");
+    __asm volatile ("amoswap.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(newval)
+                    : "memory");
     return result;
 }
 
@@ -545,39 +563,40 @@ __attribute__( ( always_inline ))      RV_STATIC_INLINE uint32_t __AMOSWAP_W(
  *
  * @return  return memory value ^ and value
  */
-__attribute__( ( always_inline ))      RV_STATIC_INLINE int32_t __AMOXOR_W(
-        volatile int32_t *addr, int32_t value) {
+__attribute__ ((always_inline)) RV_STATIC_INLINE int32_t __AMOXOR_W (
+    volatile int32_t *addr, int32_t value) {
     int32_t result;
 
-    __asm volatile ("amoxor.w %0, %2, %1" :
-            "=r"(result), "+A"(*addr) : "r"(value) : "memory");
+    __asm volatile ("amoxor.w %0, %2, %1"
+                    : "=r"(result), "+A"(*addr)
+                    : "r"(value)
+                    : "memory");
     return *addr;
 }
 
 /* Core_Exported_Functions */
-extern uint32_t __get_MSTATUS(void);
-extern void __set_MSTATUS(uint32_t value);
-extern uint32_t __get_MISA(void);
-extern void __set_MISA(uint32_t value);
-extern uint32_t __get_MTVEC(void);
-extern void __set_MTVEC(uint32_t value);
-extern uint32_t __get_MSCRATCH(void);
-extern void __set_MSCRATCH(uint32_t value);
-extern uint32_t __get_MEPC(void);
-extern void __set_MEPC(uint32_t value);
-extern uint32_t __get_MCAUSE(void);
-extern void __set_MCAUSE(uint32_t value);
-extern uint32_t __get_MTVAL(void);
-extern void __set_MTVAL(uint32_t value);
-extern uint32_t __get_MVENDORID(void);
-extern uint32_t __get_MARCHID(void);
-extern uint32_t __get_MIMPID(void);
-extern uint32_t __get_MHARTID(void);
-extern uint32_t __get_SP(void);
+extern uint32_t __get_MSTATUS (void);
+extern void __set_MSTATUS (uint32_t value);
+extern uint32_t __get_MISA (void);
+extern void __set_MISA (uint32_t value);
+extern uint32_t __get_MTVEC (void);
+extern void __set_MTVEC (uint32_t value);
+extern uint32_t __get_MSCRATCH (void);
+extern void __set_MSCRATCH (uint32_t value);
+extern uint32_t __get_MEPC (void);
+extern void __set_MEPC (uint32_t value);
+extern uint32_t __get_MCAUSE (void);
+extern void __set_MCAUSE (uint32_t value);
+extern uint32_t __get_MTVAL (void);
+extern void __set_MTVAL (uint32_t value);
+extern uint32_t __get_MVENDORID (void);
+extern uint32_t __get_MARCHID (void);
+extern uint32_t __get_MIMPID (void);
+extern uint32_t __get_MHARTID (void);
+extern uint32_t __get_SP (void);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

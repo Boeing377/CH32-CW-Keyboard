@@ -6,13 +6,13 @@
  * Description        : This file provides all the OPA firmware functions.
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "ch32v20x_opa.h"
 
-#define OPA_MASK         ((uint32_t)0x000F)
-#define OPA_Total_NUM    4
+#define OPA_MASK ((uint32_t)0x000F)
+#define OPA_Total_NUM 4
 
 /*********************************************************************
  * @fn      OPA_DeInit
@@ -22,7 +22,7 @@
  *
  * @return  none
  */
-void OPA_DeInit(void) {
+void OPA_DeInit (void) {
     OPA->CR = 0;
 }
 
@@ -36,13 +36,11 @@ void OPA_DeInit(void) {
  *
  * @return  none
  */
-void OPA_Init(OPA_InitTypeDef *OPA_InitStruct) {
+void OPA_Init (OPA_InitTypeDef *OPA_InitStruct) {
     uint32_t tmp = 0;
     tmp = OPA->CR;
     tmp &= ~(OPA_MASK << (OPA_InitStruct->OPA_NUM * OPA_Total_NUM));
-    tmp |= (((OPA_InitStruct->PSEL << OPA_PSEL_OFFSET)
-            | (OPA_InitStruct->NSEL << OPA_NSEL_OFFSET)
-            | (OPA_InitStruct->Mode << OPA_MODE_OFFSET))
+    tmp |= (((OPA_InitStruct->PSEL << OPA_PSEL_OFFSET) | (OPA_InitStruct->NSEL << OPA_NSEL_OFFSET) | (OPA_InitStruct->Mode << OPA_MODE_OFFSET))
             << (OPA_InitStruct->OPA_NUM * OPA_Total_NUM));
     OPA->CR = tmp;
 }
@@ -56,7 +54,7 @@ void OPA_Init(OPA_InitTypeDef *OPA_InitStruct) {
  *
  * @return  none
  */
-void OPA_StructInit(OPA_InitTypeDef *OPA_InitStruct) {
+void OPA_StructInit (OPA_InitTypeDef *OPA_InitStruct) {
     OPA_InitStruct->Mode = OUT_IO_OUT1;
     OPA_InitStruct->PSEL = CHP0;
     OPA_InitStruct->NSEL = CHN0;
@@ -73,7 +71,7 @@ void OPA_StructInit(OPA_InitTypeDef *OPA_InitStruct) {
  *
  * @return  none
  */
-void OPA_Cmd(OPA_Num_TypeDef OPA_NUM, FunctionalState NewState) {
+void OPA_Cmd (OPA_Num_TypeDef OPA_NUM, FunctionalState NewState) {
     if (NewState == ENABLE) {
         OPA->CR |= (1 << (OPA_NUM * OPA_Total_NUM));
     } else {

@@ -6,12 +6,12 @@
  * Description        : This file provides all the DBGMCU firmware functions.
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "ch32v20x_dbgmcu.h"
 
-#define IDCODE_DEVID_MASK    ((uint32_t)0x0000FFFF)
+#define IDCODE_DEVID_MASK ((uint32_t)0x0000FFFF)
 
 /*********************************************************************
  * @fn      DBGMCU_GetREVID
@@ -20,8 +20,8 @@
  *
  * @return  Revision identifier.
  */
-uint32_t DBGMCU_GetREVID(void) {
-    return ((*(uint32_t *) 0x1FFFF704) >> 16);
+uint32_t DBGMCU_GetREVID (void) {
+    return ((*(uint32_t *)0x1FFFF704) >> 16);
 }
 
 /*********************************************************************
@@ -31,8 +31,8 @@ uint32_t DBGMCU_GetREVID(void) {
  *
  * @return  Device identifier.
  */
-uint32_t DBGMCU_GetDEVID(void) {
-    return ((*(uint32_t *) 0x1FFFF704) & IDCODE_DEVID_MASK);
+uint32_t DBGMCU_GetDEVID (void) {
+    return ((*(uint32_t *)0x1FFFF704) & IDCODE_DEVID_MASK);
 }
 
 /*********************************************************************
@@ -42,10 +42,12 @@ uint32_t DBGMCU_GetDEVID(void) {
  *
  * @return  DEBUGE Control value
  */
-uint32_t __get_DEBUG_CR(void) {
+uint32_t __get_DEBUG_CR (void) {
     uint32_t result;
 
-    __asm volatile("csrr %0,""0x7C0" : "=r"(result));
+    __asm volatile ("csrr %0,"
+                    "0x7C0"
+                    : "=r"(result));
     return (result);
 }
 
@@ -58,8 +60,10 @@ uint32_t __get_DEBUG_CR(void) {
  *
  * @return  none
  */
-void __set_DEBUG_CR(uint32_t value) {
-    __asm volatile("csrw 0x7C0, %0" : : "r"(value));
+void __set_DEBUG_CR (uint32_t value) {
+    __asm volatile ("csrw 0x7C0, %0"
+                    :
+                    : "r"(value));
 }
 
 /*********************************************************************
@@ -77,18 +81,18 @@ void __set_DEBUG_CR(uint32_t value) {
  *
  * @return  none
  */
-void DBGMCU_Config(uint32_t DBGMCU_Periph, FunctionalState NewState) {
+void DBGMCU_Config (uint32_t DBGMCU_Periph, FunctionalState NewState) {
     uint32_t val;
 
     if (NewState != DISABLE) {
-        __set_DEBUG_CR(DBGMCU_Periph);
+        __set_DEBUG_CR (DBGMCU_Periph);
     } else {
         val = __get_DEBUG_CR();
-        val &= ~(uint32_t) DBGMCU_Periph;
-        __set_DEBUG_CR(val);
+        val &= ~(uint32_t)DBGMCU_Periph;
+        __set_DEBUG_CR (val);
     }
-
 }
+
 /*********************************************************************
  * @fn      DBGMCU_GetCHIPID
  *
@@ -112,6 +116,6 @@ void DBGMCU_Config(uint32_t DBGMCU_Periph, FunctionalState NewState) {
  *  CH32V208CBU6-0x208205xC
  *  CH32V208GBU6-0x208305xC
  */
-uint32_t DBGMCU_GetCHIPID(void) {
-    return (*(uint32_t *) 0x1FFFF704);
+uint32_t DBGMCU_GetCHIPID (void) {
+    return (*(uint32_t *)0x1FFFF704);
 }

@@ -6,7 +6,7 @@
  * Description        : This file provides all the miscellaneous firmware functions .
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "ch32v20x_misc.h"
@@ -26,7 +26,7 @@ __IO uint32_t NVIC_Priority_Group = 0;
  *
  * @return  none
  */
-void NVIC_PriorityGroupConfig(uint32_t NVIC_PriorityGroup) {
+void NVIC_PriorityGroupConfig (uint32_t NVIC_PriorityGroup) {
     NVIC_Priority_Group = NVIC_PriorityGroup;
 }
 
@@ -48,29 +48,26 @@ void NVIC_PriorityGroupConfig(uint32_t NVIC_PriorityGroup) {
  *
  * @return  none
  */
-void NVIC_Init(NVIC_InitTypeDef *NVIC_InitStruct) {
+void NVIC_Init (NVIC_InitTypeDef *NVIC_InitStruct) {
 #if (INTSYSCR_INEST == INTSYSCR_INEST_NoEN)
-    if(NVIC_Priority_Group == NVIC_PriorityGroup_0)
-    {
-        NVIC_SetPriority(NVIC_InitStruct->NVIC_IRQChannel, NVIC_InitStruct->NVIC_IRQChannelSubPriority << 4);
+    if (NVIC_Priority_Group == NVIC_PriorityGroup_0) {
+        NVIC_SetPriority (NVIC_InitStruct->NVIC_IRQChannel, NVIC_InitStruct->NVIC_IRQChannelSubPriority << 4);
     }
 #else
     if (NVIC_Priority_Group == NVIC_PriorityGroup_1) {
         if (NVIC_InitStruct->NVIC_IRQChannelPreemptionPriority == 1) {
-            NVIC_SetPriority(NVIC_InitStruct->NVIC_IRQChannel,
-                    (1 << 7)
-                            | (NVIC_InitStruct->NVIC_IRQChannelSubPriority << 5));
+            NVIC_SetPriority (NVIC_InitStruct->NVIC_IRQChannel,
+                              (1 << 7) | (NVIC_InitStruct->NVIC_IRQChannelSubPriority << 5));
         } else if (NVIC_InitStruct->NVIC_IRQChannelPreemptionPriority == 0) {
-            NVIC_SetPriority(NVIC_InitStruct->NVIC_IRQChannel,
-                    (0 << 7)
-                            | (NVIC_InitStruct->NVIC_IRQChannelSubPriority << 5));
+            NVIC_SetPriority (NVIC_InitStruct->NVIC_IRQChannel,
+                              (0 << 7) | (NVIC_InitStruct->NVIC_IRQChannelSubPriority << 5));
         }
     }
 #endif
 
     if (NVIC_InitStruct->NVIC_IRQChannelCmd != DISABLE) {
-        NVIC_EnableIRQ(NVIC_InitStruct->NVIC_IRQChannel);
+        NVIC_EnableIRQ (NVIC_InitStruct->NVIC_IRQChannel);
     } else {
-        NVIC_DisableIRQ(NVIC_InitStruct->NVIC_IRQChannel);
+        NVIC_DisableIRQ (NVIC_InitStruct->NVIC_IRQChannel);
     }
 }

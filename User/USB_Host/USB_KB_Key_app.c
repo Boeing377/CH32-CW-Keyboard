@@ -17,44 +17,38 @@
 
 /*******************************************************************************/
 /* Variable Definition */
-uint8_t DevDesc_Buf[18];                             // Device Descriptor Buffer
-uint8_t Com_Buf[DEF_COM_BUF_LEN];                              // General Buffer
-uint8_t Last_Com_Buf[DEF_COM_BUF_LEN] = { 0 };
+uint8_t DevDesc_Buf[18];           // Device Descriptor Buffer
+uint8_t Com_Buf[DEF_COM_BUF_LEN];  // General Buffer
+uint8_t Last_Com_Buf[DEF_COM_BUF_LEN] = {0};
 struct _ROOT_HUB_DEVICE RootHubDev;
 struct __HOST_CTL HostCtl[DEF_TOTAL_ROOT_HUB * DEF_ONE_USB_SUP_DEV_TOTAL];
 
-void ReadSavedMsg(uint8_t sn);
-void WriteMsg(uint8_t sn);
+void ReadSavedMsg (uint8_t sn);
+void WriteMsg (uint8_t sn);
 void WriteConfig();
 
-//0    1    2    3    4    5    6    7    8    9    a    b    c    d    e    f
-uint8_t codmap[] = { 0, 0, 0, 0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-        'j', 'k',
-        'l',    //0
-        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        '1',
-        '2',    //1
-        '3', '4', '5', '6', '7', '8', '9', '0', 31, 27, 127, 0, ' ', '-', '=',
-        0,    //2
-        0, 0, 0, ';', 0, 0, ',', '.', '/', 0, 3, 4, 5, 6, 7, 8,    //3
-        9, 10, 11, 12, 13, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29,    //4
-        28, 1, 2, 0, '/', 0, '-', '+', 31, '1', '2', '3', '4', '5', '6', '7', //5
-        '8', '9', '0', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };    //6
+//  0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+uint8_t codmap[] = {
+    0,  0,  0,  0,'a','b','c','d','e','f','g','h','i','j','k','l',  // 0
+  'm','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2',  // 1
+  '3','4','5','6','7','8','9','0', 31, 27,127,  0,' ','-','=',  0,  // 2
+    0,  0,  0,';','\'',  0,',','.','/',  0,  3,  4,  5,  6,  7,  8,  // 3
+    9, 10, 11, 12, 13, 14,  0,  0,  0,  0,  0,  0,  0,  0,  0, 29,  // 4
+   28,  1,  2,  0,'/',  0,'-','+', 31,'1','2','3','4','5','6','7',  // 5
+  '8','9','0',  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0};  // 6
 
-uint8_t codmapWithShift[] = { 0, 0, 0, 0, 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-        'H', 'I', 'J', 'K',
-        'L',    //0
-        'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        '!', '2',    //1
-        '3', '4', '5', '6', '7', '8', '9', '0', 31, 27, 127, 0, ' ', 0, '+', 0, //2
-        0, 0, 0, ':', 0, 0, 0, 0, '?', 0, 15, 16, 17, 18, 19, 20,    //3
-        21, 22, 23, 24, 25, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29,    //4
-        28, 1, 2, 0, '/', 0, '-', '+', 31, '1', '2', '3', '4', '5', '6', '7', //5
-        '8', '9', '0', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };    //6
+uint8_t codmapWithShift[] = {
+    0,  0,  0,  0,'A','B','C','D','E','F','G','H','I','J','K','L',  // 0
+  'M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','2',  // 1
+  '3','4','5','6','7','8','9','0', 31, 27,127,  0,' ',  0,'+',  0,  // 2
+    0,  0,  0,':','"',  0,  0,  0,'?',  0, 15, 16, 17, 18, 19, 20,  // 3
+   21, 22, 23, 24, 25, 26,  0,  0,  0,  0,  0,  0,  0,  0,  0, 29,  // 4
+   28,  1,  2,  0,'/',  0,'-','+', 31,'1','2','3','4','5','6','7',  // 5
+  '8','9','0',  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0}; // 6
 
 /*******************************************************************************/
 /* Interrupt Function Declaration */
-void TIM3_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void TIM3_IRQHandler (void) __attribute__ ((interrupt ("WCH-Interrupt-fast")));
 
 /*********************************************************************
  * @fn      TIM3_Init
@@ -66,35 +60,35 @@ void TIM3_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
  *
  * @return  none
  */
-void TIM3_Init(uint16_t arr, uint16_t psc) {
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure = { 0 };
-    NVIC_InitTypeDef NVIC_InitStructure = { 0 };
+void TIM3_Init (uint16_t arr, uint16_t psc) {
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure = {0};
+    NVIC_InitTypeDef NVIC_InitStructure = {0};
 
     /* Enable timer3 clock */
-    RCC_APB1PeriphClockCmd( RCC_APB1Periph_TIM3, ENABLE);
+    RCC_APB1PeriphClockCmd (RCC_APB1Periph_TIM3, ENABLE);
 
     /* Initialize timer3 */
     TIM_TimeBaseStructure.TIM_Period = arr;
     TIM_TimeBaseStructure.TIM_Prescaler = psc;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit( TIM3, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit (TIM3, &TIM_TimeBaseStructure);
 
     /* Enable updating timer3 interrupt */
-    TIM_ITConfig( TIM3, TIM_IT_Update, ENABLE);
+    TIM_ITConfig (TIM3, TIM_IT_Update, ENABLE);
 
     /* Configure timer3 interrupt */
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
+    NVIC_Init (&NVIC_InitStructure);
 
     /* Enable timer3 */
-    TIM_Cmd( TIM3, ENABLE);
+    TIM_Cmd (TIM3, ENABLE);
 
     /* Enable timer3 interrupt */
-    NVIC_EnableIRQ(TIM3_IRQn);
+    NVIC_EnableIRQ (TIM3_IRQn);
 }
 
 /*********************************************************************
@@ -116,40 +110,37 @@ void CombufDeal() {
                         newFlag = 0;
                 }
                 if (newFlag) {
-                    if (Com_Buf[i] == DEF_KEY_CAPS)
-                    {
+                    if (Com_Buf[i] == DEF_KEY_CAPS) {
                         caps_lock_stg = 1 - caps_lock_stg;
                     }
                     if (Com_Buf[0] & 0x22) {
                         if (caps_lock_stg == 0)
                             New_Pressed[newPressedNum++] =
-                                    codmapWithShift[Com_Buf[i]];
+                                codmapWithShift[Com_Buf[i]];
                         else {
-                            if ((Com_Buf[i] > 0x03)
-                                    && (Com_Buf[i] < 0x1E))
+                            if ((Com_Buf[i] > 0x03) && (Com_Buf[i] < 0x1E))
                                 New_Pressed[newPressedNum++] =
-                                        codmap[Com_Buf[i]];
+                                    codmap[Com_Buf[i]];
                             else {
                                 New_Pressed[newPressedNum++] =
-                                        codmapWithShift[Com_Buf[i]];
+                                    codmapWithShift[Com_Buf[i]];
                             }
                         }
-                    } else if (Com_Buf[0] & 0x11) {       //左右ctrl键
-                        if (Com_Buf[i] == 0x10)          //m键
-                                {
+                    } else if (Com_Buf[0] & 0x11) {  // 左右ctrl键
+                        if (Com_Buf[i] == 0x10)      // m键
+                        {
                             disp_menu = 1 - disp_menu;
                         }
                     } else {
                         if (caps_lock_stg == 0)
                             New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
                         else {
-                            if ((Com_Buf[i] > 0x03)
-                                    && (Com_Buf[i] < 0x1E))
+                            if ((Com_Buf[i] > 0x03) && (Com_Buf[i] < 0x1E))
                                 New_Pressed[newPressedNum++] =
-                                        codmapWithShift[Com_Buf[i]];
+                                    codmapWithShift[Com_Buf[i]];
                             else {
                                 New_Pressed[newPressedNum++] =
-                                        codmap[Com_Buf[i]];
+                                    codmap[Com_Buf[i]];
                             }
                         }
                     }
@@ -162,7 +153,7 @@ void CombufDeal() {
     if (newPressedNum) {
         for (i = 0; i < newPressedNum; i++) {
             if (disp_menu) {
-                if (New_Pressed[i] == 0x1) {     //按下下键
+                if (New_Pressed[i] == 0x1) {  // 按下下键
                     if (disp_ver) {
                         disp_ver = 0;
                     } else if (disp_morse_conf) {
@@ -170,7 +161,7 @@ void CombufDeal() {
                             morse_conf_item++;
                     } else if (menu_item < 4)
                         menu_item++;
-                } else if (New_Pressed[i] == 0x2) {     //按下上键
+                } else if (New_Pressed[i] == 0x2) {  // 按下上键
                     if (disp_ver) {
                         disp_ver = 0;
                     } else if (disp_morse_conf) {
@@ -178,7 +169,7 @@ void CombufDeal() {
                             morse_conf_item--;
                     } else if (menu_item > 0)
                         menu_item--;
-                } else if (New_Pressed[i] == 28) {     //按下左键
+                } else if (New_Pressed[i] == 28) {  // 按下左键
                     if (disp_ver == 1) {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
@@ -198,7 +189,7 @@ void CombufDeal() {
                         if (menu_item == 1)
                             config.beeper = 1 - config.beeper;
                     }
-                } else if (New_Pressed[i] == 29) {     //按下右键
+                } else if (New_Pressed[i] == 29) {  // 按下右键
                     if (disp_ver == 1) {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
@@ -229,7 +220,7 @@ void CombufDeal() {
                             WriteConfig();
                         }
                     }
-                } else if (New_Pressed[i] == 31) {    //按下回车
+                } else if (New_Pressed[i] == 31) {  // 按下回车
                     if (disp_ver == 1) {
                         disp_ver = 0;
                     } else if (disp_morse_conf == 1) {
@@ -248,16 +239,8 @@ void CombufDeal() {
                     }
                 }
             } else {
-                if ((New_Pressed[i] >= 'a' && New_Pressed[i] <= 'z')
-                        || (New_Pressed[i] >= 'A' && New_Pressed[i] <= 'Z')
-                        || New_Pressed[i] == ' '
-                        || (New_Pressed[i] >= '0' && New_Pressed[i] <= '9')
-                        || New_Pressed[i] == '?' || New_Pressed[i] == '!'
-                        || New_Pressed[i] == '.' || New_Pressed[i] == ','
-                        || New_Pressed[i] == ':' || New_Pressed[i] == ';'
-                        || New_Pressed[i] == '+' || New_Pressed[i] == '-'
-                        || New_Pressed[i] == '/' || New_Pressed[i] == '=') {
-                    if (inputBuffSize < INPUTZONE_SIZE-1)        //避免溢出
+                if ((New_Pressed[i] >= 'a' && New_Pressed[i] <= 'z') || (New_Pressed[i] >= 'A' && New_Pressed[i] <= 'Z') || New_Pressed[i] == ' ' || (New_Pressed[i] >= '0' && New_Pressed[i] <= '9') || New_Pressed[i] == '?' || New_Pressed[i] == '!' || New_Pressed[i] == '.' || New_Pressed[i] == ',' || New_Pressed[i] == ':' || New_Pressed[i] == ';' || New_Pressed[i] == '+' || New_Pressed[i] == '-' || New_Pressed[i] == '/' || New_Pressed[i] == '=' || New_Pressed[i] == '\'' ||New_Pressed[i] == '"' ) {
+                    if (inputBuffSize < INPUTZONE_SIZE - 1)  // 避免溢出
                     {
                         inputBuff[inputBuffSize++] = New_Pressed[i];
                         inputBuff[inputBuffSize] = '\0';
@@ -266,47 +249,47 @@ void CombufDeal() {
                                 starSending();
                         }
                     }
-                } else if (New_Pressed[i] == 31) {      //按下回车
+                } else if (New_Pressed[i] == 31) {  // 按下回车
                     if (config.mode) {
-                        memcpy(outputBuff, inputBuff, inputBuffSize);
+                        memcpy (outputBuff, inputBuff, inputBuffSize);
                         outputBuffSize = inputBuffSize;
                         outputBuff[outputBuffSize] = '\0';
                         inputBuffSize = 0;
-                        memset(inputBuff, '\0', BUFFSIZE);
+                        memset (inputBuff, '\0', BUFFSIZE);
                         starSending();
                     }
-                } else if (New_Pressed[i] == 27) {      //按下esc
+                } else if (New_Pressed[i] == 27) {  // 按下esc
                     endSending();
-                    memset(inputBuff, 0, 512);
+                    memset (inputBuff, 0, 512);
                     inputBuffSize = 0;
-                    memset(inputBuff, '\0', BUFFSIZE);
+                    memset (inputBuff, '\0', BUFFSIZE);
                     sendCount = 0;
-                } else if (New_Pressed[i] == 127) {     //按下退格
+                } else if (New_Pressed[i] == 127) {  // 按下退格
                     if (inputBuffSize > 0)
                         inputBuffSize--;
                     inputBuff[inputBuffSize] = '\0';
                     if (inputBuffSize < sendCount)
                         sendCount = inputBuffSize;
-                } else if (New_Pressed[i] == 0x1) {     //按下下键
-                    sub_wpm(1);
-                } else if (New_Pressed[i] == 0x2) {     //按下上键
-                    add_wpm(1);
-                } else if (New_Pressed[i] == 28) {     //按下左键
-                    sub_wpm(5);
-                } else if (New_Pressed[i] == 29) {     //按下右键
-                    add_wpm(5);
-                } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) { //读取F1-F12
-                    ReadSavedMsg(New_Pressed[i] - 3);
-                } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) { //存储F1-F12
-                    WriteMsg(New_Pressed[i] - 15);
+                } else if (New_Pressed[i] == 0x1) {                         // 按下下键
+                    sub_wpm (1);
+                } else if (New_Pressed[i] == 0x2) {                         // 按下上键
+                    add_wpm (1);
+                } else if (New_Pressed[i] == 28) {                          // 按下左键
+                    sub_wpm (5);
+                } else if (New_Pressed[i] == 29) {                          // 按下右键
+                    add_wpm (5);
+                } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) {   // 读取F1-F12
+                    ReadSavedMsg (New_Pressed[i] - 3);
+                } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) {  // 存储F1-F12
+                    WriteMsg (New_Pressed[i] - 15);
                     inputBuffSize = 0;
                     sendCount = 0;
-                    memset(inputBuff, '\0', BUFFSIZE);
+                    memset (inputBuff, '\0', BUFFSIZE);
                 }
             }
         }
     }
-    memcpy(Last_Com_Buf, Com_Buf, DEF_COM_BUF_LEN);
+    memcpy (Last_Com_Buf, Com_Buf, DEF_COM_BUF_LEN);
 }
 
 /*********************************************************************
@@ -316,26 +299,25 @@ void CombufDeal() {
  *
  * @return  none
  */
-void TIM3_IRQHandler(void) {
+void TIM3_IRQHandler (void) {
     uint8_t index;
     uint8_t hub_port;
     uint8_t intf_num, in_num;
     static int start_count_down = 100;
 
-    if (TIM_GetITStatus( TIM3, TIM_IT_Update) != RESET) {
+    if (TIM_GetITStatus (TIM3, TIM_IT_Update) != RESET) {
         /* Clear interrupt flag */
-        TIM_ClearITPendingBit( TIM3, TIM_IT_Update);
+        TIM_ClearITPendingBit (TIM3, TIM_IT_Update);
 
         /* USB HID Device Input Endpoint Timing */
         if (RootHubDev.bStatus >= ROOT_DEV_SUCCESS) {
             index = RootHubDev.DeviceIndex;
             if (RootHubDev.bType == USB_DEV_CLASS_HID) {
                 for (intf_num = 0; intf_num < HostCtl[index].InterfaceNum;
-                        intf_num++) {
+                     intf_num++) {
                     for (in_num = 0;
-                            in_num
-                                    < HostCtl[index].Interface[intf_num].InEndpNum;
-                            in_num++) {
+                         in_num < HostCtl[index].Interface[intf_num].InEndpNum;
+                         in_num++) {
                         HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num]++;
                     }
                 }
@@ -345,15 +327,13 @@ void TIM3_IRQHandler(void) {
                     if (RootHubDev.Device[hub_port].bStatus >= ROOT_DEV_SUCCESS) {
                         index = RootHubDev.Device[hub_port].DeviceIndex;
 
-                        if (RootHubDev.Device[hub_port].bType
-                                == USB_DEV_CLASS_HID) {
+                        if (RootHubDev.Device[hub_port].bType == USB_DEV_CLASS_HID) {
                             for (intf_num = 0;
-                                    intf_num < HostCtl[index].InterfaceNum;
-                                    intf_num++) {
+                                 intf_num < HostCtl[index].InterfaceNum;
+                                 intf_num++) {
                                 for (in_num = 0;
-                                        in_num
-                                                < HostCtl[index].Interface[intf_num].InEndpNum;
-                                        in_num++) {
+                                     in_num < HostCtl[index].Interface[intf_num].InEndpNum;
+                                     in_num++) {
                                     HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num]++;
                                 }
                             }
@@ -369,7 +349,6 @@ void TIM3_IRQHandler(void) {
             inputBuffSize = 0;
             start_count_down = -1;
         }
-
     }
 }
 
@@ -384,16 +363,14 @@ void TIM3_IRQHandler(void) {
  *
  * @return  none
  */
-void USBH_AnalyseType(uint8_t *pdev_buf, uint8_t *pcfg_buf, uint8_t *ptype) {
+void USBH_AnalyseType (uint8_t *pdev_buf, uint8_t *pcfg_buf, uint8_t *ptype) {
     uint8_t dv_cls, if_cls;
 
-    dv_cls = ((PUSB_DEV_DESCR) pdev_buf)->bDeviceClass;
-    if_cls = ((PUSB_CFG_DESCR_LONG) pcfg_buf)->itf_descr.bInterfaceClass;
-    if ((dv_cls == USB_DEV_CLASS_STORAGE)
-            || (if_cls == USB_DEV_CLASS_STORAGE)) {
+    dv_cls = ((PUSB_DEV_DESCR)pdev_buf)->bDeviceClass;
+    if_cls = ((PUSB_CFG_DESCR_LONG)pcfg_buf)->itf_descr.bInterfaceClass;
+    if ((dv_cls == USB_DEV_CLASS_STORAGE) || (if_cls == USB_DEV_CLASS_STORAGE)) {
         *ptype = USB_DEV_CLASS_STORAGE;
-    } else if ((dv_cls == USB_DEV_CLASS_PRINTER)
-            || (if_cls == USB_DEV_CLASS_PRINTER)) {
+    } else if ((dv_cls == USB_DEV_CLASS_PRINTER) || (if_cls == USB_DEV_CLASS_PRINTER)) {
         *ptype = USB_DEV_CLASS_PRINTER;
     } else if ((dv_cls == USB_DEV_CLASS_HID) || (if_cls == USB_DEV_CLASS_HID)) {
         *ptype = USB_DEV_CLASS_HID;
@@ -413,33 +390,33 @@ void USBH_AnalyseType(uint8_t *pdev_buf, uint8_t *pcfg_buf, uint8_t *ptype) {
  *
  * @return  Enumeration result
  */
-uint8_t USBH_EnumRootDevice(void) {
+uint8_t USBH_EnumRootDevice (void) {
     uint8_t s;
     uint8_t enum_cnt;
     uint8_t cfg_val;
     uint16_t i;
     uint16_t len;
 
-    DUG_PRINTF("Enum:\r\n");
+    DUG_PRINTF ("Enum:\r\n");
 
     enum_cnt = 0;
-    ENUM_START:
+ENUM_START:
     /* Delay and wait for the device to stabilize */
-    Delay_Ms(100);
+    Delay_Ms (100);
     enum_cnt++;
-    Delay_Ms(8 << enum_cnt);
+    Delay_Ms (8 << enum_cnt);
 
     /* Reset the USB device and wait for the USB device to reconnect */
-    USBFSH_ResetRootHubPort(0);
+    USBFSH_ResetRootHubPort (0);
     for (i = 0, s = 0; i < DEF_RE_ATTACH_TIMEOUT; i++) {
-        if (USBFSH_EnableRootHubPort(&RootHubDev.bSpeed) == ERR_SUCCESS) {
+        if (USBFSH_EnableRootHubPort (&RootHubDev.bSpeed) == ERR_SUCCESS) {
             i = 0;
             s++;
             if (s > 6) {
                 break;
             }
         }
-        Delay_Ms(1);
+        Delay_Ms (1);
     }
     if (i) {
         /* Determine whether the maximum number of retries has been reached, and retry if not reached */
@@ -450,19 +427,19 @@ uint8_t USBH_EnumRootDevice(void) {
     }
 
     /* Get USB device device descriptor */
-    DUG_PRINTF("Get DevDesc: ");
-    s = USBFSH_GetDeviceDescr(&RootHubDev.bEp0MaxPks, DevDesc_Buf);
+    DUG_PRINTF ("Get DevDesc: ");
+    s = USBFSH_GetDeviceDescr (&RootHubDev.bEp0MaxPks, DevDesc_Buf);
     if (s == ERR_SUCCESS) {
         /* Print USB device device descriptor */
 #if DEF_DEBUG_PRINTF
         for (i = 0; i < 18; i++) {
-            DUG_PRINTF("%02x ", DevDesc_Buf[i]);
+            DUG_PRINTF ("%02x ", DevDesc_Buf[i]);
         }
-        DUG_PRINTF("\r\n");
+        DUG_PRINTF ("\r\n");
 #endif
     } else {
         /* Determine whether the maximum number of retries has been reached, and retry if not reached */
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         if (enum_cnt <= 5) {
             goto ENUM_START;
         }
@@ -470,44 +447,44 @@ uint8_t USBH_EnumRootDevice(void) {
     }
 
     /* Set the USB device address */
-    DUG_PRINTF("Set DevAddr: ");
-    RootHubDev.bAddress = (uint8_t) ( USB_DEVICE_ADDR);
-    s = USBFSH_SetUsbAddress(RootHubDev.bEp0MaxPks, RootHubDev.bAddress);
+    DUG_PRINTF ("Set DevAddr: ");
+    RootHubDev.bAddress = (uint8_t)(USB_DEVICE_ADDR);
+    s = USBFSH_SetUsbAddress (RootHubDev.bEp0MaxPks, RootHubDev.bAddress);
     if (s == ERR_SUCCESS) {
-        DUG_PRINTF("OK\r\n");
+        DUG_PRINTF ("OK\r\n");
 
         RootHubDev.bAddress = USB_DEVICE_ADDR;
     } else {
         /* Determine whether the maximum number of retries has been reached, and retry if not reached */
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         if (enum_cnt <= 5) {
             goto ENUM_START;
         }
         return DEF_DEV_ADDR_SETFAIL;
     }
-    Delay_Ms(5);
+    Delay_Ms (5);
 
     /* Get the USB device configuration descriptor */
-    DUG_PRINTF("Get CfgDesc: ");
-    s = USBFSH_GetConfigDescr(RootHubDev.bEp0MaxPks, Com_Buf, DEF_COM_BUF_LEN,
-            &len);
+    DUG_PRINTF ("Get CfgDesc: ");
+    s = USBFSH_GetConfigDescr (RootHubDev.bEp0MaxPks, Com_Buf, DEF_COM_BUF_LEN,
+                               &len);
     if (s == ERR_SUCCESS) {
-        cfg_val = ((PUSB_CFG_DESCR) Com_Buf)->bConfigurationValue;
+        cfg_val = ((PUSB_CFG_DESCR)Com_Buf)->bConfigurationValue;
 
         /* Print USB device configuration descriptor  */
 #if DEF_DEBUG_PRINTF
         for (i = 0; i < len; i++) {
-            DUG_PRINTF("%02x ", Com_Buf[i]);
+            DUG_PRINTF ("%02x ", Com_Buf[i]);
         }
-        DUG_PRINTF("\r\n");
+        DUG_PRINTF ("\r\n");
 #endif
 
         /* Simply analyze USB device type  */
-        USBH_AnalyseType(DevDesc_Buf, Com_Buf, &RootHubDev.bType);
-        DUG_PRINTF("DevType: %02x\r\n", RootHubDev.bType);
+        USBH_AnalyseType (DevDesc_Buf, Com_Buf, &RootHubDev.bType);
+        DUG_PRINTF ("DevType: %02x\r\n", RootHubDev.bType);
     } else {
         /* Determine whether the maximum number of retries has been reached, and retry if not reached */
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         if (enum_cnt <= 5) {
             goto ENUM_START;
         }
@@ -515,13 +492,13 @@ uint8_t USBH_EnumRootDevice(void) {
     }
 
     /* Set USB device configuration value */
-    DUG_PRINTF("Set Cfg: ");
-    s = USBFSH_SetUsbConfig(RootHubDev.bEp0MaxPks, cfg_val);
+    DUG_PRINTF ("Set Cfg: ");
+    s = USBFSH_SetUsbConfig (RootHubDev.bEp0MaxPks, cfg_val);
     if (s == ERR_SUCCESS) {
-        DUG_PRINTF("OK\r\n");
+        DUG_PRINTF ("OK\r\n");
     } else {
         /* Determine whether the maximum number of retries has been reached, and retry if not reached */
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         if (enum_cnt <= 5) {
             goto ENUM_START;
         }
@@ -540,101 +517,83 @@ uint8_t USBH_EnumRootDevice(void) {
  *
  * @return  The result of the analysis.
  */
-uint8_t KM_AnalyzeConfigDesc(uint8_t index, uint8_t ep0_size) {
+uint8_t KM_AnalyzeConfigDesc (uint8_t index, uint8_t ep0_size) {
     uint8_t s = 0;
     uint16_t i;
     uint8_t num, innum, outnum;
 
     num = 0;
-    for (i = 0; i < (Com_Buf[2] + ((uint16_t) Com_Buf[3] << 8));) {
+    for (i = 0; i < (Com_Buf[2] + ((uint16_t)Com_Buf[3] << 8));) {
         if (Com_Buf[i + 1] == DEF_DECR_CONFIG) {
             /* Save the number of interface of the USB device, only up to 4 */
-            if (((PUSB_CFG_DESCR) (&Com_Buf[i]))->bNumInterfaces
-                    > DEF_INTERFACE_NUM_MAX) {
+            if (((PUSB_CFG_DESCR)(&Com_Buf[i]))->bNumInterfaces > DEF_INTERFACE_NUM_MAX) {
                 HostCtl[index].InterfaceNum = DEF_INTERFACE_NUM_MAX;
             } else {
                 HostCtl[index].InterfaceNum =
-                        ((PUSB_CFG_DESCR) (&Com_Buf[i]))->bNumInterfaces;
+                    ((PUSB_CFG_DESCR)(&Com_Buf[i]))->bNumInterfaces;
             }
             i += Com_Buf[i];
         } else if (Com_Buf[i + 1] == DEF_DECR_INTERFACE) {
             if (num == DEF_INTERFACE_NUM_MAX) {
                 return s;
             }
-            if (((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceClass == 0x03) {
+            if (((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceClass == 0x03) {
                 /* HID devices (such as USB keyboard and mouse) */
-                if (((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceSubClass <= 0x01
-                        && ((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceProtocol
-                                <= 2) {
-                    if (((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceProtocol
-                            == 0x01) // Keyboard
-                            {
+                if (((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceSubClass <= 0x01 && ((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceProtocol <= 2) {
+                    if (((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceProtocol == 0x01)  // Keyboard
+                    {
                         HostCtl[index].Interface[num].Type = DEC_KEY;
-                        HID_SetIdle(ep0_size, num, 0, 0);
-                    } else if (((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceProtocol
-                            == 0x02) // Mouse
-                            {
+                        HID_SetIdle (ep0_size, num, 0, 0);
+                    } else if (((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceProtocol == 0x02)  // Mouse
+                    {
                         HostCtl[index].Interface[num].Type = DEC_MOUSE;
-                        HID_SetIdle(ep0_size, num, 0, 0);
+                        HID_SetIdle (ep0_size, num, 0, 0);
                     }
                     s = ERR_SUCCESS;
                     i += Com_Buf[i];
                     innum = 0;
                     outnum = 0;
-                    while( 1 )
-                    {
-                        if( ( Com_Buf[ i + 1 ] == DEF_DECR_INTERFACE ) || ( i >= Com_Buf[ 2 ] ) )
-                        {
+                    while (1) {
+                        if ((Com_Buf[i + 1] == DEF_DECR_INTERFACE) || (i >= Com_Buf[2])) {
                             break;
-                        }
-                        else
-                        {
+                        } else {
                             /* Analyze each endpoint of the current interface */
-                            if( Com_Buf[ i + 1 ] == DEF_DECR_ENDPOINT )
-                            {
+                            if (Com_Buf[i + 1] == DEF_DECR_ENDPOINT) {
                                 /* Save endpoint related information (endpoint address, attribute, max packet size, polling interval) */
-                                if( ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bEndpointAddress & 0x80 )
-                                {
+                                if (((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bEndpointAddress & 0x80) {
                                     /* IN */
-                                    HostCtl[ index ].Interface[ num ].InEndpAddr[ innum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bEndpointAddress & 0x0F;
-                                    HostCtl[ index ].Interface[ num ].InEndpType[ innum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bmAttributes;
-                                    HostCtl[ index ].Interface[ num ].InEndpSize[ innum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeL +
-                                    (uint16_t)( ( ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeH) << 8);
-                                    HostCtl[ index ].Interface[ num ].InEndpInterval[ innum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bInterval;
-                                    HostCtl[ index ].Interface[ num ].InEndpNum++;
+                                    HostCtl[index].Interface[num].InEndpAddr[innum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bEndpointAddress & 0x0F;
+                                    HostCtl[index].Interface[num].InEndpType[innum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bmAttributes;
+                                    HostCtl[index].Interface[num].InEndpSize[innum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeL +
+                                                                                      (uint16_t)((((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeH) << 8);
+                                    HostCtl[index].Interface[num].InEndpInterval[innum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bInterval;
+                                    HostCtl[index].Interface[num].InEndpNum++;
 
                                     innum++;
-                                }
-                                else
-                                {
+                                } else {
                                     /* OUT */
-                                    HostCtl[ index ].Interface[ num ].OutEndpAddr[ outnum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bEndpointAddress & 0x0f;
-                                    HostCtl[ index ].Interface[ num ].OutEndpType[ outnum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bmAttributes;
-                                    HostCtl[ index ].Interface[ num ].OutEndpSize[ outnum ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeL +
-                                    (uint16_t)( ( ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeH) << 8);
-                                    HostCtl[ index ].Interface[ num ].OutEndpNum++;
+                                    HostCtl[index].Interface[num].OutEndpAddr[outnum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bEndpointAddress & 0x0f;
+                                    HostCtl[index].Interface[num].OutEndpType[outnum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bmAttributes;
+                                    HostCtl[index].Interface[num].OutEndpSize[outnum] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeL +
+                                                                                        (uint16_t)((((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeH) << 8);
+                                    HostCtl[index].Interface[num].OutEndpNum++;
 
                                     outnum++;
                                 }
 
-                                i += Com_Buf[ i ];
-                            }
-                            else if( Com_Buf[ i + 1 ] == DEF_DECR_HID )
-                            {
+                                i += Com_Buf[i];
+                            } else if (Com_Buf[i + 1] == DEF_DECR_HID) {
                                 /* Save the current interface HID report descriptor length */
-                                HostCtl[ index ].Interface[ num ].HidDescLen = ( (PUSB_HID_DESCR)( &Com_Buf[ i ] ) )->wDescriptorLengthL |
-                                ( (uint16_t)( ( (PUSB_HID_DESCR)( &Com_Buf[ i ] ) )->wDescriptorLengthH ) << 8 );
-                                i += Com_Buf[ i ];
-                            }
-                            else
-                            {
-                                i += Com_Buf[ i ];
+                                HostCtl[index].Interface[num].HidDescLen = ((PUSB_HID_DESCR)(&Com_Buf[i]))->wDescriptorLengthL |
+                                                                           ((uint16_t)(((PUSB_HID_DESCR)(&Com_Buf[i]))->wDescriptorLengthH) << 8);
+                                i += Com_Buf[i];
+                            } else {
+                                i += Com_Buf[i];
                             }
                         }
                     }
 
-                    if ((outnum == 1)
-                            && (HostCtl[index].Interface[num].Type == DEC_KEY)) {
+                    if ((outnum == 1) && (HostCtl[index].Interface[num].Type == DEC_KEY)) {
                         HostCtl[index].Interface[num].SetReport_Swi = 0xFF;
                     }
                 } else {
@@ -667,7 +626,7 @@ uint8_t KM_AnalyzeConfigDesc(uint8_t index, uint8_t ep0_size) {
  *
  * @return  The result of the analysis.
  */
-void KM_AnalyzeHidReportDesc(uint8_t index, uint8_t intf_num) {
+void KM_AnalyzeHidReportDesc (uint8_t index, uint8_t intf_num) {
     uint8_t id = 0x00;
     uint8_t led = 0x00;
     uint8_t size, type, tag;
@@ -678,118 +637,106 @@ void KM_AnalyzeHidReportDesc(uint8_t index, uint8_t intf_num) {
     uint16_t i = 0;
 
     /* Usage Page(Generic Desktop), Usage(Kyeboard) */
-    if ((Com_Buf[i + 0] == 0x05) && (Com_Buf[i + 1] == 0x01)
-            && (Com_Buf[i + 2] == 0x09) && (Com_Buf[i + 3] == 0x06)) {
+    if ((Com_Buf[i + 0] == 0x05) && (Com_Buf[i + 1] == 0x01) && (Com_Buf[i + 2] == 0x09) && (Com_Buf[i + 3] == 0x06)) {
         i += 4;
         report_size = 0;
         report_cnt = 0;
         report_bits = 0;
 
-        while( i < HostCtl[ index ].Interface[ intf_num ].HidDescLen )
-        {
+        while (i < HostCtl[index].Interface[intf_num].HidDescLen) {
             /* Item Size, Item Type, Item Tag */
-            size = Com_Buf[ i ] & 0x03;
-            type = Com_Buf[ i ] & 0x0C;
-            tag = Com_Buf[ i ] & 0xF0;
+            size = Com_Buf[i] & 0x03;
+            type = Com_Buf[i] & 0x0C;
+            tag = Com_Buf[i] & 0xF0;
 
-            switch( type )
-            {
-                /* MAIN */
-                case 0x00:
-                switch( tag )
-                {
-                    /* Output */
-                    case 0x90:
-                    if( led )
-                    {
+            switch (type) {
+            /* MAIN */
+            case 0x00:
+                switch (tag) {
+                /* Output */
+                case 0x90:
+                    if (led) {
                         report_bits += report_cnt * report_size;
 
                         /* Save report ID for output */
-                        if( ( id != 0 ) && ( HostCtl[ index ].Interface[ intf_num ].IDFlag == 0 ) )
-                        {
-                            HostCtl[ index ].Interface[ intf_num ].IDFlag = 1;
-                            HostCtl[ index ].Interface[ intf_num ].ReportID = id;
+                        if ((id != 0) && (HostCtl[index].Interface[intf_num].IDFlag == 0)) {
+                            HostCtl[index].Interface[intf_num].IDFlag = 1;
+                            HostCtl[index].Interface[intf_num].ReportID = id;
                         }
                     }
                     i++;
                     break;
 
-                    default:
+                default:
                     i++;
                     break;
                 }
                 break;
 
-                /* Global */
-                case 0x04:
-                switch( tag )
-                {
-                    /* Report ID */
-                    case 0x80:
+            /* Global */
+            case 0x04:
+                switch (tag) {
+                /* Report ID */
+                case 0x80:
                     i++;
-                    id = Com_Buf[ i ];
+                    id = Com_Buf[i];
                     break;
 
-                    /* Report Count */
-                    case 0x90:
+                /* Report Count */
+                case 0x90:
                     i++;
-                    report_cnt = Com_Buf[ i ];
+                    report_cnt = Com_Buf[i];
                     break;
 
-                    /* Report Size */
-                    case 0x70:
+                /* Report Size */
+                case 0x70:
                     i++;
-                    report_size = Com_Buf[ i ];
+                    report_size = Com_Buf[i];
                     break;
 
-                    /* Usage Page */
-                    case 0x00:
+                /* Usage Page */
+                case 0x00:
                     i++;
-                    if( Com_Buf[ i ] == 0x08 )      // LED
+                    if (Com_Buf[i] == 0x08)  // LED
                     {
                         led = 1;
-                    }
-                    else
-                    {
+                    } else {
                         led = 0;
                     }
                     break;
 
-                    default:
+                default:
                     i++;
                     break;
                 }
                 break;
 
-                /* Local */
-                case 0x08:
-                switch( tag )
-                {
-                    /* Usage Minimum */
-                    case 0x10:
+            /* Local */
+            case 0x08:
+                switch (tag) {
+                /* Usage Minimum */
+                case 0x10:
                     i++;
-                    if( led )
-                    {
-                        HostCtl[ index ].Interface[ intf_num ].LED_Usage_Min = Com_Buf[ i ];
+                    if (led) {
+                        HostCtl[index].Interface[intf_num].LED_Usage_Min = Com_Buf[i];
                     }
                     break;
 
-                    /* Usage Maximum */
-                    case 0x20:
+                /* Usage Maximum */
+                case 0x20:
                     i++;
-                    if( led )
-                    {
-                        HostCtl[ index ].Interface[ intf_num ].LED_Usage_Max = Com_Buf[ i ];
+                    if (led) {
+                        HostCtl[index].Interface[intf_num].LED_Usage_Max = Com_Buf[i];
                     }
                     break;
-
-                    default:
-                    i++;
-                    break;
-                }
-                break;
 
                 default:
+                    i++;
+                    break;
+                }
+                break;
+
+            default:
                 i++;
                 break;
             }
@@ -815,7 +762,7 @@ void KM_AnalyzeHidReportDesc(uint8_t index, uint8_t intf_num) {
  *
  * @return  The result of the acquisition and analysis.
  */
-uint8_t KM_DealHidReportDesc(uint8_t index, uint8_t ep0_size) {
+uint8_t KM_DealHidReportDesc (uint8_t index, uint8_t ep0_size) {
     uint8_t s;
     uint8_t num, num_tmp;
     uint8_t getrep_cnt;
@@ -825,46 +772,37 @@ uint8_t KM_DealHidReportDesc(uint8_t index, uint8_t ep0_size) {
 
     getrep_cnt = 0;
     num_tmp = HostCtl[index].InterfaceNum;
-    while( num_tmp )
-    {
-        num = HostCtl[ index ].InterfaceNum - num_tmp;
-        if( HostCtl[ index ].Interface[ num ].HidDescLen )
-        {
-            GETREP_START:
+    while (num_tmp) {
+        num = HostCtl[index].InterfaceNum - num_tmp;
+        if (HostCtl[index].Interface[num].HidDescLen) {
+GETREP_START:
             getrep_cnt++;
 
             /* Get HID report descriptor */
-            DUG_PRINTF("Get Interface%x RepDesc: ", num );
-            s = HID_GetHidDesr( ep0_size, num, Com_Buf, &HostCtl[ index ].Interface[ num ].HidDescLen );
-            if( s == ERR_SUCCESS )
-            {
+            DUG_PRINTF ("Get Interface%x RepDesc: ", num);
+            s = HID_GetHidDesr (ep0_size, num, Com_Buf, &HostCtl[index].Interface[num].HidDescLen);
+            if (s == ERR_SUCCESS) {
                 /* Print HID report descriptor */
 #if DEF_DEBUG_PRINTF
-                for( i = 0; i < HostCtl[ index ].Interface[ num ].HidDescLen; i++ )
-                {
-                    DUG_PRINTF( "%02x " , Com_Buf[ i ]);
+                for (i = 0; i < HostCtl[index].Interface[num].HidDescLen; i++) {
+                    DUG_PRINTF ("%02x ", Com_Buf[i]);
                 }
-                DUG_PRINTF("\r\n");
+                DUG_PRINTF ("\r\n");
 #endif
 
                 /* Analyze Report Descriptor */
-                KM_AnalyzeHidReportDesc( index, num );
+                KM_AnalyzeHidReportDesc (index, num);
 
                 num_tmp--;
-            }
-            else
-            {
-                DUG_PRINTF( "Err(%02x)\r\n", s );
-                if( getrep_cnt <= 5 )
-                {
+            } else {
+                DUG_PRINTF ("Err(%02x)\r\n", s);
+                if (getrep_cnt <= 5) {
                     goto GETREP_START;
                 }
 
                 return DEF_REP_DESCR_GETFAIL;
             }
-        }
-        else
-        {
+        } else {
             num_tmp--;
         }
     }
@@ -881,93 +819,93 @@ uint8_t KM_DealHidReportDesc(uint8_t index, uint8_t ep0_size) {
  *
  * @return  The result of the enumeration.
  */
-uint8_t USBH_EnumHidDevice(uint8_t index, uint8_t ep0_size) {
+uint8_t USBH_EnumHidDevice (uint8_t index, uint8_t ep0_size) {
     uint8_t s;
     uint8_t intf_num;
 #if DEF_DEBUG_PRINTF
     uint8_t i;
 #endif
 
-    DUG_PRINTF("Enum Hid:\r\n");
+    DUG_PRINTF ("Enum Hid:\r\n");
 
     /* Analyze HID class device configuration descriptor and save relevant parameters */
-    DUG_PRINTF("Analyze CfgDesc: ");
-    s = KM_AnalyzeConfigDesc(index, ep0_size);
+    DUG_PRINTF ("Analyze CfgDesc: ");
+    s = KM_AnalyzeConfigDesc (index, ep0_size);
     if (s == ERR_SUCCESS) {
-        DUG_PRINTF("OK\r\n");
+        DUG_PRINTF ("OK\r\n");
     } else {
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         return s;
     }
 
     /* Get the string descriptor contained in the configuration descriptor if it exists */
     if (Com_Buf[6]) {
-        DUG_PRINTF("Get StringDesc4: ");
-        s = USBFSH_GetStrDescr(ep0_size, Com_Buf[6], Com_Buf);
+        DUG_PRINTF ("Get StringDesc4: ");
+        s = USBFSH_GetStrDescr (ep0_size, Com_Buf[6], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print the string descriptor contained in the configuration descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get HID report descriptor */
-    s = KM_DealHidReportDesc(index, ep0_size);
+    s = KM_DealHidReportDesc (index, ep0_size);
 
     /* Get USB vendor string descriptor  */
     if (DevDesc_Buf[14]) {
-        DUG_PRINTF("Get StringDesc1: ");
-        s = USBFSH_GetStrDescr(ep0_size, DevDesc_Buf[14], Com_Buf);
+        DUG_PRINTF ("Get StringDesc1: ");
+        s = USBFSH_GetStrDescr (ep0_size, DevDesc_Buf[14], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB vendor string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get USB product string descriptor */
     if (DevDesc_Buf[15]) {
-        DUG_PRINTF("Get StringDesc2: ");
-        s = USBFSH_GetStrDescr(ep0_size, DevDesc_Buf[15], Com_Buf);
+        DUG_PRINTF ("Get StringDesc2: ");
+        s = USBFSH_GetStrDescr (ep0_size, DevDesc_Buf[15], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB product string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get USB serial number string descriptor */
     if (DevDesc_Buf[16]) {
-        DUG_PRINTF("Get StringDesc3: ");
-        s = USBFSH_GetStrDescr(ep0_size, DevDesc_Buf[16], Com_Buf);
+        DUG_PRINTF ("Get StringDesc3: ");
+        s = USBFSH_GetStrDescr (ep0_size, DevDesc_Buf[16], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB serial number string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
@@ -975,7 +913,7 @@ uint8_t USBH_EnumHidDevice(uint8_t index, uint8_t ep0_size) {
     for (intf_num = 0; intf_num < HostCtl[index].InterfaceNum; intf_num++) {
         if (HostCtl[index].Interface[intf_num].Type == DEC_KEY) {
             HostCtl[index].Interface[intf_num].SetReport_Value = 0x00;
-            KB_SetReport(index, ep0_size, intf_num);
+            KB_SetReport (index, ep0_size, intf_num);
         }
     }
 
@@ -991,51 +929,43 @@ uint8_t USBH_EnumHidDevice(uint8_t index, uint8_t ep0_size) {
  *
  * @return  none
  */
-uint8_t HUB_AnalyzeConfigDesc(uint8_t index) {
+uint8_t HUB_AnalyzeConfigDesc (uint8_t index) {
     uint8_t s = ERR_SUCCESS;
     uint16_t i;
 
-    for (i = 0; i < (Com_Buf[2] + ((uint16_t) Com_Buf[3] << 8));) {
+    for (i = 0; i < (Com_Buf[2] + ((uint16_t)Com_Buf[3] << 8));) {
         if (Com_Buf[i + 1] == DEF_DECR_CONFIG) {
             /* Save the number of interface of the USB device, only up to 4 */
-            if (((PUSB_CFG_DESCR) (&Com_Buf[i]))->bNumInterfaces > 1) {
+            if (((PUSB_CFG_DESCR)(&Com_Buf[i]))->bNumInterfaces > 1) {
                 HostCtl[index].InterfaceNum = 1;
             } else {
                 HostCtl[index].InterfaceNum =
-                        ((PUSB_CFG_DESCR) (&Com_Buf[i]))->bNumInterfaces;
+                    ((PUSB_CFG_DESCR)(&Com_Buf[i]))->bNumInterfaces;
             }
             i += Com_Buf[i];
         } else if (Com_Buf[i + 1] == DEF_DECR_INTERFACE) {
-            if (((PUSB_ITF_DESCR) (&Com_Buf[i]))->bInterfaceClass == 0x09) {
+            if (((PUSB_ITF_DESCR)(&Com_Buf[i]))->bInterfaceClass == 0x09) {
                 i += Com_Buf[i];
-                while( 1 )
-                {
-                    if( ( Com_Buf[ i + 1 ] == DEF_DECR_INTERFACE ) || ( i >= ( Com_Buf[ 2 ] + ( (uint16_t)Com_Buf[ 3 ] << 8 ) ) ) )
-                    {
+                while (1) {
+                    if ((Com_Buf[i + 1] == DEF_DECR_INTERFACE) || (i >= (Com_Buf[2] + ((uint16_t)Com_Buf[3] << 8)))) {
                         break;
-                    }
-                    else
-                    {
+                    } else {
                         /* Analyze each endpoint of the current interface */
-                        if( Com_Buf[ i + 1 ] == DEF_DECR_ENDPOINT )
-                        {
+                        if (Com_Buf[i + 1] == DEF_DECR_ENDPOINT) {
                             /* Save endpoint related information (endpoint address, attribute, max packet size, polling interval) */
-                            if( ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bEndpointAddress & 0x80 )
-                            {
+                            if (((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bEndpointAddress & 0x80) {
                                 /* IN */
-                                HostCtl[ index ].Interface[ 0 ].InEndpAddr[ 0 ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bEndpointAddress & 0x0F;
-                                HostCtl[ index ].Interface[ 0 ].InEndpType[ 0 ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bmAttributes;
-                                HostCtl[ index ].Interface[ 0 ].InEndpSize[ 0 ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeL +
-                                (uint16_t)( ( ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->wMaxPacketSizeH ) << 8 );
-                                HostCtl[ index ].Interface[ 0 ].InEndpInterval[ 0 ] = ( (PUSB_ENDP_DESCR)( &Com_Buf[ i ] ) )->bInterval;
-                                HostCtl[ index ].Interface[ 0 ].InEndpNum++;
+                                HostCtl[index].Interface[0].InEndpAddr[0] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bEndpointAddress & 0x0F;
+                                HostCtl[index].Interface[0].InEndpType[0] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bmAttributes;
+                                HostCtl[index].Interface[0].InEndpSize[0] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeL +
+                                                                            (uint16_t)((((PUSB_ENDP_DESCR)(&Com_Buf[i]))->wMaxPacketSizeH) << 8);
+                                HostCtl[index].Interface[0].InEndpInterval[0] = ((PUSB_ENDP_DESCR)(&Com_Buf[i]))->bInterval;
+                                HostCtl[index].Interface[0].InEndpNum++;
                             }
 
-                            i += Com_Buf[ i ];
-                        }
-                        else
-                        {
-                            i += Com_Buf[ i ];
+                            i += Com_Buf[i];
+                        } else {
+                            i += Com_Buf[i];
                         }
                     }
                 }
@@ -1059,112 +989,113 @@ uint8_t HUB_AnalyzeConfigDesc(uint8_t index) {
  *
  * @return  The result of the enumeration.
  */
-uint8_t USBH_EnumHubDevice(void) {
+uint8_t USBH_EnumHubDevice (void) {
     uint8_t s, retry;
     uint16_t len;
     uint16_t i;
 
-    DUG_PRINTF("Enum Hub:\r\n");
+    DUG_PRINTF ("Enum Hub:\r\n");
 
     /* Analyze HID class device configuration descriptor and save relevant parameters */
-    DUG_PRINTF("Analyze CfgDesc: ");
-    s = HUB_AnalyzeConfigDesc(RootHubDev.DeviceIndex);
+    DUG_PRINTF ("Analyze CfgDesc: ");
+    s = HUB_AnalyzeConfigDesc (RootHubDev.DeviceIndex);
     if (s == ERR_SUCCESS) {
-        DUG_PRINTF("OK\r\n");
+        DUG_PRINTF ("OK\r\n");
     } else {
-        DUG_PRINTF("Err(%02x)\r\n", s);
+        DUG_PRINTF ("Err(%02x)\r\n", s);
         return s;
     }
 
     /* Get the string descriptor contained in the configuration descriptor if it exists */
     if (Com_Buf[6]) {
-        DUG_PRINTF("Get StringDesc4: ");
-        s = USBFSH_GetStrDescr(RootHubDev.bEp0MaxPks, Com_Buf[6], Com_Buf);
+        DUG_PRINTF ("Get StringDesc4: ");
+        s = USBFSH_GetStrDescr (RootHubDev.bEp0MaxPks, Com_Buf[6], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print the string descriptor contained in the configuration descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get USB vendor string descriptor  */
     if (DevDesc_Buf[14]) {
-        DUG_PRINTF("Get StringDesc1: ");
-        s = USBFSH_GetStrDescr(RootHubDev.bEp0MaxPks, DevDesc_Buf[14], Com_Buf);
+        DUG_PRINTF ("Get StringDesc1: ");
+        s = USBFSH_GetStrDescr (RootHubDev.bEp0MaxPks, DevDesc_Buf[14], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB vendor string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get USB product string descriptor */
     if (DevDesc_Buf[15]) {
-        DUG_PRINTF("Get StringDesc2: ");
-        s = USBFSH_GetStrDescr(RootHubDev.bEp0MaxPks, DevDesc_Buf[15], Com_Buf);
+        DUG_PRINTF ("Get StringDesc2: ");
+        s = USBFSH_GetStrDescr (RootHubDev.bEp0MaxPks, DevDesc_Buf[15], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB product string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get USB serial number string descriptor */
     if (DevDesc_Buf[16]) {
-        DUG_PRINTF("Get StringDesc3: ");
-        s = USBFSH_GetStrDescr(RootHubDev.bEp0MaxPks, DevDesc_Buf[16], Com_Buf);
+        DUG_PRINTF ("Get StringDesc3: ");
+        s = USBFSH_GetStrDescr (RootHubDev.bEp0MaxPks, DevDesc_Buf[16], Com_Buf);
         if (s == ERR_SUCCESS) {
             /* Print USB serial number string descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < Com_Buf[0]; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
         }
     }
 
     /* Get hub descriptor */
-    DUG_PRINTF("Get Hub Desc: ");
+    DUG_PRINTF ("Get Hub Desc: ");
     for (retry = 0; retry < 5; retry++) {
-        s = HUB_GetClassDevDescr(RootHubDev.bEp0MaxPks, Com_Buf, &len);
+        s = HUB_GetClassDevDescr (RootHubDev.bEp0MaxPks, Com_Buf, &len);
         if (s == ERR_SUCCESS) {
             /* Print USB device device descriptor */
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < len; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
 
-            RootHubDev.bPortNum = ((PUSB_HUB_DESCR) Com_Buf)->bNbrPorts;
+            RootHubDev.bPortNum = ((PUSB_HUB_DESCR)Com_Buf)->bNbrPorts;
             if (RootHubDev.bPortNum > DEF_NEXT_HUB_PORT_NUM_MAX) {
                 RootHubDev.bPortNum = DEF_NEXT_HUB_PORT_NUM_MAX;
-            }DUG_PRINTF("RootHubDev.bPortNum: %02x\r\n", RootHubDev.bPortNum);
+            }
+            DUG_PRINTF ("RootHubDev.bPortNum: %02x\r\n", RootHubDev.bPortNum);
             break;
         } else {
             /* Determine whether the maximum number of retries has been reached, and retry if not reached */
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
 
             if (retry == 4) {
                 return ERR_USB_UNKNOWN;
@@ -1174,11 +1105,11 @@ uint8_t USBH_EnumHubDevice(void) {
 
     /* Set the HUB port to power on */
     for (retry = 0, i = 1; i <= RootHubDev.bPortNum; i++) {
-        s = HUB_SetPortFeature(RootHubDev.bEp0MaxPks, i, HUB_PORT_POWER);
+        s = HUB_SetPortFeature (RootHubDev.bEp0MaxPks, i, HUB_PORT_POWER);
         if (s == ERR_SUCCESS) {
             continue;
         } else {
-            Delay_Ms(5);
+            Delay_Ms (5);
 
             i--;
             retry++;
@@ -1200,31 +1131,31 @@ uint8_t USBH_EnumHubDevice(void) {
  *
  * @return  none
  */
-uint8_t HUB_Port_PreEnum1(uint8_t hub_port, uint8_t *pbuf) {
+uint8_t HUB_Port_PreEnum1 (uint8_t hub_port, uint8_t *pbuf) {
     uint8_t s;
     uint8_t buf[4];
     uint8_t retry;
 
     if ((*pbuf) & (1 << hub_port)) {
-        s = HUB_GetPortStatus(RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
+        s = HUB_GetPortStatus (RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
         if (s != ERR_SUCCESS) {
-            DUG_PRINTF("HUB_PE1_ERR1:%x\r\n", s);
+            DUG_PRINTF ("HUB_PE1_ERR1:%x\r\n", s);
             return s;
         } else {
             if (buf[2] & 0x01) {
-                s = HUB_ClearPortFeature(RootHubDev.bEp0MaxPks, hub_port,
-                HUB_C_PORT_CONNECTION);
+                s = HUB_ClearPortFeature (RootHubDev.bEp0MaxPks, hub_port,
+                                          HUB_C_PORT_CONNECTION);
                 if (s != ERR_SUCCESS) {
-                    DUG_PRINTF("HUB_PE1_ERR2:%x\r\n", s);
+                    DUG_PRINTF ("HUB_PE1_ERR2:%x\r\n", s);
                     return s;
                 }
 
                 retry = 0;
                 do {
-                    s = HUB_GetPortStatus(RootHubDev.bEp0MaxPks, hub_port,
-                            &buf[0]);
+                    s = HUB_GetPortStatus (RootHubDev.bEp0MaxPks, hub_port,
+                                           &buf[0]);
                     if (s != ERR_SUCCESS) {
-                        DUG_PRINTF("HUB_PE1_ERR3:%x\r\n", s);
+                        DUG_PRINTF ("HUB_PE1_ERR3:%x\r\n", s);
                         return s;
                     }
                     retry++;
@@ -1232,7 +1163,7 @@ uint8_t HUB_Port_PreEnum1(uint8_t hub_port, uint8_t *pbuf) {
 
                 if (retry != 10) {
                     if (!(buf[0] & 0x01)) {
-                        DUG_PRINTF("Hub Port%x Out\r\n", hub_port);
+                        DUG_PRINTF ("Hub Port%x Out\r\n", hub_port);
                         return ERR_USB_DISCON;
                     }
                 }
@@ -1252,23 +1183,23 @@ uint8_t HUB_Port_PreEnum1(uint8_t hub_port, uint8_t *pbuf) {
  *
  * @return  none
  */
-uint8_t HUB_Port_PreEnum2(uint8_t hub_port, uint8_t *pbuf) {
+uint8_t HUB_Port_PreEnum2 (uint8_t hub_port, uint8_t *pbuf) {
     uint8_t s;
     uint8_t buf[4];
     uint8_t retry = 0;
 
     if ((*pbuf) & (1 << hub_port)) {
-        s = HUB_SetPortFeature(RootHubDev.bEp0MaxPks, hub_port, HUB_PORT_RESET);
+        s = HUB_SetPortFeature (RootHubDev.bEp0MaxPks, hub_port, HUB_PORT_RESET);
         if (s != ERR_SUCCESS) {
-            DUG_PRINTF("HUB_PE2_ERR1:%x\r\n", s);
+            DUG_PRINTF ("HUB_PE2_ERR1:%x\r\n", s);
             return s;
         }
 
-        Delay_Ms(10);
+        Delay_Ms (10);
         do {
-            s = HUB_GetPortStatus(RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
+            s = HUB_GetPortStatus (RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
             if (s != ERR_SUCCESS) {
-                DUG_PRINTF("HUB_PE2_ERR2:%x\r\n", s);
+                DUG_PRINTF ("HUB_PE2_ERR2:%x\r\n", s);
                 return s;
             }
             retry++;
@@ -1276,13 +1207,13 @@ uint8_t HUB_Port_PreEnum2(uint8_t hub_port, uint8_t *pbuf) {
 
         if (retry != 10) {
             retry = 0;
-            s = HUB_ClearPortFeature(RootHubDev.bEp0MaxPks, hub_port,
-            HUB_C_PORT_RESET);
+            s = HUB_ClearPortFeature (RootHubDev.bEp0MaxPks, hub_port,
+                                      HUB_C_PORT_RESET);
 
             do {
-                s = HUB_GetPortStatus(RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
+                s = HUB_GetPortStatus (RootHubDev.bEp0MaxPks, hub_port, &buf[0]);
                 if (s != ERR_SUCCESS) {
-                    DUG_PRINTF("HUB_PE2_ERR3:%x\r\n", s);
+                    DUG_PRINTF ("HUB_PE2_ERR3:%x\r\n", s);
                     return s;
                 }
                 retry++;
@@ -1290,7 +1221,7 @@ uint8_t HUB_Port_PreEnum2(uint8_t hub_port, uint8_t *pbuf) {
 
             if (retry != 10) {
                 if (buf[0] & 0x01) {
-                    DUG_PRINTF("Hub Port%x In\r\n", hub_port);
+                    DUG_PRINTF ("Hub Port%x In\r\n", hub_port);
                     return ERR_USB_CONNECT;
                 }
             }
@@ -1309,10 +1240,10 @@ uint8_t HUB_Port_PreEnum2(uint8_t hub_port, uint8_t *pbuf) {
  *
  * @return  none
  */
-uint8_t HUB_CheckPortSpeed(uint8_t hub_port, uint8_t *pbuf) {
+uint8_t HUB_CheckPortSpeed (uint8_t hub_port, uint8_t *pbuf) {
     uint8_t s;
 
-    s = HUB_GetPortStatus(RootHubDev.bEp0MaxPks, hub_port, pbuf);
+    s = HUB_GetPortStatus (RootHubDev.bEp0MaxPks, hub_port, pbuf);
     if (s) {
         return s;
     }
@@ -1337,7 +1268,7 @@ uint8_t HUB_CheckPortSpeed(uint8_t hub_port, uint8_t *pbuf) {
  *
  * @return  none
  */
-uint8_t USBH_EnumHubPortDevice(uint8_t hub_port, uint8_t *paddr, uint8_t *ptype) {
+uint8_t USBH_EnumHubPortDevice (uint8_t hub_port, uint8_t *paddr, uint8_t *ptype) {
     uint8_t s;
     uint8_t enum_cnt;
     uint16_t len;
@@ -1347,21 +1278,21 @@ uint8_t USBH_EnumHubPortDevice(uint8_t hub_port, uint8_t *paddr, uint8_t *ptype)
 #endif
 
     /* Get USB device descriptor */
-    DUG_PRINTF("(S1)Get DevDesc: \r\n");
+    DUG_PRINTF ("(S1)Get DevDesc: \r\n");
     enum_cnt = 0;
     do {
         enum_cnt++;
-        s = USBFSH_GetDeviceDescr(&RootHubDev.Device[hub_port].bEp0MaxPks,
-                DevDesc_Buf);
+        s = USBFSH_GetDeviceDescr (&RootHubDev.Device[hub_port].bEp0MaxPks,
+                                   DevDesc_Buf);
         if (s == ERR_SUCCESS) {
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < 18; i++) {
-                DUG_PRINTF("%02x ", DevDesc_Buf[i]);
+                DUG_PRINTF ("%02x ", DevDesc_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
             if (enum_cnt >= 10) {
                 return DEF_DEV_DESCR_GETFAIL;
             }
@@ -1369,47 +1300,47 @@ uint8_t USBH_EnumHubPortDevice(uint8_t hub_port, uint8_t *paddr, uint8_t *ptype)
     } while ((s != ERR_SUCCESS) && (enum_cnt < 10));
 
     /* Set the USB device address */
-    DUG_PRINTF("Set DevAddr: \r\n");
+    DUG_PRINTF ("Set DevAddr: \r\n");
     enum_cnt = 0;
     do {
         enum_cnt++;
-        s = USBFSH_SetUsbAddress(RootHubDev.Device[hub_port].bEp0MaxPks,
-                RootHubDev.Device[hub_port].DeviceIndex + USB_DEVICE_ADDR);
+        s = USBFSH_SetUsbAddress (RootHubDev.Device[hub_port].bEp0MaxPks,
+                                  RootHubDev.Device[hub_port].DeviceIndex + USB_DEVICE_ADDR);
         if (s == ERR_SUCCESS) {
             /* Save address */
             *paddr = RootHubDev.Device[hub_port].DeviceIndex + USB_DEVICE_ADDR;
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
             if (enum_cnt >= 10) {
                 return DEF_DEV_ADDR_SETFAIL;
             }
         }
     } while ((s != ERR_SUCCESS) && (enum_cnt < 10));
-    Delay_Ms(5);
+    Delay_Ms (5);
 
     /* Get USB configuration descriptor */
-    DUG_PRINTF("Get DevCfgDesc: \r\n");
+    DUG_PRINTF ("Get DevCfgDesc: \r\n");
     enum_cnt = 0;
     do {
         enum_cnt++;
-        s = USBFSH_GetConfigDescr(RootHubDev.Device[hub_port].bEp0MaxPks,
-                Com_Buf, DEF_COM_BUF_LEN, &len);
+        s = USBFSH_GetConfigDescr (RootHubDev.Device[hub_port].bEp0MaxPks,
+                                   Com_Buf, DEF_COM_BUF_LEN, &len);
         if (s == ERR_SUCCESS) {
 #if DEF_DEBUG_PRINTF
             for (i = 0; i < len; i++) {
-                DUG_PRINTF("%02x ", Com_Buf[i]);
+                DUG_PRINTF ("%02x ", Com_Buf[i]);
             }
-            DUG_PRINTF("\r\n");
+            DUG_PRINTF ("\r\n");
 #endif
 
             /* Save configuration value */
-            cfg_val = ((PUSB_CFG_DESCR) Com_Buf)->bConfigurationValue;
+            cfg_val = ((PUSB_CFG_DESCR)Com_Buf)->bConfigurationValue;
 
             /* Analyze USB device type */
-            USBH_AnalyseType(DevDesc_Buf, Com_Buf, ptype);
-            DUG_PRINTF("DevType: %02x\r\n", *ptype);
+            USBH_AnalyseType (DevDesc_Buf, Com_Buf, ptype);
+            DUG_PRINTF ("DevType: %02x\r\n", *ptype);
         } else {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
             if (enum_cnt >= 10) {
                 return DEF_DEV_DESCR_GETFAIL;
             }
@@ -1417,21 +1348,21 @@ uint8_t USBH_EnumHubPortDevice(uint8_t hub_port, uint8_t *paddr, uint8_t *ptype)
     } while ((s != ERR_SUCCESS) && (enum_cnt < 10));
 
     /* Set USB device configuration value */
-    DUG_PRINTF("Set CfgValue: \r\n");
+    DUG_PRINTF ("Set CfgValue: \r\n");
     enum_cnt = 0;
     do {
         enum_cnt++;
-        s = USBFSH_SetUsbConfig(RootHubDev.Device[hub_port].bEp0MaxPks,
-                cfg_val);
+        s = USBFSH_SetUsbConfig (RootHubDev.Device[hub_port].bEp0MaxPks,
+                                 cfg_val);
         if (s != ERR_SUCCESS) {
-            DUG_PRINTF("Err(%02x)\r\n", s);
+            DUG_PRINTF ("Err(%02x)\r\n", s);
             if (enum_cnt >= 10) {
                 return DEF_CFG_VALUE_SETFAIL;
             }
         }
     } while ((s != ERR_SUCCESS) && (enum_cnt < 10));
 
-    return ( ERR_SUCCESS);
+    return (ERR_SUCCESS);
 }
 
 /*********************************************************************
@@ -1446,8 +1377,8 @@ uint8_t USBH_EnumHubPortDevice(uint8_t hub_port, uint8_t *paddr, uint8_t *ptype)
  *
  * @return  The result of the analysis.
  */
-void KB_AnalyzeKeyValue(uint8_t index, uint8_t intf_num, uint8_t *pbuf,
-        uint16_t len) {
+void KB_AnalyzeKeyValue (uint8_t index, uint8_t intf_num, uint8_t *pbuf,
+                         uint16_t len) {
     uint8_t i;
     uint8_t value;
     uint8_t bit_pos = 0x00;
@@ -1455,24 +1386,24 @@ void KB_AnalyzeKeyValue(uint8_t index, uint8_t intf_num, uint8_t *pbuf,
     value = HostCtl[index].Interface[intf_num].SetReport_Value;
 
     for (i = HostCtl[index].Interface[intf_num].LED_Usage_Min;
-            i <= HostCtl[index].Interface[intf_num].LED_Usage_Max; i++) {
+         i <= HostCtl[index].Interface[intf_num].LED_Usage_Max; i++) {
         if (i == 0x01) {
-            if (memchr(pbuf, DEF_KEY_NUM, len)) {
+            if (memchr (pbuf, DEF_KEY_NUM, len)) {
                 HostCtl[index].Interface[intf_num].SetReport_Value ^= (1
-                        << bit_pos);
+                                                                       << bit_pos);
             }
         } else if (i == 0x02) {
-            if (memchr(pbuf, DEF_KEY_CAPS, len)) {
+            if (memchr (pbuf, DEF_KEY_CAPS, len)) {
                 HostCtl[index].Interface[intf_num].SetReport_Value ^= (1
-                        << bit_pos);
-//                caps_lock_stg =
-//                        HostCtl[index].Interface[intf_num].SetReport_Value
-//                                & 0x02;
+                                                                       << bit_pos);
+                //  caps_lock_stg =
+                //          HostCtl[index].Interface[intf_num].SetReport_Value
+                //                  & 0x02;
             }
         } else if (i == 0x03) {
-            if (memchr(pbuf, DEF_KEY_SCROLL, len)) {
+            if (memchr (pbuf, DEF_KEY_SCROLL, len)) {
                 HostCtl[index].Interface[intf_num].SetReport_Value ^= (1
-                        << bit_pos);
+                                                                       << bit_pos);
             }
         }
 
@@ -1496,7 +1427,7 @@ void KB_AnalyzeKeyValue(uint8_t index, uint8_t intf_num, uint8_t *pbuf,
  *
  * @return  The result of the handling keyboard lighting.
  */
-uint8_t KB_SetReport(uint8_t index, uint8_t ep0_size, uint8_t intf_num) {
+uint8_t KB_SetReport (uint8_t index, uint8_t ep0_size, uint8_t intf_num) {
     uint8_t dat[2];
     uint16_t len;
     uint8_t s = ERR_SUCCESS;
@@ -1510,15 +1441,15 @@ uint8_t KB_SetReport(uint8_t index, uint8_t ep0_size, uint8_t intf_num) {
         len = 1;
     }
 
-    if (HostCtl[index].Interface[intf_num].SetReport_Swi == 1) // Perform lighting operation through endpoint0
-            {
+    if (HostCtl[index].Interface[intf_num].SetReport_Swi == 1)  // Perform lighting operation through endpoint0
+    {
         /* Send set report command */
-        s = HID_SetReport(ep0_size, intf_num, dat, &len);
-    } else if (HostCtl[index].Interface[intf_num].SetReport_Swi == 0xFF) // Perform lighting operation through other endpoint
-            {
-        s = USBFSH_SendEndpData(
-                HostCtl[index].Interface[intf_num].OutEndpAddr[0],
-                &HostCtl[index].Interface[intf_num].OutEndpTog[0], dat, len);
+        s = HID_SetReport (ep0_size, intf_num, dat, &len);
+    } else if (HostCtl[index].Interface[intf_num].SetReport_Swi == 0xFF)  // Perform lighting operation through other endpoint
+    {
+        s = USBFSH_SendEndpData (
+            HostCtl[index].Interface[intf_num].OutEndpAddr[0],
+            &HostCtl[index].Interface[intf_num].OutEndpTog[0], dat, len);
     }
 
     return s;
@@ -1532,7 +1463,7 @@ uint8_t KB_SetReport(uint8_t index, uint8_t ep0_size, uint8_t intf_num) {
  *
  * @return  none
  */
-void USBH_MainDeal(void) {
+void USBH_MainDeal (void) {
     uint8_t s;
     uint8_t index;
     uint8_t hub_port;
@@ -1543,82 +1474,79 @@ void USBH_MainDeal(void) {
     uint16_t i;
 #endif
 
-    s = USBFSH_CheckRootHubPortStatus(RootHubDev.bStatus); // Check USB device connection or disconnection
+    s = USBFSH_CheckRootHubPortStatus (RootHubDev.bStatus);  // Check USB device connection or disconnection
     if (s == ROOT_DEV_CONNECTED) {
-        DUG_PRINTF("USB Port Dev In.\r\n");
+        DUG_PRINTF ("USB Port Dev In.\r\n");
 
         /* Set root device state parameters */
         RootHubDev.bStatus = ROOT_DEV_CONNECTED;
-        RootHubDev.DeviceIndex = DEF_USBFS_PORT_INDEX
-                * DEF_ONE_USB_SUP_DEV_TOTAL;
+        RootHubDev.DeviceIndex = DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL;
 
-        s = USBH_EnumRootDevice(); // Simply enumerate root device
+        s = USBH_EnumRootDevice();                      // Simply enumerate root device
         if (s == ERR_SUCCESS) {
-            if (RootHubDev.bType == USB_DEV_CLASS_HID) // Further enumerate it if this device is a HID device
+            if (RootHubDev.bType == USB_DEV_CLASS_HID)  // Further enumerate it if this device is a HID device
             {
-                DUG_PRINTF("Root Device Is HID. ");
+                DUG_PRINTF ("Root Device Is HID. ");
 
-                s = USBH_EnumHidDevice(RootHubDev.DeviceIndex,
-                        RootHubDev.bEp0MaxPks);
-                DUG_PRINTF("Further Enum Result: ");
+                s = USBH_EnumHidDevice (RootHubDev.DeviceIndex,
+                                        RootHubDev.bEp0MaxPks);
+                DUG_PRINTF ("Further Enum Result: ");
                 if (s == ERR_SUCCESS) {
-                    DUG_PRINTF("OK\r\n");
+                    DUG_PRINTF ("OK\r\n");
                     keyboard_in = 1;
 
                     /* Set the connection status of the device  */
                     RootHubDev.bStatus = ROOT_DEV_SUCCESS;
                 } else if (s != ERR_USB_DISCON) {
-                    DUG_PRINTF("Err(%02x)\r\n", s);
+                    DUG_PRINTF ("Err(%02x)\r\n", s);
 
                     RootHubDev.bStatus = ROOT_DEV_FAILED;
                 }
             } else if (RootHubDev.bType == USB_DEV_CLASS_HUB) {
-                DUG_PRINTF("Root Device Is HUB. ");
+                DUG_PRINTF ("Root Device Is HUB. ");
 
                 s = USBH_EnumHubDevice();
-                DUG_PRINTF("Further Enum Result: ");
+                DUG_PRINTF ("Further Enum Result: ");
                 if (s == ERR_SUCCESS) {
-                    DUG_PRINTF("OK\r\n");
+                    DUG_PRINTF ("OK\r\n");
 
                     /* Set the connection status of the device  */
                     RootHubDev.bStatus = ROOT_DEV_SUCCESS;
                 } else if (s != ERR_USB_DISCON) {
-                    DUG_PRINTF("Err(%02x)\r\n", s);
+                    DUG_PRINTF ("Err(%02x)\r\n", s);
 
                     RootHubDev.bStatus = ROOT_DEV_FAILED;
                 }
-            } else // Detect that this device is a NON-HID device
+            } else  // Detect that this device is a NON-HID device
             {
-                DUG_PRINTF("Root Device Is ");
+                DUG_PRINTF ("Root Device Is ");
                 switch (RootHubDev.bType) {
                 case USB_DEV_CLASS_STORAGE:
-                    DUG_PRINTF("Storage. ")
-                    ;
+                    DUG_PRINTF ("Storage. ");
                     break;
                 case USB_DEV_CLASS_PRINTER:
-                    DUG_PRINTF("Printer. ")
-                    ;
+                    DUG_PRINTF ("Printer. ");
                     break;
                 case DEF_DEV_TYPE_UNKNOWN:
-                    DUG_PRINTF("Unknown. ")
-                    ;
+                    DUG_PRINTF ("Unknown. ");
                     break;
-                }DUG_PRINTF("End Enum.\r\n");
+                }
+                DUG_PRINTF ("End Enum.\r\n");
 
                 RootHubDev.bStatus = ROOT_DEV_SUCCESS;
             }
         } else if (s != ERR_USB_DISCON) {
             /* Enumeration failed */
-            DUG_PRINTF("Enum Fail with Error Code:%x\r\n", s);
+            DUG_PRINTF ("Enum Fail with Error Code:%x\r\n", s);
             RootHubDev.bStatus = ROOT_DEV_FAILED;
         }
     } else if (s == ROOT_DEV_DISCONNECT) {
-        DUG_PRINTF("USB Port Dev Out.\r\n");
+        DUG_PRINTF ("USB Port Dev Out.\r\n");
         keyboard_in = 0;
         /* Clear parameters */
         index = RootHubDev.DeviceIndex;
-        memset(&RootHubDev.bStatus, 0, sizeof(ROOT_HUB_DEVICE));
-        memset(&HostCtl[index].InterfaceNum, 0, sizeof(HOST_CTL));
+        memset (&RootHubDev.bStatus, 0, sizeof (ROOT_HUB_DEVICE));
+        memset (&HostCtl[index].InterfaceNum, 0, sizeof (HOST_CTL));
     }
 
     /* Get the data of the HID device connected to the USB host port */
@@ -1627,28 +1555,27 @@ void USBH_MainDeal(void) {
 
         if (RootHubDev.bType == USB_DEV_CLASS_HID) {
             for (intf_num = 0; intf_num < HostCtl[index].InterfaceNum;
-                    intf_num++) {
+                 intf_num++) {
                 for (in_num = 0;
-                        in_num < HostCtl[index].Interface[intf_num].InEndpNum;
-                        in_num++) {
+                     in_num < HostCtl[index].Interface[intf_num].InEndpNum;
+                     in_num++) {
                     /* Get endpoint data based on the interval time of the device */
-                    if (HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num]
-                            >= HostCtl[index].Interface[intf_num].InEndpInterval[in_num]) {
+                    if (HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num] >= HostCtl[index].Interface[intf_num].InEndpInterval[in_num]) {
                         HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num] %=
-                                HostCtl[index].Interface[intf_num].InEndpInterval[in_num];
+                            HostCtl[index].Interface[intf_num].InEndpInterval[in_num];
 
                         /* Get endpoint data */
                         s =
-                                USBFSH_GetEndpData(
-                                        HostCtl[index].Interface[intf_num].InEndpAddr[in_num],
-                                        &HostCtl[index].Interface[intf_num].InEndpTog[in_num],
-                                        Com_Buf, &len);
+                            USBFSH_GetEndpData (
+                                HostCtl[index].Interface[intf_num].InEndpAddr[in_num],
+                                &HostCtl[index].Interface[intf_num].InEndpTog[in_num],
+                                Com_Buf, &len);
                         if (s == ERR_SUCCESS) {
 #if DEF_DEBUG_PRINTF
                             for (i = 0; i < len; i++) {
-                                DUG_PRINTF("%02x ", Com_Buf[i]);
+                                DUG_PRINTF ("%02x ", Com_Buf[i]);
                             }
-                            DUG_PRINTF("\r\n");
+                            DUG_PRINTF ("\r\n");
 #endif
 #if DEAL_COM_BUF
                             CombufDeal();
@@ -1656,51 +1583,47 @@ void USBH_MainDeal(void) {
 #endif
 
                             /* Handle keyboard lighting */
-                            if (HostCtl[index].Interface[intf_num].Type
-                                    == DEC_KEY) {
-                                KB_AnalyzeKeyValue(index, intf_num, Com_Buf,
-                                        len);
+                            if (HostCtl[index].Interface[intf_num].Type == DEC_KEY) {
+                                KB_AnalyzeKeyValue (index, intf_num, Com_Buf,
+                                                    len);
 
                                 if (HostCtl[index].Interface[intf_num].SetReport_Flag) {
-                                    KB_SetReport(index, RootHubDev.bEp0MaxPks,
-                                            intf_num);
+                                    KB_SetReport (index, RootHubDev.bEp0MaxPks,
+                                                  intf_num);
                                 }
                             }
                         } else if (s == ERR_USB_DISCON) {
                             break;
-                        } else if (s == ( USB_PID_STALL | ERR_USB_TRANSFER)) {
+                        } else if (s == (USB_PID_STALL | ERR_USB_TRANSFER)) {
                             /* USB device abnormal event */
-                            DUG_PRINTF("Abnormal\r\n");
+                            DUG_PRINTF ("Abnormal\r\n");
 
                             /* Clear endpoint */
-                            USBFSH_ClearEndpStall(RootHubDev.bEp0MaxPks,
-                                    HostCtl[index].Interface[intf_num].InEndpAddr[in_num]
-                                            | 0x80);
+                            USBFSH_ClearEndpStall (RootHubDev.bEp0MaxPks,
+                                                   HostCtl[index].Interface[intf_num].InEndpAddr[in_num] | 0x80);
                             HostCtl[index].Interface[intf_num].InEndpTog[in_num] =
-                                    0x00;
+                                0x00;
 
                             /* Judge the number of error */
                             HostCtl[index].ErrorCount++;
                             if (HostCtl[index].ErrorCount >= 10) {
                                 /* Re-enumerate the device and clear the endpoint again */
-                                memset(&RootHubDev.bStatus, 0,
-                                        sizeof(struct _ROOT_HUB_DEVICE));
+                                memset (&RootHubDev.bStatus, 0,
+                                        sizeof (struct _ROOT_HUB_DEVICE));
                                 s = USBH_EnumRootDevice();
                                 if (s == ERR_SUCCESS) {
-                                    USBFSH_ClearEndpStall(RootHubDev.bEp0MaxPks,
-                                            HostCtl[index].Interface[intf_num].InEndpAddr[in_num]
-                                                    | 0x80);
+                                    USBFSH_ClearEndpStall (RootHubDev.bEp0MaxPks,
+                                                           HostCtl[index].Interface[intf_num].InEndpAddr[in_num] | 0x80);
                                     HostCtl[index].ErrorCount = 0x00;
 
                                     RootHubDev.bStatus = ROOT_DEV_CONNECTED;
                                     RootHubDev.DeviceIndex =
-                                    DEF_USBFS_PORT_INDEX
-                                            * DEF_ONE_USB_SUP_DEV_TOTAL;
+                                        DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL;
 
-                                    memset(&HostCtl[index].InterfaceNum, 0,
-                                            sizeof(struct __HOST_CTL));
-                                    s = USBH_EnumHidDevice(index,
-                                            RootHubDev.bEp0MaxPks);
+                                    memset (&HostCtl[index].InterfaceNum, 0,
+                                            sizeof (struct __HOST_CTL));
+                                    s = USBH_EnumHidDevice (index,
+                                                            RootHubDev.bEp0MaxPks);
                                     if (s == ERR_SUCCESS) {
                                         RootHubDev.bStatus = ROOT_DEV_SUCCESS;
                                     } else if (s != ERR_USB_DISCON) {
@@ -1720,125 +1643,117 @@ void USBH_MainDeal(void) {
             }
         } else if (RootHubDev.bType == USB_DEV_CLASS_HUB) {
             /* Query port status change */
-            if (HostCtl[index].Interface[0].InEndpTimeCount[0]
-                    >= HostCtl[index].Interface[0].InEndpInterval[0]) {
+            if (HostCtl[index].Interface[0].InEndpTimeCount[0] >= HostCtl[index].Interface[0].InEndpInterval[0]) {
                 HostCtl[index].Interface[0].InEndpTimeCount[0] %=
-                        HostCtl[index].Interface[0].InEndpInterval[0];
+                    HostCtl[index].Interface[0].InEndpInterval[0];
 
                 /* Select HUB port */
-                USBFSH_SetSelfAddr(RootHubDev.bAddress);
-                USBFSH_SetSelfSpeed(RootHubDev.bSpeed);
+                USBFSH_SetSelfAddr (RootHubDev.bAddress);
+                USBFSH_SetSelfSpeed (RootHubDev.bSpeed);
 
                 /* Get HUB interrupt endpoint data */
-                s = USBFSH_GetEndpData(
-                        HostCtl[index].Interface[0].InEndpAddr[0],
-                        &HostCtl[index].Interface[0].InEndpTog[0], Com_Buf,
-                        &len);
+                s = USBFSH_GetEndpData (
+                    HostCtl[index].Interface[0].InEndpAddr[0],
+                    &HostCtl[index].Interface[0].InEndpTog[0], Com_Buf,
+                    &len);
                 if (s == ERR_SUCCESS) {
                     hub_dat = Com_Buf[0];
-                    DUG_PRINTF("Hub Int Data:%02x\r\n", hub_dat);
+                    DUG_PRINTF ("Hub Int Data:%02x\r\n", hub_dat);
 
                     for (hub_port = 0; hub_port < RootHubDev.bPortNum;
-                            hub_port++) {
+                         hub_port++) {
                         /* HUB Port PreEnumate Step 1: C_PORT_CONNECTION */
-                        s = HUB_Port_PreEnum1((hub_port + 1), &hub_dat);
+                        s = HUB_Port_PreEnum1 ((hub_port + 1), &hub_dat);
                         if (s == ERR_USB_DISCON) {
                             hub_dat &= ~(1 << (hub_port + 1));
 
                             /* Clear parameters */
-                            memset(
-                                    &HostCtl[RootHubDev.Device[hub_port].DeviceIndex],
-                                    0, sizeof(HOST_CTL));
-                            memset(&RootHubDev.Device[hub_port].bStatus, 0,
-                                    sizeof(HUB_DEVICE));
+                            memset (
+                                &HostCtl[RootHubDev.Device[hub_port].DeviceIndex],
+                                0, sizeof (HOST_CTL));
+                            memset (&RootHubDev.Device[hub_port].bStatus, 0,
+                                    sizeof (HUB_DEVICE));
                             continue;
                         }
 
                         /* HUB Port PreEnumate Step 2: Set/Clear PORT_RESET */
-                        Delay_Ms(100);
-                        s = HUB_Port_PreEnum2((hub_port + 1), &hub_dat);
+                        Delay_Ms (100);
+                        s = HUB_Port_PreEnum2 ((hub_port + 1), &hub_dat);
                         if (s == ERR_USB_CONNECT) {
                             /* Set parameters */
                             RootHubDev.Device[hub_port].bStatus =
-                            ROOT_DEV_CONNECTED;
+                                ROOT_DEV_CONNECTED;
                             RootHubDev.Device[hub_port].bEp0MaxPks =
-                            DEFAULT_ENDP0_SIZE;
+                                DEFAULT_ENDP0_SIZE;
                             RootHubDev.Device[hub_port].DeviceIndex =
-                            DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL
-                                    + hub_port + 1;
+                                DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL + hub_port + 1;
                         } else {
                             hub_dat &= ~(1 << (hub_port + 1));
                         }
 
                         /* Enumerate HUB Device */
-                        if (RootHubDev.Device[hub_port].bStatus
-                                == ROOT_DEV_CONNECTED) {
+                        if (RootHubDev.Device[hub_port].bStatus == ROOT_DEV_CONNECTED) {
                             /* Check device speed */
                             RootHubDev.Device[hub_port].bSpeed =
-                                    HUB_CheckPortSpeed((hub_port + 1), Com_Buf);
-                            DUG_PRINTF("Dev Speed:%x\r\n",
-                                    RootHubDev.Device[hub_port].bSpeed);
+                                HUB_CheckPortSpeed ((hub_port + 1), Com_Buf);
+                            DUG_PRINTF ("Dev Speed:%x\r\n",
+                                        RootHubDev.Device[hub_port].bSpeed);
 
                             /* Select the specified port */
-                            USBFSH_SetSelfAddr(
-                                    RootHubDev.Device[hub_port].bAddress);
-                            USBFSH_SetSelfSpeed(
-                                    RootHubDev.Device[hub_port].bSpeed);
+                            USBFSH_SetSelfAddr (
+                                RootHubDev.Device[hub_port].bAddress);
+                            USBFSH_SetSelfSpeed (
+                                RootHubDev.Device[hub_port].bSpeed);
                             if (RootHubDev.bSpeed != USB_LOW_SPEED) {
                                 USBFSH->HOST_CTRL &= ~USBFS_UH_LOW_SPEED;
                             }
 
                             /* Enumerate the USB device of the current HUB port */
-                            DUG_PRINTF("Enum_HubDevice\r\n");
-                            s = USBH_EnumHubPortDevice(hub_port,
-                                    &RootHubDev.Device[hub_port].bAddress,
-                                    &RootHubDev.Device[hub_port].bType);
+                            DUG_PRINTF ("Enum_HubDevice\r\n");
+                            s = USBH_EnumHubPortDevice (hub_port,
+                                                        &RootHubDev.Device[hub_port].bAddress,
+                                                        &RootHubDev.Device[hub_port].bType);
                             if (s == ERR_SUCCESS) {
-                                if (RootHubDev.Device[hub_port].bType
-                                        == USB_DEV_CLASS_HID) {
-                                    DUG_PRINTF(
-                                            "HUB port%x device is HID! Further Enum:\r\n",
-                                            hub_port);
+                                if (RootHubDev.Device[hub_port].bType == USB_DEV_CLASS_HID) {
+                                    DUG_PRINTF (
+                                        "HUB port%x device is HID! Further Enum:\r\n",
+                                        hub_port);
 
                                     /* Perform HID class enumeration on the current device */
                                     s =
-                                            USBH_EnumHidDevice(
-                                                    RootHubDev.Device[hub_port].DeviceIndex,
-                                                    RootHubDev.Device[hub_port].bEp0MaxPks);
+                                        USBH_EnumHidDevice (
+                                            RootHubDev.Device[hub_port].DeviceIndex,
+                                            RootHubDev.Device[hub_port].bEp0MaxPks);
                                     if (s == ERR_SUCCESS) {
                                         RootHubDev.Device[hub_port].bStatus =
-                                        ROOT_DEV_SUCCESS;
-                                        DUG_PRINTF("OK!\r\n");
+                                            ROOT_DEV_SUCCESS;
+                                        DUG_PRINTF ("OK!\r\n");
                                     }
-                                } else // Detect that this device is a Non-HID device
+                                } else  // Detect that this device is a Non-HID device
                                 {
-                                    DUG_PRINTF("HUB port%x device is ",
-                                            hub_port);
+                                    DUG_PRINTF ("HUB port%x device is ",
+                                                hub_port);
                                     switch (RootHubDev.Device[hub_port].bType) {
                                     case USB_DEV_CLASS_STORAGE:
-                                        DUG_PRINTF("storage!\r\n")
-                                        ;
+                                        DUG_PRINTF ("storage!\r\n");
                                         break;
                                     case USB_DEV_CLASS_PRINTER:
-                                        DUG_PRINTF("printer!\r\n")
-                                        ;
+                                        DUG_PRINTF ("printer!\r\n");
                                         break;
                                     case USB_DEV_CLASS_HUB:
-                                        DUG_PRINTF("printer!\r\n")
-                                        ;
+                                        DUG_PRINTF ("printer!\r\n");
                                         break;
                                     case DEF_DEV_TYPE_UNKNOWN:
-                                        DUG_PRINTF("unknown!\r\n")
-                                        ;
+                                        DUG_PRINTF ("unknown!\r\n");
                                         break;
                                     }
                                     RootHubDev.Device[hub_port].bStatus =
-                                    ROOT_DEV_SUCCESS;
+                                        ROOT_DEV_SUCCESS;
                                 }
                             } else {
                                 RootHubDev.Device[hub_port].bStatus =
-                                ROOT_DEV_FAILED;
-                                DUG_PRINTF("HUB Port%x Enum Err!\r\n", hub_port);
+                                    ROOT_DEV_FAILED;
+                                DUG_PRINTF ("HUB Port%x Enum Err!\r\n", hub_port);
                             }
                         }
                     }
@@ -1852,51 +1767,48 @@ void USBH_MainDeal(void) {
 
                     if (RootHubDev.Device[hub_port].bType == USB_DEV_CLASS_HID) {
                         for (intf_num = 0;
-                                intf_num < HostCtl[index].InterfaceNum;
-                                intf_num++) {
+                             intf_num < HostCtl[index].InterfaceNum;
+                             intf_num++) {
                             for (in_num = 0;
-                                    in_num
-                                            < HostCtl[index].Interface[intf_num].InEndpNum;
-                                    in_num++) {
+                                 in_num < HostCtl[index].Interface[intf_num].InEndpNum;
+                                 in_num++) {
                                 /* Get endpoint data based on the interval time of the device */
-                                if (HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num]
-                                        >= HostCtl[index].Interface[intf_num].InEndpInterval[in_num]) {
+                                if (HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num] >= HostCtl[index].Interface[intf_num].InEndpInterval[in_num]) {
                                     HostCtl[index].Interface[intf_num].InEndpTimeCount[in_num] %=
-                                            HostCtl[index].Interface[intf_num].InEndpInterval[in_num];
+                                        HostCtl[index].Interface[intf_num].InEndpInterval[in_num];
 
                                     /* Select HUB device port */
-                                    USBFSH_SetSelfAddr(
-                                            RootHubDev.Device[hub_port].bAddress);
-                                    USBFSH_SetSelfSpeed(
-                                            RootHubDev.Device[hub_port].bSpeed);
+                                    USBFSH_SetSelfAddr (
+                                        RootHubDev.Device[hub_port].bAddress);
+                                    USBFSH_SetSelfSpeed (
+                                        RootHubDev.Device[hub_port].bSpeed);
                                     if (RootHubDev.bSpeed != USB_LOW_SPEED) {
                                         USBFSH->HOST_CTRL &=
-                                                ~USBFS_UH_LOW_SPEED;
+                                            ~USBFS_UH_LOW_SPEED;
                                     }
 
                                     /* Get endpoint data */
                                     s =
-                                            USBFSH_GetEndpData(
-                                                    HostCtl[index].Interface[intf_num].InEndpAddr[in_num],
-                                                    &HostCtl[index].Interface[intf_num].InEndpTog[in_num],
-                                                    Com_Buf, &len);
+                                        USBFSH_GetEndpData (
+                                            HostCtl[index].Interface[intf_num].InEndpAddr[in_num],
+                                            &HostCtl[index].Interface[intf_num].InEndpTog[in_num],
+                                            Com_Buf, &len);
                                     if (s == ERR_SUCCESS) {
 #if DEF_DEBUG_PRINTF
                                         for (i = 0; i < len; i++) {
-                                            DUG_PRINTF("%02x ", Com_Buf[i]);
+                                            DUG_PRINTF ("%02x ", Com_Buf[i]);
                                         }
-                                        DUG_PRINTF("\r\n");
+                                        DUG_PRINTF ("\r\n");
 #endif
 
-                                        if (HostCtl[index].Interface[intf_num].Type
-                                                == DEC_KEY) {
-                                            KB_AnalyzeKeyValue(index, intf_num,
-                                                    Com_Buf, len);
+                                        if (HostCtl[index].Interface[intf_num].Type == DEC_KEY) {
+                                            KB_AnalyzeKeyValue (index, intf_num,
+                                                                Com_Buf, len);
 
                                             if (HostCtl[index].Interface[intf_num].SetReport_Flag) {
-                                                KB_SetReport(index,
-                                                        RootHubDev.Device[hub_port].bEp0MaxPks,
-                                                        intf_num);
+                                                KB_SetReport (index,
+                                                              RootHubDev.Device[hub_port].bEp0MaxPks,
+                                                              intf_num);
                                             }
                                         }
                                     } else if (s == ERR_USB_DISCON) {
@@ -1915,4 +1827,3 @@ void USBH_MainDeal(void) {
         }
     }
 }
-

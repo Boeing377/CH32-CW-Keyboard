@@ -6,14 +6,14 @@
  * Description        : This file provides all the RTC firmware functions.
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "ch32v20x_rtc.h"
 
 /* RTC_Private_Defines */
-#define RTC_LSB_MASK     ((uint32_t)0x0000FFFF) /* RTC LSB Mask */
-#define PRLH_MSB_MASK    ((uint32_t)0x000F0000) /* RTC Prescaler MSB Mask */
+#define RTC_LSB_MASK ((uint32_t)0x0000FFFF)  /* RTC LSB Mask */
+#define PRLH_MSB_MASK ((uint32_t)0x000F0000) /* RTC Prescaler MSB Mask */
 
 /*********************************************************************
  * @fn      RTC_ITConfig
@@ -27,11 +27,11 @@
  *
  * @return  NewState - new state of the specified RTC interrupts(ENABLE or DISABLE).
  */
-void RTC_ITConfig(uint16_t RTC_IT, FunctionalState NewState) {
+void RTC_ITConfig (uint16_t RTC_IT, FunctionalState NewState) {
     if (NewState != DISABLE) {
         RTC->CTLRH |= RTC_IT;
     } else {
-        RTC->CTLRH &= (uint16_t) ~RTC_IT;
+        RTC->CTLRH &= (uint16_t)~RTC_IT;
     }
 }
 
@@ -42,7 +42,7 @@ void RTC_ITConfig(uint16_t RTC_IT, FunctionalState NewState) {
  *
  * @return  none
  */
-void RTC_EnterConfigMode(void) {
+void RTC_EnterConfigMode (void) {
     RTC->CTLRL |= RTC_CTLRL_CNF;
 }
 
@@ -53,8 +53,8 @@ void RTC_EnterConfigMode(void) {
  *
  * @return  none
  */
-void RTC_ExitConfigMode(void) {
-    RTC->CTLRL &= (uint16_t) ~((uint16_t) RTC_CTLRL_CNF);
+void RTC_ExitConfigMode (void) {
+    RTC->CTLRL &= (uint16_t) ~((uint16_t)RTC_CTLRL_CNF);
 }
 
 /*********************************************************************
@@ -64,7 +64,7 @@ void RTC_ExitConfigMode(void) {
  *
  * @return  RTC counter value
  */
-uint32_t RTC_GetCounter(void) {
+uint32_t RTC_GetCounter (void) {
     uint16_t high1a = 0, high1b = 0, high2a = 0, high2b = 0;
     uint16_t low1 = 0, low2 = 0;
 
@@ -90,7 +90,7 @@ uint32_t RTC_GetCounter(void) {
         } while (low1 != low2);
     }
 
-    return (((uint32_t) high2b << 16) | low2);
+    return (((uint32_t)high2b << 16) | low2);
 }
 
 /*********************************************************************
@@ -102,7 +102,7 @@ uint32_t RTC_GetCounter(void) {
  *
  * @return  RTC counter value
  */
-void RTC_SetCounter(uint32_t CounterValue) {
+void RTC_SetCounter (uint32_t CounterValue) {
     RTC_EnterConfigMode();
     RTC->CNTH = CounterValue >> 16;
     RTC->CNTL = (CounterValue & RTC_LSB_MASK);
@@ -118,7 +118,7 @@ void RTC_SetCounter(uint32_t CounterValue) {
  *
  * @return  none
  */
-void RTC_SetPrescaler(uint32_t PrescalerValue) {
+void RTC_SetPrescaler (uint32_t PrescalerValue) {
     RTC_EnterConfigMode();
     RTC->PSCRH = (PrescalerValue & PRLH_MSB_MASK) >> 16;
     RTC->PSCRL = (PrescalerValue & RTC_LSB_MASK);
@@ -134,7 +134,7 @@ void RTC_SetPrescaler(uint32_t PrescalerValue) {
  *
  * @return  none
  */
-void RTC_SetAlarm(uint32_t AlarmValue) {
+void RTC_SetAlarm (uint32_t AlarmValue) {
     RTC_EnterConfigMode();
     RTC->ALRMH = AlarmValue >> 16;
     RTC->ALRML = (AlarmValue & RTC_LSB_MASK);
@@ -148,7 +148,7 @@ void RTC_SetAlarm(uint32_t AlarmValue) {
  *
  * @return  RTC Divider value
  */
-uint32_t RTC_GetDivider(void) {
+uint32_t RTC_GetDivider (void) {
     uint16_t high1a = 0, high1b = 0, high2a = 0, high2b = 0;
     uint16_t low1 = 0, low2 = 0;
 
@@ -174,7 +174,7 @@ uint32_t RTC_GetDivider(void) {
         } while (low1 != low2);
     }
 
-    return ((((uint32_t) high2b & (uint32_t) 0x000F) << 16) | low2);
+    return ((((uint32_t)high2b & (uint32_t)0x000F) << 16) | low2);
 }
 
 /*********************************************************************
@@ -185,9 +185,8 @@ uint32_t RTC_GetDivider(void) {
  *          This function must be called before any write to RTC registers.
  * @return  none
  */
-void RTC_WaitForLastTask(void) {
-    while((RTC->CTLRL & RTC_FLAG_RTOFF) == (uint16_t)RESET)
-    {
+void RTC_WaitForLastTask (void) {
+    while ((RTC->CTLRL & RTC_FLAG_RTOFF) == (uint16_t)RESET) {
     }
 }
 
@@ -198,13 +197,12 @@ void RTC_WaitForLastTask(void) {
  *          Note-
  *          This function must be called before any read operation after an APB reset
  *          or an APB clock stop.
- *          
+ *
  * @return  none
  */
-void RTC_WaitForSynchro(void) {
-    RTC->CTLRL &= (uint16_t) ~RTC_FLAG_RSF;
-    while((RTC->CTLRL & RTC_FLAG_RSF) == (uint16_t)RESET)
-    {
+void RTC_WaitForSynchro (void) {
+    RTC->CTLRL &= (uint16_t)~RTC_FLAG_RSF;
+    while ((RTC->CTLRL & RTC_FLAG_RSF) == (uint16_t)RESET) {
     }
 }
 
@@ -222,9 +220,9 @@ void RTC_WaitForSynchro(void) {
  *
  * @return  The new state of RTC_FLAG (SET or RESET)
  */
-FlagStatus RTC_GetFlagStatus(uint16_t RTC_FLAG) {
+FlagStatus RTC_GetFlagStatus (uint16_t RTC_FLAG) {
     FlagStatus bitstatus = RESET;
-    if ((RTC->CTLRL & RTC_FLAG) != (uint16_t) RESET) {
+    if ((RTC->CTLRL & RTC_FLAG) != (uint16_t)RESET) {
         bitstatus = SET;
     } else {
         bitstatus = RESET;
@@ -245,8 +243,8 @@ FlagStatus RTC_GetFlagStatus(uint16_t RTC_FLAG) {
  *
  * @return  none
  */
-void RTC_ClearFlag(uint16_t RTC_FLAG) {
-    RTC->CTLRL &= (uint16_t) ~RTC_FLAG;
+void RTC_ClearFlag (uint16_t RTC_FLAG) {
+    RTC->CTLRL &= (uint16_t)~RTC_FLAG;
 }
 
 /*********************************************************************
@@ -261,12 +259,11 @@ void RTC_ClearFlag(uint16_t RTC_FLAG) {
  *
  * @return  The new state of the RTC_IT (SET or RESET)
  */
-ITStatus RTC_GetITStatus(uint16_t RTC_IT) {
+ITStatus RTC_GetITStatus (uint16_t RTC_IT) {
     ITStatus bitstatus = RESET;
 
-    bitstatus = (ITStatus) (RTC->CTLRL & RTC_IT);
-    if (((RTC->CTLRH & RTC_IT) != (uint16_t) RESET)
-            && (bitstatus != (uint16_t) RESET)) {
+    bitstatus = (ITStatus)(RTC->CTLRL & RTC_IT);
+    if (((RTC->CTLRH & RTC_IT) != (uint16_t)RESET) && (bitstatus != (uint16_t)RESET)) {
         bitstatus = SET;
     } else {
         bitstatus = RESET;
@@ -286,8 +283,8 @@ ITStatus RTC_GetITStatus(uint16_t RTC_IT) {
  *
  * @return  none
  */
-void RTC_ClearITPendingBit(uint16_t RTC_IT) {
-    RTC->CTLRL &= (uint16_t) ~RTC_IT;
+void RTC_ClearITPendingBit (uint16_t RTC_IT) {
+    RTC->CTLRL &= (uint16_t)~RTC_IT;
 }
 
 #if defined(CH32V20x_D8) || defined(CH32V20x_D8W)
@@ -303,8 +300,7 @@ void RTC_ClearITPendingBit(uint16_t RTC_IT) {
  *
  * @return        None
  */
-void Calibration_LSI(Cali_LevelTypeDef cali_Lv)
-{
+void Calibration_LSI (Cali_LevelTypeDef cali_Lv) {
     uint32_t i;
     int32_t cnt_offset;
     int32_t Freq = 0;
@@ -315,29 +311,31 @@ void Calibration_LSI(Cali_LevelTypeDef cali_Lv)
     // Coarse tuning
     OSC->LSI32K_CAL_CFG &= ~RB_OSC_CNT_VLU;
     OSC->LSI32K_CAL_CFG |= 0;
-    while(1)
-    {
+    while (1) {
         retry_all++;
-        while(1)
-        {
+        while (1) {
             OSC->LSI32K_CAL_CTRL |= RB_OSC_CAL_EN;
             OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
             OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_IF_END;
-            while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+            while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+                ;
             i = OSC->LSI32K_CAL_STATR;
             OSC->LSI32K_CAL_CTRL &= ~RB_OSC_CAL_EN;
             OSC->LSI32K_CAL_CTRL |= RB_OSC_CAL_EN;
             OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
             OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_IF_END;
             cnt_32k = RTC_GetCounter();
-            while(RTC_GetCounter() == cnt_32k);
+            while (RTC_GetCounter() == cnt_32k)
+                ;
             OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
-            while(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END);
-            while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+            while (OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END)
+                ;
+            while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+                ;
             i = OSC->LSI32K_CAL_STATR;
             cnt_offset = (i & 0x3FFF) + OSC->LSI32K_CAL_OV_CNT * 0x3FFF - 2000 * (Freq / 1000) / CAB_LSIFQ;
-            if(((cnt_offset > -(20 * (Freq / 1000) / 36000)) && (cnt_offset < (20 * (Freq / 1000) / 36000))) || retry > 2)
-            break;
+            if (((cnt_offset > -(20 * (Freq / 1000) / 36000)) && (cnt_offset < (20 * (Freq / 1000) / 36000))) || retry > 2)
+                break;
             retry++;
             cnt_offset = (cnt_offset > 0) ? (((cnt_offset * 2) / (40 * (Freq / 1000) / 36000)) + 1) / 2 : (((cnt_offset * 2) / (40 * (Freq / 1000) / 36000)) - 1) / 2;
             OSC->LSI32K_TUNE += cnt_offset;
@@ -351,47 +349,40 @@ void Calibration_LSI(Cali_LevelTypeDef cali_Lv)
 
         // Fine tuning
         // After configuring the fine-tuning parameters, discard the two captured values (software behavior) and judge once, only one time is left here
-        while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+        while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+            ;
         i = OSC->LSI32K_CAL_STATR;
         OSC->LSI32K_CAL_CTRL &= ~RB_OSC_CAL_EN;
         OSC->LSI32K_CAL_CTRL |= RB_OSC_CAL_EN;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_IF_END;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
         cnt_32k = RTC_GetCounter();
-        while(RTC_GetCounter() == cnt_32k);
+        while (RTC_GetCounter() == cnt_32k)
+            ;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
-        while(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END);
-        while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+        while (OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END)
+            ;
+        while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+            ;
         i = OSC->LSI32K_CAL_STATR;
         cnt_offset = (i & 0x3FFF) + OSC->LSI32K_CAL_OV_CNT * 0x3FFF - 8000 * (1 << 2) * (Freq / 1000000) / 256 * 1000 / (CAB_LSIFQ / 256);
         cnt_offset = (cnt_offset > 0) ? ((((cnt_offset * 2 * 100) / (748 * ((1 << 2) / 4) * (Freq / 1000) / 36000)) + 1) / 2) : ((((cnt_offset * 2 * 100) / (748 * ((1 << 2) / 4) * (Freq / 1000) / 36000)) - 1) / 2);
-        if((cnt_offset > 0)&&(((OSC->LSI32K_TUNE>>5)+cnt_offset)>0x7FF))
-        {
-            if(retry_all>2)
-            {
-                OSC->LSI32K_TUNE |= (0xFF<<5);
-            }
-            else
-            {
-                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE&0x1F)|(0x3FF<<5);
+        if ((cnt_offset > 0) && (((OSC->LSI32K_TUNE >> 5) + cnt_offset) > 0x7FF)) {
+            if (retry_all > 2) {
+                OSC->LSI32K_TUNE |= (0xFF << 5);
+            } else {
+                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE & 0x1F) | (0x3FF << 5);
                 continue;
             }
-        }
-        else if((cnt_offset < 0)&&((OSC->LSI32K_TUNE>>5)<(-cnt_offset)))
-        {
-            if(retry_all>2)
-            {
+        } else if ((cnt_offset < 0) && ((OSC->LSI32K_TUNE >> 5) < (-cnt_offset))) {
+            if (retry_all > 2) {
                 OSC->LSI32K_TUNE &= 0x1F;
-            }
-            else
-            {
-                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE&0x1F)|(0x7F<<5);
+            } else {
+                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE & 0x1F) | (0x7F << 5);
                 continue;
             }
-        }
-        else
-        {
-            OSC->LSI32K_TUNE += (cnt_offset<<5);
+        } else {
+            OSC->LSI32K_TUNE += (cnt_offset << 5);
         }
         OSC->LSI32K_CAL_CFG &= ~RB_OSC_CNT_VLU;
         OSC->LSI32K_CAL_CFG |= cali_Lv;
@@ -401,50 +392,43 @@ void Calibration_LSI(Cali_LevelTypeDef cali_Lv)
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
         // Fine tuning
         // After configuring the fine-tuning parameters, discard the two captured values (software behavior) and judge once, only one time is left here
-        while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+        while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+            ;
         i = OSC->LSI32K_CAL_STATR;
         OSC->LSI32K_CAL_CTRL &= ~RB_OSC_CAL_EN;
         OSC->LSI32K_CAL_CTRL |= RB_OSC_CAL_EN;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_IF_END;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
         cnt_32k = RTC_GetCounter();
-        while(RTC_GetCounter() == cnt_32k);
+        while (RTC_GetCounter() == cnt_32k)
+            ;
         OSC->LSI32K_CAL_STATR |= RB_OSC_CAL_CNT_OV;
-        while(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END);
-        while(!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END));
+        while (OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END)
+            ;
+        while (!(OSC->LSI32K_CAL_STATR & RB_OSC_CAL_IF_END))
+            ;
         OSC->LSI32K_CAL_CTRL &= ~RB_OSC_CAL_EN;
         i = OSC->LSI32K_CAL_STATR;
         cnt_offset = (i & 0x3FFF) + OSC->LSI32K_CAL_OV_CNT * 0x3FFF - 8000 * (1 << cali_Lv) * (Freq / 1000000) / 256 * 1000 / (CAB_LSIFQ / 256);
         cnt_offset = (cnt_offset > 0) ? ((((cnt_offset * 2 * 100) / (748 * ((1 << cali_Lv) / 4) * (Freq / 1000) / 36000)) + 1) / 2) : ((((cnt_offset * 2 * 100) / (748 * ((1 << cali_Lv) / 4) * (Freq / 1000) / 36000)) - 1) / 2);
-        if((cnt_offset > 0)&&(((OSC->LSI32K_TUNE>>5)+cnt_offset)>0x7FF))
-        {
-            if(retry_all>2)
-            {
-                OSC->LSI32K_TUNE |= (0xFF<<5);
+        if ((cnt_offset > 0) && (((OSC->LSI32K_TUNE >> 5) + cnt_offset) > 0x7FF)) {
+            if (retry_all > 2) {
+                OSC->LSI32K_TUNE |= (0xFF << 5);
                 return;
-            }
-            else
-            {
-                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE&0x1F)|(0x3FF<<5);
+            } else {
+                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE & 0x1F) | (0x3FF << 5);
                 continue;
             }
-        }
-        else if((cnt_offset < 0)&&((OSC->LSI32K_TUNE>>5)<(-cnt_offset)))
-        {
-            if(retry_all>2)
-            {
+        } else if ((cnt_offset < 0) && ((OSC->LSI32K_TUNE >> 5) < (-cnt_offset))) {
+            if (retry_all > 2) {
                 OSC->LSI32K_TUNE &= 0x1F;
                 return;
-            }
-            else
-            {
-                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE&0x1F)|(0x3F<<5);
+            } else {
+                OSC->LSI32K_TUNE = (OSC->LSI32K_TUNE & 0x1F) | (0x3F << 5);
                 continue;
             }
-        }
-        else
-        {
-            OSC->LSI32K_TUNE += (cnt_offset<<5);
+        } else {
+            OSC->LSI32K_TUNE += (cnt_offset << 5);
             return;
         }
     }

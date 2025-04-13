@@ -6,7 +6,7 @@
  * Description        : This file provides all the BKP firmware functions.
  *********************************************************************************
  * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
+ * Attention: This software (modified or not) and binary are used for
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "ch32v20x_bkp.h"
@@ -15,8 +15,8 @@
 /* BKP registers bit mask */
 
 /* OCTLR register bit mask */
-#define OCTLR_CAL_MASK    ((uint16_t)0xFF80)
-#define OCTLR_MASK        ((uint16_t)0xFC7F)
+#define OCTLR_CAL_MASK ((uint16_t)0xFF80)
+#define OCTLR_MASK ((uint16_t)0xFC7F)
 
 /*********************************************************************
  * @fn      BKP_DeInit
@@ -25,9 +25,9 @@
  *
  * @return  none
  */
-void BKP_DeInit(void) {
-    RCC_BackupResetCmd(ENABLE);
-    RCC_BackupResetCmd(DISABLE);
+void BKP_DeInit (void) {
+    RCC_BackupResetCmd (ENABLE);
+    RCC_BackupResetCmd (DISABLE);
 }
 
 /*********************************************************************
@@ -41,7 +41,7 @@ void BKP_DeInit(void) {
  *
  * @return  none
  */
-void BKP_TamperPinLevelConfig(uint16_t BKP_TamperPinLevel) {
+void BKP_TamperPinLevelConfig (uint16_t BKP_TamperPinLevel) {
     if (BKP_TamperPinLevel) {
         BKP->TPCTLR |= (1 << 1);
     } else {
@@ -58,7 +58,7 @@ void BKP_TamperPinLevelConfig(uint16_t BKP_TamperPinLevel) {
  *
  * @return  none
  */
-void BKP_TamperPinCmd(FunctionalState NewState) {
+void BKP_TamperPinCmd (FunctionalState NewState) {
     if (NewState) {
         BKP->TPCTLR |= (1 << 0);
     } else {
@@ -75,7 +75,7 @@ void BKP_TamperPinCmd(FunctionalState NewState) {
  *
  * @return  none
  */
-void BKP_ITConfig(FunctionalState NewState) {
+void BKP_ITConfig (FunctionalState NewState) {
     if (NewState) {
         BKP->TPCSR |= (1 << 2);
     } else {
@@ -99,7 +99,7 @@ void BKP_ITConfig(FunctionalState NewState) {
  *
  * @return  none
  */
-void BKP_RTCOutputConfig(uint16_t BKP_RTCOutputSource) {
+void BKP_RTCOutputConfig (uint16_t BKP_RTCOutputSource) {
     uint16_t tmpreg = 0;
 
     tmpreg = BKP->OCTLR;
@@ -118,7 +118,7 @@ void BKP_RTCOutputConfig(uint16_t BKP_RTCOutputSource) {
  *
  * @return  none
  */
-void BKP_SetRTCCalibrationValue(uint8_t CalibrationValue) {
+void BKP_SetRTCCalibrationValue (uint8_t CalibrationValue) {
     uint16_t tmpreg = 0;
 
     tmpreg = BKP->OCTLR;
@@ -137,12 +137,12 @@ void BKP_SetRTCCalibrationValue(uint8_t CalibrationValue) {
  *
  * @return  none
  */
-void BKP_WriteBackupRegister(uint16_t BKP_DR, uint16_t Data) {
+void BKP_WriteBackupRegister (uint16_t BKP_DR, uint16_t Data) {
     __IO uint32_t tmp = 0;
 
-    tmp = (uint32_t) BKP_BASE;
+    tmp = (uint32_t)BKP_BASE;
     tmp += BKP_DR;
-    *(__IO uint32_t *) tmp = Data;
+    *(__IO uint32_t *)tmp = Data;
 }
 
 /*********************************************************************
@@ -155,13 +155,13 @@ void BKP_WriteBackupRegister(uint16_t BKP_DR, uint16_t Data) {
  *
  * @return  none
  */
-uint16_t BKP_ReadBackupRegister(uint16_t BKP_DR) {
+uint16_t BKP_ReadBackupRegister (uint16_t BKP_DR) {
     __IO uint32_t tmp = 0;
 
-    tmp = (uint32_t) BKP_BASE;
+    tmp = (uint32_t)BKP_BASE;
     tmp += BKP_DR;
 
-    return (*(__IO uint16_t *) tmp);
+    return (*(__IO uint16_t *)tmp);
 }
 
 /*********************************************************************
@@ -171,7 +171,7 @@ uint16_t BKP_ReadBackupRegister(uint16_t BKP_DR) {
  *
  * @return  FlagStatus - SET or RESET.
  */
-FlagStatus BKP_GetFlagStatus(void) {
+FlagStatus BKP_GetFlagStatus (void) {
     if (BKP->TPCSR & (1 << 8)) {
         return SET;
     } else {
@@ -186,7 +186,7 @@ FlagStatus BKP_GetFlagStatus(void) {
  *
  * @return  none
  */
-void BKP_ClearFlag(void) {
+void BKP_ClearFlag (void) {
     BKP->TPCSR |= BKP_CTE;
 }
 
@@ -197,7 +197,7 @@ void BKP_ClearFlag(void) {
  *
  * @return  ITStatus - SET or RESET.
  */
-ITStatus BKP_GetITStatus(void) {
+ITStatus BKP_GetITStatus (void) {
     if (BKP->TPCSR & (1 << 9)) {
         return SET;
     } else {
@@ -212,6 +212,6 @@ ITStatus BKP_GetITStatus(void) {
  *
  * @return  none
  */
-void BKP_ClearITPendingBit(void) {
+void BKP_ClearITPendingBit (void) {
     BKP->TPCSR |= BKP_CTI;
 }

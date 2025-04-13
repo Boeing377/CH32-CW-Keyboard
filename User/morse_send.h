@@ -10,10 +10,10 @@
 
 #include "global.h"
 
-void TIM2_Init(uint16_t arr, uint16_t psc);
-void bufCovn(uint8_t theChar);
-void add_wpm(int num);
-void sub_wpm(int num);
+void TIM2_Init (uint16_t arr, uint16_t psc);
+void bufCovn (uint8_t theChar);
+void add_wpm (int num);
+void sub_wpm (int num);
 void starSending();
 void endSending();
 

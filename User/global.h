@@ -9,33 +9,34 @@
 #define USER_GLOBAL_H_
 #include "ch32v20x.h"
 
-#define VERSION     "Ver 1.1.5a"
+#define VERSION "Ver 1.1.6"
 
 #define STARUP_FLAG 0x15
 
-#define KEY_OUT     GPIO_Pin_1
-#define BEEP_OUT    GPIO_Pin_9
-#define LED_OUT     GPIO_Pin_12
-#define KEY_1_IN    GPIO_Pin_13
-#define KEY_2_IN    GPIO_Pin_14
+#define KEY_OUT GPIO_Pin_1
+#define BEEP_OUT GPIO_Pin_9
+#define LED_OUT GPIO_Pin_12
+#define KEY_1_IN GPIO_Pin_13
+#define KEY_2_IN GPIO_Pin_14
 #define POWBOTTON_OUT GPIO_Pin_3
+#define USB_SW_OUT GPIO_Pin_15
 
-#define KEY_OUT_PORT    GPIOA
-#define BEEP_OUT_PORT   GPIOB
-#define LED_OUT_PORT    GPIOB
-#define KEY_1_IN_PORT   GPIOB
-#define KEY_2_IN_PORT   GPIOB
-#define POWBOTTON_PORT  GPIOA
+#define KEY_OUT_PORT GPIOA
+#define BEEP_OUT_PORT GPIOB
+#define LED_OUT_PORT GPIOB
+#define KEY_1_IN_PORT GPIOB
+#define KEY_2_IN_PORT GPIOB
+#define POWBOTTON_PORT GPIOA
 
 #define MAX_WPM 99
 #define MIN_WPN 1
 
-#define DEF_WPM                 20
-#define DEF_DOT_LEN             1
-#define DEF_DASH_LEN            3
-#define DEF_BREAK_LEN           1
-#define DEF_LETTER_BREAK_LEN    3
-#define DEF_WORD_BREAK_LEN      7
+#define DEF_WPM 20
+#define DEF_DOT_LEN 1
+#define DEF_DASH_LEN 3
+#define DEF_BREAK_LEN 1
+#define DEF_LETTER_BREAK_LEN 3
+#define DEF_WORD_BREAK_LEN 7
 
 #define BUFFSIZE 512
 #define INPUTZONE_SIZE 1000
@@ -58,7 +59,7 @@ struct Morse_Config {
 
 struct Config {
     uint8_t beeper;
-    uint8_t mode;                       //模式        0：按下立即输出         1：回车输出
+    uint8_t mode;  // 模式        0：按下立即输出         1：回车输出
     int8_t wpm;
     uint8_t initial_startup;
     struct Morse_Config morse_config;
@@ -68,7 +69,7 @@ extern struct Config config;
 extern uint8_t msg[];
 
 extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
-        menu_item, disp_ver, disp_morse_conf, morse_conf_item;
+    menu_item, disp_ver, disp_morse_conf, morse_conf_item;
 extern uint8_t inputBuff[], outputBuff[];
 extern int sendCount;
 extern uint32_t inputBuffSize, outputBuffSize;
