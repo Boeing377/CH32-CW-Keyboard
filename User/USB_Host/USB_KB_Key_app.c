@@ -251,6 +251,7 @@ void CombufDeal() {
                     }
                 } else if (New_Pressed[i] == 31) {  // 按下回车
                     if (config.mode) {
+                        memset (outputBuff, '\0', BUFFSIZE);
                         memcpy (outputBuff, inputBuff, inputBuffSize);
                         outputBuffSize = inputBuffSize;
                         outputBuff[outputBuffSize] = '\0';

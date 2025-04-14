@@ -183,7 +183,8 @@ void starSending() {
         stge = 1;
         bufCovnMark = 1;
         if (config.mode) {
-            sendCount = 0;
+            send_now = sendCount = 0;
+            
         }
         TIM_Cmd (TIM2, ENABLE);
         NVIC_EnableIRQ (TIM2_IRQn);
@@ -515,6 +516,7 @@ void TIM2_IRQHandler (void) {
         TIM_ClearITPendingBit (TIM2, TIM_IT_Update);
 
         if (bufCovnMark) {
+            send_now = sendCount;
             if (config.mode) {
                 bufCovn (outputBuff[sendCount++]);
             } else {
@@ -528,7 +530,8 @@ void TIM2_IRQHandler (void) {
             GPIO_WriteBit (KEY_OUT_PORT, KEY_OUT, Bit_RESET);
             if (config.beeper)
                 GPIO_WriteBit (BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
-
+                
+            send_now = sendCount;
             if (config.mode) {
                 if (sendCount < outputBuffSize) {
                     bufCovn (outputBuff[sendCount++]);

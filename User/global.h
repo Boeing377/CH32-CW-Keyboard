@@ -8,6 +8,7 @@
 #ifndef USER_GLOBAL_H_
 #define USER_GLOBAL_H_
 #include "ch32v20x.h"
+#include "u8g2/u8g2.h"
 
 #define VERSION "Ver 1.1.6"
 
@@ -69,11 +70,13 @@ extern struct Config config;
 extern uint8_t msg[];
 
 extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
-    menu_item, disp_ver, disp_morse_conf, morse_conf_item;
-extern uint8_t inputBuff[], outputBuff[];
-extern int sendCount;
+    menu_item, disp_ver, disp_morse_conf, morse_conf_item, curse_flash;
+extern char inputBuff[], outputBuff[];
+extern int sendCount, send_now;
 extern uint32_t inputBuffSize, outputBuffSize;
 
 extern struct Config config;
+
+extern u8g2_t u8g2;
 
 #endif /* USER_GLOBAL_H_ */

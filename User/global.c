@@ -19,10 +19,13 @@ uint8_t menu_item = 0;
 uint8_t disp_ver = 0;
 uint8_t disp_morse_conf = 0;
 uint8_t morse_conf_item = 0;
-int sendCount = 0;
+int sendCount = 0, send_now;
+uint8_t curse_flash = 0;
 
 uint8_t msg[MSG_NUM];
 
-uint8_t inputBuff[INPUTZONE_SIZE], outputBuff[INPUTZONE_SIZE];  // 键入buffer和输出buffer
+char inputBuff[INPUTZONE_SIZE], outputBuff[INPUTZONE_SIZE];  // 键入buffer和输出buffer
 
 uint32_t inputBuffSize = 0, outputBuffSize = 0;
+
+u8g2_t u8g2;

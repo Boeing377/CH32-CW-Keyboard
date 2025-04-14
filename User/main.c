@@ -21,9 +21,10 @@
 #include "debug.h"
 #include "global.h"
 #include "morse_send.h"
-#include "OLED/oled.h"
 #include "USB_Host/usb_host_conf.h"
 #include "string.h"
+#include "ch32_u8g2.h"
+#include "screen_disp.h"
 
 /* Global typedef */
 
@@ -74,8 +75,8 @@ int main (void) {
     TIM4_Init (3999, 999);
 
     /*Init OLED*/
-    SSD1306_Init();
-
+    Delay_Ms (100);
+    u8g2Init(&u8g2);
     /*Set USB input*/
     GPIO_WriteBit(GPIOB, USB_SW_OUT, Bit_SET);
 
@@ -89,15 +90,18 @@ int main (void) {
 
     ReadConfig();
 
-    DispWelcome();
+    // DispWelcome();
+    show_welcome();
 
     Delay_Ms (1500);
 
     while (1) {
+        
         key1 = GPIO_ReadInputDataBit (KEY_1_IN_PORT, KEY_1_IN);
         key2 = GPIO_ReadInputDataBit (KEY_2_IN_PORT, KEY_2_IN);
         USBH_MainDeal();
-        Disp();
+        dispf();
+
         if (key1 == 1 && key1old == 0)          // key1 pressed
         {
             config.beeper = 1 - config.beeper;  // «–ªª «∑Ò π”√∑‰√˘∆˜
@@ -287,267 +291,110 @@ void WriteMsg (uint8_t sn) {
     msg[sn] = 0xcd;
     WriteConfig();
 
-    //  TIM_Cmd( TIM4, DISABLE);
-    //  NVIC_DisableIRQ(TIM4_IRQn);
-
     saving = 0;
 }
 
-void DispWelcome() {
-    SSD1306_GotoXY (10, 10);
-    SSD1306_Puts ("CW", &Font_11x18, 1);
-    SSD1306_GotoXY (10, 30);
-    SSD1306_Puts ("Keyboard", &Font_11x18, 1);
-    SSD1306_GotoXY (20, 50);
-    SSD1306_Puts ("By DeVolt Elec.", &Font_7x10, 1);
-    //  SSD1306_GotoXY(60, 50);
-    //  SSD1306_Puts(VERSION, &Font_7x10, 1); //print Soft Version
-    SSD1306_UpdateScreen();  // update screen
-}
 
-void Disp_Ver() {
-    char str[19];
-    SSD1306_GotoXY (30, 20);
-    sprintf (str, "%s", VERSION);
-    SSD1306_Puts (str, &Font_7x10, 1);
-}
+// void Disp() {
+//     char str[19];
+//     int diff;
 
-void Disp_Morse_Conf() {
-    char str[19];
 
-    SSD1306_GotoXY (0, 0);
-    sprintf (str, "Word Split");
-    SSD1306_Puts (str, &Font_7x10, morse_conf_item == 0 ? 0 : 1);
-    SSD1306_GotoXY (86, 0);
-    switch (config.morse_config.word_break_len) {
-    case 7:
-        sprintf (str, "Short");
-        break;
-    case 10:
-        sprintf (str, "Mid");
-        break;
-    case 14:
-        sprintf (str, "Long");
-        break;
-    default:
-        sprintf (str, "ERR");
-    }
-    SSD1306_Puts (str, &Font_7x10, 1);
+//         if (config.mode) {
+//             SSD1306_DrawLine (64, 10, 64, 64, 1);
+//             SSD1306_DrawLine (63, 10, 63, 64, 1);
+//             SSD1306_DrawLine (0, 10, 128, 10, 1);
 
-    SSD1306_GotoXY (0, 10);
-    sprintf (str, "Cut Num");
-    SSD1306_Puts (str, &Font_7x10, morse_conf_item == 1 ? 0 : 1);
-    SSD1306_GotoXY (86, 10);
-    switch (config.morse_config.cut_num) {
-    case 0:
-        sprintf (str, "OFF");
-        break;
-    case 1:
-        sprintf (str, "Mod A");
-        break;
-    case 2:
-        sprintf (str, "Mod B");
-        break;
-    case 3:
-        sprintf (str, "Mod C");
-        break;
-    default:
-        sprintf (str, "ERR");
-        break;
-    }
-    SSD1306_Puts (str, &Font_7x10, 1);
-    SSD1306_GotoXY (0, 0);
+//             SSD1306_GotoXY (0, 11);
+//             SSD1306_Puts ("INPUT:", &Font_7x10, 0);
 
-    //  SSD1306_GotoXY(0, 20);
-    //  sprintf(str, "BREAK LEN");
-    //  SSD1306_Puts(str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
-    //  SSD1306_GotoXY(100, 20);
-    //  sprintf(str, "%d", config.morse_config.break_len);
-    //  SSD1306_Puts(str, &Font_7x10, 1);
-    //
-    //  SSD1306_GotoXY(0, 30);
-    //  sprintf(str, "LETTER BREAK");
-    //  SSD1306_Puts(str, &Font_7x10, morse_conf_item == 3 ? 0 : 1);
-    //  SSD1306_GotoXY(100, 30);
-    //  sprintf(str, "%d", config.morse_config.letter_break_len);
-    //  SSD1306_Puts(str, &Font_7x10, 1);
-    //
-    //  SSD1306_GotoXY(0, 40);
-    //  sprintf(str, "WORD BREAK");
-    //  SSD1306_Puts(str, &Font_7x10, morse_conf_item == 4 ? 0 : 1);
-    //  SSD1306_GotoXY(100, 40);
-    //  sprintf(str, "%d", config.morse_config.word_break_len);
-    //  SSD1306_Puts(str, &Font_7x10, 1);
+//             if (strlen (inputBuff) <= 9) {
+//                 SSD1306_GotoXY (0, 22);
+//                 SSD1306_Puts (inputBuff, &Font_7x10, 1);
+//             } else if (strlen (inputBuff) < 9 * 4) {
+//                 for (int i = 0; i < (strlen (inputBuff) / 9 + 1); i++) {
+//                     if (strlen (inputBuff + i * 9) <= 9) {
+//                         strcpy (str, inputBuff + i * 9);
 
-    SSD1306_GotoXY (0, 50);
-    sprintf (str, "BACK");
-    SSD1306_Puts (str, &Font_7x10, morse_conf_item == 2 ? 0 : 1);
-}
+//                     } else {
+//                         memcpy (str, inputBuff + i * 9, 9);
+//                         str[9] = '\0';
+//                     }
+//                     SSD1306_GotoXY (0, 22 + i * 10);
+//                     SSD1306_Puts (str, &Font_7x10, 1);
+//                 }
+//             } else {
+//                 diff = strlen (inputBuff) / 9 - 3;
+//                 for (int i = diff; i < (strlen (inputBuff) / 9 + 1); i++) {
+//                     if (strlen (inputBuff + i * 9) <= 9) {
+//                         strcpy (str, inputBuff + i * 9);
 
-void Disp_Menu() {
-    char str[19];
-    if (disp_ver) {
-        Disp_Ver();
-    } else if (disp_morse_conf) {
-        Disp_Morse_Conf();
-    } else {
-        SSD1306_GotoXY (0, 0);
-        sprintf (str, "MODE");
-        SSD1306_Puts (str, &Font_7x10, menu_item == 0 ? 0 : 1);
-        SSD1306_GotoXY (100, 0);
-        sprintf (str, "%s", config.mode == 1 ? "BUF" : "DIR");
-        SSD1306_Puts (str, &Font_7x10, 1);
+//                     } else {
+//                         memcpy (str, inputBuff + i * 9, 9);
+//                         str[9] = '\0';
+//                     }
+//                     SSD1306_GotoXY (0, 22 + (i - diff) * 10);
+//                     SSD1306_Puts (str, &Font_7x10, 1);
+//                 }
+//             }
 
-        SSD1306_GotoXY (0, 10);
-        sprintf (str, "BEEPER");
-        SSD1306_Puts (str, &Font_7x10, menu_item == 1 ? 0 : 1);
-        SSD1306_GotoXY (100, 10);
-        sprintf (str, "%s", config.beeper == 1 ? "ON" : "OFF");
-        SSD1306_Puts (str, &Font_7x10, 1);
+//             SSD1306_GotoXY (64, 11);
+//             SSD1306_Puts ("SENDING:", &Font_7x10, 0);
 
-        SSD1306_GotoXY (0, 20);
-        sprintf (str, "MORSE CONF");
-        SSD1306_Puts (str, &Font_7x10, menu_item == 2 ? 0 : 1);
+//             if (strlen (outputBuff) <= 9) {
+//                 SSD1306_GotoXY (64, 22);
+//                 SSD1306_Puts (outputBuff, &Font_7x10, 1);
+//             } else {
+//                 for (int i = 0; i < (strlen (outputBuff) / 9 + 1); i++) {
+//                     if (strlen (outputBuff + i * 9) <= 9) {
+//                         strcpy (str, outputBuff + i * 9);
 
-        SSD1306_GotoXY (0, 30);
-        sprintf (str, "VERSION");
-        SSD1306_Puts (str, &Font_7x10, menu_item == 3 ? 0 : 1);
+//                     } else {
+//                         memcpy (str, outputBuff + i * 9, 9);
+//                         str[9] = '\0';
+//                     }
+//                     SSD1306_GotoXY (64, 22 + i * 10);
+//                     SSD1306_Puts (str, &Font_7x10, 1);
+//                 }
+//             }
+//         } else {
+//             SSD1306_DrawLine (0, 10, 128, 10, 1);
+//             SSD1306_GotoXY (0, 11);
+//             SSD1306_Puts ("INPUT:", &Font_7x10, 0);
 
-        SSD1306_GotoXY (0, 50);
-        sprintf (str, "SAVE & EXIT");
-        SSD1306_Puts (str, &Font_7x10, menu_item == 4 ? 0 : 1);
-    }
-}
+//             if (strlen (inputBuff) <= 18) {
+//                 SSD1306_GotoXY (0, 22);
+//                 SSD1306_Puts (inputBuff, &Font_7x10, 1);
+//             } else if (strlen (inputBuff) <= 18 * 4) {
+//                 for (int i = 0; i < (strlen (inputBuff) / 18 + 1); i++) {
+//                     if (strlen (inputBuff + i * 18) <= 18) {
+//                         strcpy (str, inputBuff + i * 18);
 
-void Disp() {
-    char str[19];
-    int diff;
+//                     } else {
+//                         memcpy (str, inputBuff + i * 18, 18);
+//                         str[18] = '\0';
+//                     }
+//                     SSD1306_GotoXY (0, 22 + i * 10);
+//                     SSD1306_Puts (str, &Font_7x10, 1);
+//                 }
+//             } else {
+//                 diff = strlen (inputBuff) / 18 - 3;
+//                 for (int i = diff; i < (strlen (inputBuff) / 18 + 1); i++) {
+//                     if (strlen (inputBuff + i * 18) <= 18) {
+//                         strcpy (str, inputBuff + i * 18);
 
-    SSD1306_Fill (SSD1306_COLOR_BLACK);
-
-    if (disp_menu) {
-        Disp_Menu();
-    } else {
-        SSD1306_GotoXY (0, 0);
-        sprintf (str, "WPM:%d", config.wpm);
-        SSD1306_Puts (str, &Font_7x10, 1);
-
-        if (config.beeper) {
-            SSD1306_GotoXY (113, 0);
-            SSD1306_Puts ("B", &Font_7x10, 1);
-        }
-
-        SSD1306_GotoXY (42, 0);
-        sprintf (str, "S:%03d", sendCount);
-        SSD1306_Puts (str, &Font_7x10, 1);
-
-        SSD1306_GotoXY (77, 0);
-        if (stge == 1 && config.mode == 1)
-            sprintf (str, "L:%03d", outputBuffSize);
-        else
-            sprintf (str, "L:%03d", inputBuffSize);
-        SSD1306_Puts (str, &Font_7x10, 1);
-
-        if (caps_lock_stg) {
-            SSD1306_GotoXY (120, 0);
-            SSD1306_Puts ("C", &Font_7x10, 1);
-        }
-
-        if (config.mode) {
-            SSD1306_DrawLine (64, 10, 64, 64, 1);
-            SSD1306_DrawLine (63, 10, 63, 64, 1);
-            SSD1306_DrawLine (0, 10, 128, 10, 1);
-
-            SSD1306_GotoXY (0, 11);
-            SSD1306_Puts ("INPUT:", &Font_7x10, 0);
-
-            if (strlen (inputBuff) <= 9) {
-                SSD1306_GotoXY (0, 22);
-                SSD1306_Puts (inputBuff, &Font_7x10, 1);
-            } else if (strlen (inputBuff) < 9 * 4) {
-                for (int i = 0; i < (strlen (inputBuff) / 9 + 1); i++) {
-                    if (strlen (inputBuff + i * 9) <= 9) {
-                        strcpy (str, inputBuff + i * 9);
-
-                    } else {
-                        memcpy (str, inputBuff + i * 9, 9);
-                        str[9] = '\0';
-                    }
-                    SSD1306_GotoXY (0, 22 + i * 10);
-                    SSD1306_Puts (str, &Font_7x10, 1);
-                }
-            } else {
-                diff = strlen (inputBuff) / 9 - 3;
-                for (int i = diff; i < (strlen (inputBuff) / 9 + 1); i++) {
-                    if (strlen (inputBuff + i * 9) <= 9) {
-                        strcpy (str, inputBuff + i * 9);
-
-                    } else {
-                        memcpy (str, inputBuff + i * 9, 9);
-                        str[9] = '\0';
-                    }
-                    SSD1306_GotoXY (0, 22 + (i - diff) * 10);
-                    SSD1306_Puts (str, &Font_7x10, 1);
-                }
-            }
-
-            SSD1306_GotoXY (64, 11);
-            SSD1306_Puts ("SENDING:", &Font_7x10, 0);
-
-            if (strlen (outputBuff) <= 9) {
-                SSD1306_GotoXY (64, 22);
-                SSD1306_Puts (outputBuff, &Font_7x10, 1);
-            } else {
-                for (int i = 0; i < (strlen (outputBuff) / 9 + 1); i++) {
-                    if (strlen (outputBuff + i * 9) <= 9) {
-                        strcpy (str, outputBuff + i * 9);
-
-                    } else {
-                        memcpy (str, outputBuff + i * 9, 9);
-                        str[9] = '\0';
-                    }
-                    SSD1306_GotoXY (64, 22 + i * 10);
-                    SSD1306_Puts (str, &Font_7x10, 1);
-                }
-            }
-        } else {
-            SSD1306_DrawLine (0, 10, 128, 10, 1);
-            SSD1306_GotoXY (0, 11);
-            SSD1306_Puts ("INPUT:", &Font_7x10, 0);
-
-            if (strlen (inputBuff) <= 18) {
-                SSD1306_GotoXY (0, 22);
-                SSD1306_Puts (inputBuff, &Font_7x10, 1);
-            } else if (strlen (inputBuff) <= 18 * 4) {
-                for (int i = 0; i < (strlen (inputBuff) / 18 + 1); i++) {
-                    if (strlen (inputBuff + i * 18) <= 18) {
-                        strcpy (str, inputBuff + i * 18);
-
-                    } else {
-                        memcpy (str, inputBuff + i * 18, 18);
-                        str[18] = '\0';
-                    }
-                    SSD1306_GotoXY (0, 22 + i * 10);
-                    SSD1306_Puts (str, &Font_7x10, 1);
-                }
-            } else {
-                diff = strlen (inputBuff) / 18 - 3;
-                for (int i = diff; i < (strlen (inputBuff) / 18 + 1); i++) {
-                    if (strlen (inputBuff + i * 18) <= 18) {
-                        strcpy (str, inputBuff + i * 18);
-
-                    } else {
-                        memcpy (str, inputBuff + i * 18, 18);
-                        str[18] = '\0';
-                    }
-                    SSD1306_GotoXY (0, 22 + (i - diff) * 10);
-                    SSD1306_Puts (str, &Font_7x10, 1);
-                }
-            }
-        }
-    }
-    SSD1306_UpdateScreen();
-}
+//                     } else {
+//                         memcpy (str, inputBuff + i * 18, 18);
+//                         str[18] = '\0';
+//                     }
+//                     SSD1306_GotoXY (0, 22 + (i - diff) * 10);
+//                     SSD1306_Puts (str, &Font_7x10, 1);
+//                 }
+//             }
+//         }
+//     }
+//     SSD1306_UpdateScreen();
+// }
 
 void TIM4_IRQHandler (void) __attribute__ ((interrupt ("WCH-Interrupt-fast")));
 
@@ -584,6 +431,8 @@ void TIM4_IRQHandler (void) {
         /* Clear interrupt flag */
         TIM_ClearITPendingBit (TIM4, TIM_IT_Update);
         static int powbutton_timer;
+        static int curse_flash_timer;
+        
         if (powbutton_timer > 0)
             powbutton_timer--;
         else {
@@ -594,6 +443,12 @@ void TIM4_IRQHandler (void) {
                 GPIO_WriteBit (POWBOTTON_PORT, POWBOTTON_OUT, Bit_SET);
                 powbutton_timer = 235;
             }
+        }
+        if (curse_flash_timer > 0)
+            curse_flash_timer--;
+        else{
+            curse_flash = ! curse_flash;
+            curse_flash_timer = 10;
         }
     }
 }
