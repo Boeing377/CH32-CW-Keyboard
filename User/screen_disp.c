@@ -159,23 +159,22 @@ void mode_0_word_disp()
     int send_line = ((send_now) / 14);
     int send_num = ((send_now) % 14) + 1;
 
+    int i;
+
     u8g2_SetDrawColor(&u8g2, 2);
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
 
     if(tail_line > 3)
     {
-        strncpy(str_buff, inputBuff + (tail_line - 3) * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 21, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 2) * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 34, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 1) * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 47, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 0) * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 60, str_buff);
-        // Layer 14
+        for(i = 3; i >= 0; i --)
+        {
+            strncpy(str_buff, inputBuff + (tail_line - i) * 14,  14);
+            u8g2_DrawStr(&u8g2, 1, 21 + (3 - i) * 13, str_buff);
+        }
+
         u8g2_SetDrawColor(&u8g2, 1);
         if(curse_flash)
-            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 54, 2 + 9 * tail_num, 61);
+            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 50, 2 + 9 * tail_num, 61);
 
         if(stge && ((tail_line - send_line) < 4))
         {
@@ -185,15 +184,12 @@ void mode_0_word_disp()
     }
     else
     {
-        strncpy(str_buff, inputBuff + 0 * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 21, str_buff);
-        strncpy(str_buff, inputBuff + 1 * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 34, str_buff);
-        strncpy(str_buff, inputBuff + 2 * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 47, str_buff);
-        strncpy(str_buff, inputBuff + 3 * 14,  14);
-        u8g2_DrawStr(&u8g2, 1, 60, str_buff);
-        // Layer 14
+        for(i = 0; i < 4; i ++)
+        {
+            strncpy(str_buff, inputBuff + i * 14,  14);
+            u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
+        }
+
         u8g2_SetDrawColor(&u8g2, 1);
         if(curse_flash)
             u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 10 + tail_line * 13 , 2 + 9 * tail_num, 21 + tail_line * 13);
@@ -216,67 +212,60 @@ void mode_1_word_disp()
     int send_line = ((send_now) / 7);
     int send_num = ((send_now) % 7) + 1;
 
+    int i;
+
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
 
     if(tail_line > 3)
     {
-        strncpy(str_buff, inputBuff + (tail_line - 3) * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 21, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 2) * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 34, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 1) * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 47, str_buff);
-        strncpy(str_buff, inputBuff + (tail_line - 0) * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 60, str_buff);
+        for(i = 3; i >=0; i --)
+        {
+            strncpy(str_buff, inputBuff + (tail_line - i) * 7,  7);
+            u8g2_DrawStr(&u8g2, 1, 21 + (3 - i) * 13, str_buff);
+        }
         u8g2_SetDrawColor(&u8g2, 1);
         if(curse_flash)
             u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 49, 2 + 9 * tail_num, 60);
     }
     else {
-        strncpy(str_buff, inputBuff + 0 * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 21, str_buff);
-        strncpy(str_buff, inputBuff + 1 * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 34, str_buff);
-        strncpy(str_buff, inputBuff + 2 * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 47, str_buff);
-        strncpy(str_buff, inputBuff + 3 * 7,  7);
-        u8g2_DrawStr(&u8g2, 1, 60, str_buff);
+        for(i = 0; i < 4; i ++)
+        {
+            strncpy(str_buff, inputBuff + i * 7,  7);
+            u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
+        }
         u8g2_SetDrawColor(&u8g2, 1);
         if(curse_flash)
             u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 10 + tail_line * 13 , 2 + 9 * tail_num, 21 + tail_line * 13);
     }
 
     if(stge){
-    if(send_line > 3){
-        strncpy(str_buff, outputBuff + (send_line - 3) * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 21, str_buff);
-        strncpy(str_buff, outputBuff + (send_line - 2) * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 34, str_buff);
-        strncpy(str_buff, outputBuff + (send_line - 1) * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 47, str_buff);
-        strncpy(str_buff, outputBuff + (send_line - 0) * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 60, str_buff);
-        if(stge)
-        {
-            u8g2_SetDrawColor(&u8g2, 2);
-            u8g2_DrawBox(&u8g2, 9*send_num +56, 48, 9, 13);
+        if(send_line > 3){
+            for(i = 3; i >= 0; i --)
+            {
+                strncpy(str_buff, outputBuff + (send_line - i) * 7,  7);
+                u8g2_DrawStr(&u8g2, 65, 21 + (3 - i) * 13, str_buff);
+            }
+
+            if(stge)
+            {
+                u8g2_SetDrawColor(&u8g2, 2);
+                u8g2_DrawBox(&u8g2, 9*send_num +56, 48, 9, 13);
+            }
+        }
+        else {
+            for(i = 0; i < 4; i ++)
+            {
+                strncpy(str_buff, outputBuff + i * 7,  7);
+                u8g2_DrawStr(&u8g2, 65, 21 + i * 13, str_buff);
+            }
+
+            if(stge)
+            {
+                u8g2_SetDrawColor(&u8g2, 2);
+                u8g2_DrawBox(&u8g2, 9*send_num +56, 9+13*send_line, 9, 13);
+            }
         }
     }
-    else {
-        strncpy(str_buff, outputBuff + 0 * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 21, str_buff);
-        strncpy(str_buff, outputBuff + 1 * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 34, str_buff);
-        strncpy(str_buff, outputBuff + 2 * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 47, str_buff);
-        strncpy(str_buff, outputBuff + 3 * 7,  7);
-        u8g2_DrawStr(&u8g2, 65, 60, str_buff);
-        if(stge)
-        {
-            u8g2_SetDrawColor(&u8g2, 2);
-            u8g2_DrawBox(&u8g2, 9*send_num +56, 9+13*send_line, 9, 13);
-        }
-    }}
 }
 
 void show_main_page(void) {
@@ -290,12 +279,17 @@ void show_main_page(void) {
     u8g2_DrawXBM(&u8g2, 102, 0, 26, 8, image_Battery_bits);
 
     u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
-    u8g2_DrawStr(&u8g2, 2, 7, "WPM:");
 
-    sprintf (str_buff, "%02d", config.wpm);
-    u8g2_DrawStr(&u8g2, 23, 7, str_buff);
+    sprintf (str_buff, "WPM:%02d", config.wpm);
+    u8g2_DrawStr(&u8g2, 2, 7, str_buff);
 
-    u8g2_DrawStr(&u8g2, 106, 7, "100");
+    sprintf (str_buff, "MsgLen:%d", strlen(inputBuff));
+    u8g2_DrawStr(&u8g2, 35, 7, str_buff);
+
+    sprintf(str_buff, "%d.%dV", bat_adc_val / 10 , bat_adc_val % 10);
+    u8g2_DrawStr(&u8g2, 105, 7, str_buff);
+
+    memset(str_buff, 0, 64);
 
     // Pin_arrow_up
     if(caps_lock_stg)

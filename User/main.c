@@ -25,6 +25,7 @@
 #include "string.h"
 #include "ch32_u8g2.h"
 #include "screen_disp.h"
+#include "i2c_eeprom.h"
 
 /* Global typedef */
 
@@ -34,18 +35,22 @@
 uint8_t key1 = 0, key1old = 0, key2 = 0, key2old = 0;
 
 void InitGPIOs();
+void InitADC();
 
-void ReadConfig();
-void WriteConfig();
+u16 Get_ADC_Val(u8 ch);
+
+// void ReadConfig();
+// void WriteConfig();
+
+void ReadConfigEEPROM();
+void WriteConfigEEPROM();
 
 void ReadSavedMsg (uint8_t sn);
 void WriteMsg (uint8_t sn);
 
-void DispWelcome();
-void Disp();
-
 void TIM4_Init (uint16_t arr, uint16_t psc);
 
+s16 Calibrattion_Val = 0;
 /*********************************************************************
  * @fn      main
  *
@@ -57,28 +62,21 @@ int main (void) {
     NVIC_PriorityGroupConfig (NVIC_PriorityGroup_1);
     SystemCoreClockUpdate();
     Delay_Init();
-#if DEBUG
-    USART_Printf_Init (115200);
-    printf ("SystemClk:%d\r\n", SystemCoreClock);
-    printf ("ChipID:%08x\r\n", DBGMCU_GetCHIPID());
-    printf ("BG6VSK made USB keyboard electric key\r\n");
-#endif
-    /*Init TIM2&3*/
-    TIM2_Init (3999, (60 * SystemCoreClock / (1000 * 1000) - 1));
-    TIM3_Init (9, SystemCoreClock / 1000 - 1);
-#if DEBUG
-    printf ("TIM OK\r\n");
-#endif
-    /*Init GPIO*/
-    InitGPIOs();
 
+    /*Init TIMs*/
+    TIM3_Init (9, SystemCoreClock / 1000 - 1);
     TIM4_Init (3999, 999);
 
+    /*Init GPIO*/
+    InitGPIOs();
+    InitADC();
+
     /*Init OLED*/
-    Delay_Ms (100);
+    Delay_Ms (100); //wait for OLED hardware OK
     u8g2Init(&u8g2);
+
     /*Set USB input*/
-    GPIO_WriteBit(GPIOB, USB_SW_OUT, Bit_SET);
+    GPIO_WriteBit(GPIOB, USB_SW_OUT, Bit_SET);  //Switch USB A
 
     /*Init USB Host*/
     USBFS_RCC_Init();
@@ -88,10 +86,13 @@ int main (void) {
         &HostCtl[DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL].InterfaceNum,
         0, DEF_ONE_USB_SUP_DEV_TOTAL * sizeof (HOST_CTL));
 
-    ReadConfig();
-
     // DispWelcome();
     show_welcome();
+
+    // ReadConfig();
+    ReadConfigEEPROM();
+
+    TIM2_Init (3999, (60 * SystemCoreClock / (config.wpm * 50 * 1000) - 1));
 
     Delay_Ms (1500);
 
@@ -99,26 +100,31 @@ int main (void) {
         
         key1 = GPIO_ReadInputDataBit (KEY_1_IN_PORT, KEY_1_IN);
         key2 = GPIO_ReadInputDataBit (KEY_2_IN_PORT, KEY_2_IN);
+
         USBH_MainDeal();
+
+        bat_adc_val = Get_ADC_Val(ADC_Channel_2);
+        bat_adc_val = (int)((float)(bat_adc_val * 20 / 4096.0) * (float)3.3); 
+
         dispf();
 
         if (key1 == 1 && key1old == 0)          // key1 pressed
         {
             config.beeper = 1 - config.beeper;  // 切换是否使用蜂鸣器
-            WriteConfig();
+            // WriteConfig();
+            WriteConfigEEPROM();
         }
         if (key2 == 1 && key2old == 0)      // key2 pressed
         {
             config.mode = 1 - config.mode;  // 切换模式
             endSending();
             inputBuffSize = 0;
-            //  inputBuff[0] = '\0';
             memset (inputBuff, '\0', BUFFSIZE);
             outputBuffSize = 0;
-            //  outputBuff[0] = '\0';
             memset (outputBuff, '\0', BUFFSIZE);
             sendCount = 0;
-            WriteConfig();
+            // WriteConfig();
+            WriteConfigEEPROM();
         }
         if (keyboard_in) {
             GPIO_WriteBit (LED_OUT_PORT, LED_OUT, Bit_SET);
@@ -160,10 +166,126 @@ void InitGPIOs() {
     GPIO_Init (GPIOA, &GPIO_InitStructure);
 }
 
-void ReadConfig() {
-    struct Config *savedConfig;
-    savedConfig = (struct Config *)(CONFIG_ADDR);
-    if (savedConfig->initial_startup != STARUP_FLAG)  // 确认是否初次启动，此处为初次启动
+void InitADC() {
+    ADC_InitTypeDef  ADC_InitStructure = {0};
+    GPIO_InitTypeDef GPIO_InitStructure = {0};
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+    RCC_ADCCLKConfig(RCC_PCLK2_Div8);
+
+    GPIO_InitStructure.GPIO_Pin = BAT_ADC_PIN;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+    GPIO_Init(BAT_ADC_PORT, &GPIO_InitStructure);
+
+    ADC_DeInit(ADC1);
+    ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+    ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+    ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_NbrOfChannel = 1;
+    ADC_Init(ADC1, &ADC_InitStructure);
+
+    ADC_Cmd(ADC1, ENABLE);
+
+    ADC_BufferCmd(ADC1, DISABLE); //disable buffer
+    ADC_ResetCalibration(ADC1);
+    while(ADC_GetResetCalibrationStatus(ADC1));
+    ADC_StartCalibration(ADC1);
+    while(ADC_GetCalibrationStatus(ADC1));
+    Calibrattion_Val = Get_CalibrationValue(ADC1);
+}
+
+u16 Get_ConversionVal(s16 val)
+{
+    if((val + Calibrattion_Val) < 0)
+        return 0;
+    if((Calibrattion_Val + val) > 4095 || val==4095)
+        return 4095;
+    return (val + Calibrattion_Val);
+}
+
+u16 Get_ADC_Val(u8 ch)
+{
+    u16 val;
+
+    ADC_RegularChannelConfig(ADC1, ch, 1, ADC_SampleTime_41Cycles5);
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+
+    while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+    val = ADC_GetConversionValue(ADC1);
+
+    return val;
+}
+
+// void ReadConfig() {
+//     struct Config *savedConfig;
+//     savedConfig = (struct Config *)(CONFIG_ADDR);
+//     if (savedConfig->initial_startup != STARUP_FLAG)  // 确认是否初次启动，此处为初次启动
+//     {
+//         config.initial_startup = STARUP_FLAG;
+//         config.mode = 0;
+//         config.beeper = 0;  // not using beeper
+//         config.wpm = DEF_WPM;
+//         config.morse_config.dot_len = DEF_DOT_LEN;
+//         config.morse_config.dash_len = DEF_DASH_LEN;
+//         config.morse_config.break_len = DEF_BREAK_LEN;
+//         config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
+//         config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
+//         config.morse_config.cut_num = 0;
+//         WriteConfig();
+//     } else {
+//         config.mode = savedConfig->mode;
+//         config.beeper = savedConfig->beeper;
+//         config.wpm = savedConfig->wpm;
+//         config.morse_config.dot_len = DEF_DOT_LEN;
+//         config.morse_config.dash_len = DEF_DASH_LEN;
+//         config.morse_config.break_len = DEF_BREAK_LEN;
+//         config.morse_config.letter_break_len =
+//             DEF_LETTER_BREAK_LEN;
+//         config.morse_config.word_break_len =
+//             savedConfig->morse_config.word_break_len;
+//         config.morse_config.cut_num = savedConfig->morse_config.cut_num;
+//     }
+
+//     memcpy (msg, (uint8_t *)(CONFIG_ADDR + 32), 12);
+// }
+
+// void WriteConfig() {
+//     uint8_t tmp[16] = {0};
+//     int i;
+//     FLASH_Unlock();
+
+//     FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
+//     FLASH_ErasePage_Fast (CONFIG_ADDR);
+
+//     config.initial_startup = STARUP_FLAG;
+
+//     memcpy (tmp, &config, sizeof (struct Config));
+
+//     for (i = 0; i < 4; i++) {
+//         FLASH_ProgramWord ((CONFIG_ADDR + 4 * i), *((uint32_t *)(tmp + 4 * i)));
+//     }
+
+//     FLASH_ProgramWord (CONFIG_ADDR + 16, *((uint32_t *)msg));
+//     FLASH_ProgramWord (CONFIG_ADDR + 20, *((uint32_t *)(msg + 4)));
+//     FLASH_ProgramWord (CONFIG_ADDR + 24, *((uint32_t *)(msg + 8)));
+
+//     FLASH_Lock();
+// }
+
+void WriteConfigEEPROM(){
+    config.initial_startup = STARUP_FLAG;
+    AT24CXX_Write(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
+    AT24CXX_Write(EEPROM_CONFIG_ADDR + 32, msg, MSG_NUM);
+}
+
+void ReadConfigEEPROM(){
+    struct Config savedConfig;
+    // savedConfig = (struct Config *)(CONFIG_ADDR);
+    AT24CXX_Read(EEPROM_CONFIG_ADDR, (u8*)&savedConfig, sizeof (struct Config));
+    if (savedConfig.initial_startup != STARUP_FLAG)  // 确认是否初次启动，此处为初次启动
     {
         config.initial_startup = STARUP_FLAG;
         config.mode = 0;
@@ -175,63 +297,35 @@ void ReadConfig() {
         config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
         config.morse_config.cut_num = 0;
-        WriteConfig();
+        WriteConfigEEPROM();
     } else {
-        config.mode = savedConfig->mode;
-        config.beeper = savedConfig->beeper;
-        config.wpm = savedConfig->wpm;
+        config.mode = savedConfig.mode;
+        config.beeper = savedConfig.beeper;
+        config.wpm = savedConfig.wpm;
         config.morse_config.dot_len = DEF_DOT_LEN;
         config.morse_config.dash_len = DEF_DASH_LEN;
         config.morse_config.break_len = DEF_BREAK_LEN;
         config.morse_config.letter_break_len =
             DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len =
-            savedConfig->morse_config.word_break_len;
-        config.morse_config.cut_num = savedConfig->morse_config.cut_num;
+            savedConfig.morse_config.word_break_len;
+        config.morse_config.cut_num = savedConfig.morse_config.cut_num;
     }
 
-    memcpy (msg, (uint8_t *)(CONFIG_ADDR + 16), 12);
+    // memcpy (msg, (uint8_t *)(CONFIG_ADDR + 16), 12);
+    AT24CXX_Read(EEPROM_CONFIG_ADDR + 32, msg, MSG_NUM);
 }
 
-void WriteConfig() {
-    uint8_t tmp[16] = {0};
-    int i;
-    FLASH_Unlock();
+void ReadSavedMsgEEPROM(uint8_t sn) {
+    uint16_t addr = 0x0000 + sn * MSG_ZONE_SIZE;
 
-    FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
-    //  FLASH_ErasePage(CONFIG_ADDR);
-    //  FLASH_ROM_ERASE(CONFIG_ADDR, 256);
-    FLASH_ErasePage_Fast (CONFIG_ADDR);
+    uint8_t buff[MSG_ZONE_SIZE];
 
-    config.initial_startup = STARUP_FLAG;
-
-    memcpy (tmp, &config, sizeof (struct Config));
-
-    for (i = 0; i < 4; i++) {
-        FLASH_ProgramWord ((CONFIG_ADDR + 4 * i), *((uint32_t *)(tmp + 4 * i)));
-    }
-
-    FLASH_ProgramWord (CONFIG_ADDR + 16, *((uint32_t *)msg));
-    FLASH_ProgramWord (CONFIG_ADDR + 20, *((uint32_t *)(msg + 4)));
-    FLASH_ProgramWord (CONFIG_ADDR + 24, *((uint32_t *)(msg + 8)));
-
-    FLASH_Lock();
-}
-
-void ReadSavedMsg (uint8_t sn) {
-    uint32_t addr;
-
-    if (sn < 4) {
-        addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
-    } else if (sn < 8) {
-        addr = MSG_ADDR + 0x1000 + (sn - 4) * MSG_ZONE_SIZE;
-    } else {
-        addr = MSG_ADDR + 0x2000 + (sn - 8) * MSG_ZONE_SIZE;
-    }
+    AT24CXX_Read(addr, buff, MSG_ZONE_SIZE);
 
     if (msg[sn] == 0xcd) {
-        inputBuffSize = *(uint32_t *)(addr + BUFFSIZE - 4);
-        memcpy (inputBuff, (uint32_t *)addr, inputBuffSize);
+        inputBuffSize = *(uint32_t *)(buff + BUFFSIZE - 4);
+        memcpy (inputBuff, (uint32_t *)buff, inputBuffSize);
         inputBuff[inputBuffSize] = '\0';
         if (!config.mode) {
             sendCount = 0;
@@ -243,157 +337,101 @@ void ReadSavedMsg (uint8_t sn) {
     }
 }
 
-void WriteMsg (uint8_t sn) {
-    uint32_t eraseAddr;
-    uint8_t buff[0x0800];
-    uint32_t saveingBuffSize;
+// void ReadSavedMsg (uint8_t sn) {
+//     uint32_t addr;
+
+//     if (sn < 4) {
+//         addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
+//     } else if (sn < 8) {
+//         addr = MSG_ADDR + 0x1000 + (sn - 4) * MSG_ZONE_SIZE;
+//     } else {
+//         addr = MSG_ADDR + 0x2000 + (sn - 8) * MSG_ZONE_SIZE;
+//     }
+
+//     if (msg[sn] == 0xcd) {
+//         inputBuffSize = *(uint32_t *)(addr + BUFFSIZE - 4);
+//         memset(inputBuff, 0, INPUTZONE_SIZE);
+//         memcpy (inputBuff, (uint32_t *)addr, inputBuffSize);
+//         inputBuff[inputBuffSize] = '\0';
+//         if (!config.mode) {
+//             sendCount = 0;
+//             starSending();
+//         }
+//     } else {
+//         sprintf (inputBuff, "no saved msg");
+//         inputBuffSize = strlen (inputBuff);
+//     }
+// }
+
+void WriteMsgEEPROM (uint8_t sn)
+{
+    uint16_t msgWriteAddr = 0x00000000 + sn * 256;
+    uint8_t buff[MSG_ZONE_SIZE];
+    uint32_t saveingBuffSize = inputBuffSize;
 
     saving = 1;
-    //  TIM_Cmd( TIM4, ENABLE);
-    /* Enable timer3 interrupt */
-    //  NVIC_EnableIRQ(TIM4_IRQn);
 
-    if (sn < 4)
-        eraseAddr = MSG_ADDR;
-    else if (sn < 8)
-        eraseAddr = MSG_ADDR + 0x1000;
-    else
-        eraseAddr = MSG_ADDR + 0x2000;
-
-    memcpy (buff, (uint8_t *)eraseAddr, 0x0800);
-
-    FLASH_Unlock();
-
-    FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
-    FLASH_ErasePage (eraseAddr);
-
-    saveingBuffSize = inputBuffSize;
     if (saveingBuffSize > MAXSAVEBUFSIZE)
         saveingBuffSize = MAXSAVEBUFSIZE;
+    memcpy (buff, inputBuff, saveingBuffSize);
+    *(uint32_t *)(buff + BUFFSIZE - 4) = saveingBuffSize;
 
-    if (sn < 4) {
-        memcpy (buff + MSG_ZONE_SIZE * sn, inputBuff, saveingBuffSize);
-        *(uint32_t *)(buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = saveingBuffSize;
-    } else if (sn < 8) {
-        memcpy (buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, saveingBuffSize);
-        *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 4) + BUFFSIZE - 4) =
-            saveingBuffSize;
-    } else {
-        memcpy (buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, saveingBuffSize);
-        *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 8) + BUFFSIZE - 4) =
-            saveingBuffSize;
-    }
-
-    FLASH_ROM_WRITE (eraseAddr, (uint32_t *)buff, 0x0800);
-
-    FLASH_Lock();
+    AT24CXX_Write(msgWriteAddr, buff, MSG_ZONE_SIZE);
 
     msg[sn] = 0xcd;
-    WriteConfig();
+
+    WriteConfigEEPROM();
 
     saving = 0;
 }
 
+// void WriteMsg (uint8_t sn) {
+//     uint32_t eraseAddr;
+//     uint8_t buff[0x0800];
+//     uint32_t saveingBuffSize;
 
-// void Disp() {
-//     char str[19];
-//     int diff;
+//     saving = 1;
 
+//     if (sn < 4)
+//         eraseAddr = MSG_ADDR;
+//     else if (sn < 8)
+//         eraseAddr = MSG_ADDR + 0x1000;
+//     else
+//         eraseAddr = MSG_ADDR + 0x2000;
 
-//         if (config.mode) {
-//             SSD1306_DrawLine (64, 10, 64, 64, 1);
-//             SSD1306_DrawLine (63, 10, 63, 64, 1);
-//             SSD1306_DrawLine (0, 10, 128, 10, 1);
+//     memcpy (buff, (uint8_t *)eraseAddr, 0x0800);
 
-//             SSD1306_GotoXY (0, 11);
-//             SSD1306_Puts ("INPUT:", &Font_7x10, 0);
+//     FLASH_Unlock();
 
-//             if (strlen (inputBuff) <= 9) {
-//                 SSD1306_GotoXY (0, 22);
-//                 SSD1306_Puts (inputBuff, &Font_7x10, 1);
-//             } else if (strlen (inputBuff) < 9 * 4) {
-//                 for (int i = 0; i < (strlen (inputBuff) / 9 + 1); i++) {
-//                     if (strlen (inputBuff + i * 9) <= 9) {
-//                         strcpy (str, inputBuff + i * 9);
+//     FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
+//     FLASH_ErasePage (eraseAddr);
 
-//                     } else {
-//                         memcpy (str, inputBuff + i * 9, 9);
-//                         str[9] = '\0';
-//                     }
-//                     SSD1306_GotoXY (0, 22 + i * 10);
-//                     SSD1306_Puts (str, &Font_7x10, 1);
-//                 }
-//             } else {
-//                 diff = strlen (inputBuff) / 9 - 3;
-//                 for (int i = diff; i < (strlen (inputBuff) / 9 + 1); i++) {
-//                     if (strlen (inputBuff + i * 9) <= 9) {
-//                         strcpy (str, inputBuff + i * 9);
+//     saveingBuffSize = inputBuffSize;
+//     if (saveingBuffSize > MAXSAVEBUFSIZE)
+//         saveingBuffSize = MAXSAVEBUFSIZE;
 
-//                     } else {
-//                         memcpy (str, inputBuff + i * 9, 9);
-//                         str[9] = '\0';
-//                     }
-//                     SSD1306_GotoXY (0, 22 + (i - diff) * 10);
-//                     SSD1306_Puts (str, &Font_7x10, 1);
-//                 }
-//             }
-
-//             SSD1306_GotoXY (64, 11);
-//             SSD1306_Puts ("SENDING:", &Font_7x10, 0);
-
-//             if (strlen (outputBuff) <= 9) {
-//                 SSD1306_GotoXY (64, 22);
-//                 SSD1306_Puts (outputBuff, &Font_7x10, 1);
-//             } else {
-//                 for (int i = 0; i < (strlen (outputBuff) / 9 + 1); i++) {
-//                     if (strlen (outputBuff + i * 9) <= 9) {
-//                         strcpy (str, outputBuff + i * 9);
-
-//                     } else {
-//                         memcpy (str, outputBuff + i * 9, 9);
-//                         str[9] = '\0';
-//                     }
-//                     SSD1306_GotoXY (64, 22 + i * 10);
-//                     SSD1306_Puts (str, &Font_7x10, 1);
-//                 }
-//             }
-//         } else {
-//             SSD1306_DrawLine (0, 10, 128, 10, 1);
-//             SSD1306_GotoXY (0, 11);
-//             SSD1306_Puts ("INPUT:", &Font_7x10, 0);
-
-//             if (strlen (inputBuff) <= 18) {
-//                 SSD1306_GotoXY (0, 22);
-//                 SSD1306_Puts (inputBuff, &Font_7x10, 1);
-//             } else if (strlen (inputBuff) <= 18 * 4) {
-//                 for (int i = 0; i < (strlen (inputBuff) / 18 + 1); i++) {
-//                     if (strlen (inputBuff + i * 18) <= 18) {
-//                         strcpy (str, inputBuff + i * 18);
-
-//                     } else {
-//                         memcpy (str, inputBuff + i * 18, 18);
-//                         str[18] = '\0';
-//                     }
-//                     SSD1306_GotoXY (0, 22 + i * 10);
-//                     SSD1306_Puts (str, &Font_7x10, 1);
-//                 }
-//             } else {
-//                 diff = strlen (inputBuff) / 18 - 3;
-//                 for (int i = diff; i < (strlen (inputBuff) / 18 + 1); i++) {
-//                     if (strlen (inputBuff + i * 18) <= 18) {
-//                         strcpy (str, inputBuff + i * 18);
-
-//                     } else {
-//                         memcpy (str, inputBuff + i * 18, 18);
-//                         str[18] = '\0';
-//                     }
-//                     SSD1306_GotoXY (0, 22 + (i - diff) * 10);
-//                     SSD1306_Puts (str, &Font_7x10, 1);
-//                 }
-//             }
-//         }
+//     if (sn < 4) {
+//         memcpy (buff + MSG_ZONE_SIZE * sn, inputBuff, saveingBuffSize);
+//         *(uint32_t *)(buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = saveingBuffSize;
+//     } else if (sn < 8) {
+//         memcpy (buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, saveingBuffSize);
+//         *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 4) + BUFFSIZE - 4) =
+//             saveingBuffSize;
+//     } else {
+//         memcpy (buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, saveingBuffSize);
+//         *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 8) + BUFFSIZE - 4) =
+//             saveingBuffSize;
 //     }
-//     SSD1306_UpdateScreen();
+
+//     FLASH_ROM_WRITE (eraseAddr, (uint32_t *)buff, 0x0800);
+
+//     FLASH_Lock();
+
+//     msg[sn] = 0xcd;
+//     // WriteConfig();
+//     WriteConfigEEPROM();
+
+//     saving = 0;
 // }
 
 void TIM4_IRQHandler (void) __attribute__ ((interrupt ("WCH-Interrupt-fast")));

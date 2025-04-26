@@ -42,7 +42,11 @@
 					"${project}/Startup/startup_ch32v20x_D8W.S",
 					"${project}/Startup/startup_ch32v20x_D8.S",
 					"${project}/User/OLED/oled.c",
-					"${project}/User/OLED/oled.h"
+					"${project}/User/OLED/oled.h",
+					"${project}/User/u8g2/u8x8_d_ssd1309.c",
+					"${project}/User/u8g2/u8x8_d_sh1106_72x40.c",
+					"${project}/User/u8g2/u8x8_d_sh1106_64x32.c",
+					"${project}/User/u8g2/u8x8_fonts.c"
 				],
 				"riscvTargetProcessor": {
 					"architecture": "rv32i",
@@ -103,7 +107,7 @@
 					"other_warning_flags": ""
 				},
 				"debugging": {
-					"debug_level": "default",
+					"debug_level": "none",
 					"debug_format": "default",
 					"generate_prof_information": false,
 					"generate_gprof_information": false,
@@ -151,7 +155,7 @@
 						"include_files": []
 					},
 					"optimization": {
-						"language_standard": "gnu99",
+						"language_standard": "gnu17",
 						"other_optimization_flags": ""
 					},
 					"warnings": {

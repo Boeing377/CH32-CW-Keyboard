@@ -21,6 +21,7 @@
 #define KEY_2_IN GPIO_Pin_14
 #define POWBOTTON_OUT GPIO_Pin_3
 #define USB_SW_OUT GPIO_Pin_15
+#define BAT_ADC_PIN GPIO_Pin_2
 
 #define KEY_OUT_PORT GPIOA
 #define BEEP_OUT_PORT GPIOB
@@ -28,6 +29,7 @@
 #define KEY_1_IN_PORT GPIOB
 #define KEY_2_IN_PORT GPIOB
 #define POWBOTTON_PORT GPIOA
+#define BAT_ADC_PORT GPIOA
 
 #define MAX_WPM 99
 #define MIN_WPN 1
@@ -39,13 +41,16 @@
 #define DEF_LETTER_BREAK_LEN 3
 #define DEF_WORD_BREAK_LEN 7
 
-#define BUFFSIZE 512
+#define BUFFSIZE 256
 #define INPUTZONE_SIZE 1000
-#define MAXSAVEBUFSIZE 508
+#define MAXSAVEBUFSIZE (256 - 4)
 
-#define CONFIG_ADDR 0x0800CF00
 #define MSG_ADDR 0x0800D000
-#define MSG_ZONE_SIZE 0x0200
+#define MSG_ZONE_SIZE 256
+#define U8G2_WITHOUT_UNICODE
+#define U8G2_WITHOUT_FONT_ROTATION
+
+#define EEPROM_CONFIG_ADDR 0x0F00
 
 #define MSG_NUM 12
 
@@ -74,6 +79,7 @@ extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
 extern char inputBuff[], outputBuff[];
 extern int sendCount, send_now;
 extern uint32_t inputBuffSize, outputBuffSize;
+extern uint16_t bat_adc_val;
 
 extern struct Config config;
 

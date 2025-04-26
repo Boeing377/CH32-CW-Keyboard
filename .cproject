@@ -71,7 +71,7 @@
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.floatequal.134298453" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.floatequal" useByScannerDiscovery="true" value="false" valueType="boolean"/>
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.toerrors.1117291056" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.toerrors" useByScannerDiscovery="true" value="false" valueType="boolean"/>
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.other.1918769559" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.other" useByScannerDiscovery="true" value="" valueType="string"/>
-              <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level.1204865254" name="Debug level" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level.default" valueType="enumerated"/>
+              <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level.1204865254" name="Debug level" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.level.none" valueType="enumerated"/>
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.format.867779652" name="Debug format" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.format" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.format.default" valueType="enumerated"/>
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.prof.2131276390" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.prof" useByScannerDiscovery="true" value="false" valueType="boolean"/>
               <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.gprof.1910159761" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.gprof" useByScannerDiscovery="true" value="false" valueType="boolean"/>
@@ -124,7 +124,7 @@
                 </option>
                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.include.systempaths.2011720354" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.include.systempaths" useByScannerDiscovery="true" valueType="includePath"/>
                 <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.include.files.542153928" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.include.files" useByScannerDiscovery="true" valueType="includeFiles"/>
-                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std.2020844713" name="Language standard" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std.gnu99" valueType="enumerated"/>
+                <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std.2020844713" name="Language standard" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std" useByScannerDiscovery="true" value="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.std.gnu17" valueType="enumerated"/>
                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.otheroptimizations.92321033" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.otheroptimizations" useByScannerDiscovery="true" value="" valueType="string"/>
                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.warning.missingprototypes.1180998530" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.warning.missingprototypes" useByScannerDiscovery="true" value="false" valueType="boolean"/>
                 <option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.warning.strictprototypes.684937223" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.c.compiler.warning.strictprototypes" useByScannerDiscovery="true" value="false" valueType="boolean"/>
@@ -256,7 +256,7 @@
             </toolChain>
           </folderInfo>
           <sourceEntries>
-            <entry excluding="Startup/startup_ch32v20x_D8W.S|Startup/startup_ch32v20x_D8.S|User/OLED/oled.c|User/OLED/oled.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+            <entry excluding="Startup/startup_ch32v20x_D8W.S|Startup/startup_ch32v20x_D8.S|User/OLED/oled.c|User/OLED/oled.h|User/u8g2/u8x8_d_ssd1309.c|User/u8g2/u8x8_d_sh1106_72x40.c|User/u8g2/u8x8_d_sh1106_64x32.c|User/u8g2/u8x8_fonts.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
           </sourceEntries>
         </configuration>
       </storageModule>

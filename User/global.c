@@ -21,6 +21,7 @@ uint8_t disp_morse_conf = 0;
 uint8_t morse_conf_item = 0;
 int sendCount = 0, send_now;
 uint8_t curse_flash = 0;
+uint16_t bat_adc_val;
 
 uint8_t msg[MSG_NUM];
 

@@ -26,6 +26,9 @@ struct __HOST_CTL HostCtl[DEF_TOTAL_ROOT_HUB * DEF_ONE_USB_SUP_DEV_TOTAL];
 void ReadSavedMsg (uint8_t sn);
 void WriteMsg (uint8_t sn);
 void WriteConfig();
+void WriteConfigEEPROM();
+void ReadSavedMsgEEPROM (uint8_t sn);
+void WriteMsgEEPROM (uint8_t sn);
 
 //  0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 uint8_t codmap[] = {
@@ -217,7 +220,8 @@ void CombufDeal() {
                             disp_ver = 1;
                         if (menu_item == 4) {
                             disp_menu = 0;
-                            WriteConfig();
+                            // WriteConfig();
+                            WriteConfigEEPROM();
                         }
                     }
                 } else if (New_Pressed[i] == 31) {  // 按下回车
@@ -234,7 +238,8 @@ void CombufDeal() {
                             disp_ver = 1;
                         if (menu_item == 4) {
                             disp_menu = 0;
-                            WriteConfig();
+                            // WriteConfig();
+                            WriteConfigEEPROM();
                         }
                     }
                 }
@@ -280,9 +285,11 @@ void CombufDeal() {
                 } else if (New_Pressed[i] == 29) {                          // 按下右键
                     add_wpm (5);
                 } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) {   // 读取F1-F12
-                    ReadSavedMsg (New_Pressed[i] - 3);
+                    // ReadSavedMsg (New_Pressed[i] - 3);
+                    ReadSavedMsgEEPROM (New_Pressed[i] - 3);
                 } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) {  // 存储F1-F12
-                    WriteMsg (New_Pressed[i] - 15);
+                    // WriteMsg (New_Pressed[i] - 15);
+                    WriteMsgEEPROM(New_Pressed[i] - 15);
                     inputBuffSize = 0;
                     sendCount = 0;
                     memset (inputBuff, '\0', BUFFSIZE);

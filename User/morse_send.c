@@ -11,6 +11,9 @@
 void ReadConfig();
 void WriteConfig();
 
+void ReadConfigEEPROM();
+void WriteConfigEEPROM();
+
 uint32_t sendBufLen = 0;
 uint8_t sendbuf[256];  // max for 6 dash 6*20+5*20+20
 
@@ -132,11 +135,6 @@ void TIM2_Init (uint16_t arr, uint16_t psc) {
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init (&NVIC_InitStructure);
-
-    /* Enable timer3 */
-    // TIM_Cmd( TIM2, ENABLE);
-    /* Enable timer3 interrupt */
-    // NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 void TIM2_ChangBase (uint16_t arr, uint16_t psc) {
@@ -165,7 +163,8 @@ void add_wpm (int num) {
     }
     //  printf("wpm %d\r\n", wpm);
     TIM2_ChangBase (3999, (60 * SystemCoreClock / (config.wpm * 50 * 1000) - 1));
-    WriteConfig();
+    // WriteConfig();
+    WriteConfigEEPROM();
 }
 
 void sub_wpm (int num) {
@@ -175,7 +174,8 @@ void sub_wpm (int num) {
     }
     //  printf("wpm %d\r\n", wpm);
     TIM2_ChangBase (3999, (60 * SystemCoreClock / (config.wpm * 50 * 1000) - 1));
-    WriteConfig();
+    // WriteConfig();
+    WriteConfigEEPROM();
 }
 
 void starSending() {
@@ -307,8 +307,7 @@ void bufCovn (uint8_t theChar) {
         switch (theChar) {
         case '?':
             for (j = 0; j < morse_code_map[36].len; j++) {
-                i = ((uint8_t)(morse_code_map[36].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[36].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[36].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -323,8 +322,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '!':
             for (j = 0; j < morse_code_map[37].len; j++) {
-                i = ((uint8_t)(morse_code_map[37].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[37].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[37].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -339,8 +337,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '.':
             for (j = 0; j < morse_code_map[38].len; j++) {
-                i = ((uint8_t)(morse_code_map[38].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[38].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[38].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -355,8 +352,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case ',':
             for (j = 0; j < morse_code_map[39].len; j++) {
-                i = ((uint8_t)(morse_code_map[39].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[39].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[39].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -371,8 +367,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case ';':
             for (j = 0; j < morse_code_map[40].len; j++) {
-                i = ((uint8_t)(morse_code_map[40].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[40].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[40].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -387,8 +382,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case ':':
             for (j = 0; j < morse_code_map[41].len; j++) {
-                i = ((uint8_t)(morse_code_map[41].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[41].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[41].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -403,8 +397,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '+':
             for (j = 0; j < morse_code_map[42].len; j++) {
-                i = ((uint8_t)(morse_code_map[42].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[42].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[42].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -419,8 +412,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '-':
             for (j = 0; j < morse_code_map[43].len; j++) {
-                i = ((uint8_t)(morse_code_map[43].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[43].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[43].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -435,8 +427,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '/':
             for (j = 0; j < morse_code_map[44].len; j++) {
-                i = ((uint8_t)(morse_code_map[44].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[44].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[44].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -451,8 +442,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '=':
             for (j = 0; j < morse_code_map[45].len; j++) {
-                i = ((uint8_t)(morse_code_map[45].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[45].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[45].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -467,8 +457,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '\'':
             for (j = 0; j < morse_code_map[46].len; j++) {
-                i = ((uint8_t)(morse_code_map[46].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[46].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[46].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
@@ -483,8 +472,7 @@ void bufCovn (uint8_t theChar) {
             break;
         case '"':
             for (j = 0; j < morse_code_map[47].len; j++) {
-                i = ((uint8_t)(morse_code_map[47].code >> (7 - j)) & (uint8_t)0x01);
-                if ((morse_code_map[47].code >> 7 - j) & 0x01) {
+                if ((morse_code_map[47].code >> (7 - j)) & 0x01) {
                     for (l = 0; l < config.morse_config.dash_len; l++)
                         sendbuf[k++] = 1;
                     for (l = 0; l < config.morse_config.break_len; l++)
