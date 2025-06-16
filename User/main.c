@@ -277,8 +277,10 @@ u16 Get_ADC_Val(u8 ch)
 
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;
+    Delay_Ms(10);
     AT24CXX_Write(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
-    AT24CXX_Write(EEPROM_CONFIG_ADDR + 32, msg, MSG_NUM);
+    Delay_Ms(10);
+    AT24CXX_Write(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
 }
 
 void ReadConfigEEPROM(){

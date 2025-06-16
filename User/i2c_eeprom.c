@@ -124,6 +124,6 @@ void AT24CXX_Write(u16 WriteAddr, u8 *pBuffer, u16 NumToWrite)
 		AT24CXX_WriteOneByte(WriteAddr,*pBuffer);
 		WriteAddr++;
 		pBuffer++;
-		Delay_Ms(2);
+		Delay_Ms(5);
 	}
 }
