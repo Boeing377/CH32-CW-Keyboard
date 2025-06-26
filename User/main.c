@@ -26,6 +26,7 @@
 #include "ch32_u8g2.h"
 #include "screen_disp.h"
 #include "i2c_eeprom.h"
+#include "ButtonFunc.h"
 
 /* Global typedef */
 
@@ -110,21 +111,23 @@ int main (void) {
 
         if (key1 == 1 && key1old == 0)          // key1 pressed
         {
-            config.beeper = 1 - config.beeper;  // 切换是否使用蜂鸣器
-            // WriteConfig();
-            WriteConfigEEPROM();
+            // config.beeper = 1 - config.beeper;  // 切换是否使用蜂鸣器
+            // // WriteConfig();
+            // WriteConfigEEPROM();
+            config.button_func.bt1_func();
         }
         if (key2 == 1 && key2old == 0)      // key2 pressed
         {
-            config.mode = 1 - config.mode;  // 切换模式
-            endSending();
-            inputBuffSize = 0;
-            memset (inputBuff, '\0', BUFFSIZE);
-            outputBuffSize = 0;
-            memset (outputBuff, '\0', BUFFSIZE);
-            sendCount = 0;
-            // WriteConfig();
-            WriteConfigEEPROM();
+            // config.mode = 1 - config.mode;  // 切换模式
+            // endSending();
+            // inputBuffSize = 0;
+            // memset (inputBuff, '\0', BUFFSIZE);
+            // outputBuffSize = 0;
+            // memset (outputBuff, '\0', BUFFSIZE);
+            // sendCount = 0;
+            // // WriteConfig();
+            // WriteConfigEEPROM();
+            config.button_func.bt2_func();
         }
         if (keyboard_in) {
             GPIO_WriteBit (LED_OUT_PORT, LED_OUT, Bit_SET);
@@ -164,6 +167,10 @@ void InitGPIOs() {
     GPIO_InitStructure.GPIO_Pin = POWBOTTON_OUT;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init (GPIOA, &GPIO_InitStructure);
+
+    GPIO_WriteBit (POWBOTTON_PORT, POWBOTTON_OUT, Bit_RESET);
+    Delay_Ms(50);
+    GPIO_WriteBit (POWBOTTON_PORT, POWBOTTON_OUT, Bit_SET);
 }
 
 void InitADC() {
@@ -219,73 +226,19 @@ u16 Get_ADC_Val(u8 ch)
     return val;
 }
 
-// void ReadConfig() {
-//     struct Config *savedConfig;
-//     savedConfig = (struct Config *)(CONFIG_ADDR);
-//     if (savedConfig->initial_startup != STARUP_FLAG)  // 确认是否初次启动，此处为初次启动
-//     {
-//         config.initial_startup = STARUP_FLAG;
-//         config.mode = 0;
-//         config.beeper = 0;  // not using beeper
-//         config.wpm = DEF_WPM;
-//         config.morse_config.dot_len = DEF_DOT_LEN;
-//         config.morse_config.dash_len = DEF_DASH_LEN;
-//         config.morse_config.break_len = DEF_BREAK_LEN;
-//         config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
-//         config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
-//         config.morse_config.cut_num = 0;
-//         WriteConfig();
-//     } else {
-//         config.mode = savedConfig->mode;
-//         config.beeper = savedConfig->beeper;
-//         config.wpm = savedConfig->wpm;
-//         config.morse_config.dot_len = DEF_DOT_LEN;
-//         config.morse_config.dash_len = DEF_DASH_LEN;
-//         config.morse_config.break_len = DEF_BREAK_LEN;
-//         config.morse_config.letter_break_len =
-//             DEF_LETTER_BREAK_LEN;
-//         config.morse_config.word_break_len =
-//             savedConfig->morse_config.word_break_len;
-//         config.morse_config.cut_num = savedConfig->morse_config.cut_num;
-//     }
-
-//     memcpy (msg, (uint8_t *)(CONFIG_ADDR + 32), 12);
-// }
-
-// void WriteConfig() {
-//     uint8_t tmp[16] = {0};
-//     int i;
-//     FLASH_Unlock();
-
-//     FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
-//     FLASH_ErasePage_Fast (CONFIG_ADDR);
-
-//     config.initial_startup = STARUP_FLAG;
-
-//     memcpy (tmp, &config, sizeof (struct Config));
-
-//     for (i = 0; i < 4; i++) {
-//         FLASH_ProgramWord ((CONFIG_ADDR + 4 * i), *((uint32_t *)(tmp + 4 * i)));
-//     }
-
-//     FLASH_ProgramWord (CONFIG_ADDR + 16, *((uint32_t *)msg));
-//     FLASH_ProgramWord (CONFIG_ADDR + 20, *((uint32_t *)(msg + 4)));
-//     FLASH_ProgramWord (CONFIG_ADDR + 24, *((uint32_t *)(msg + 8)));
-
-//     FLASH_Lock();
-// }
 
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;
     Delay_Ms(10);
-    AT24CXX_Write(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
+    // AT24CXX_Write(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
+    AT24CXX_WriteMultiPage(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
     Delay_Ms(10);
-    AT24CXX_Write(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
+    // AT24CXX_Write(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
+    AT24CXX_WriteMultiPage(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
 }
 
 void ReadConfigEEPROM(){
     struct Config savedConfig;
-    // savedConfig = (struct Config *)(CONFIG_ADDR);
     AT24CXX_Read(EEPROM_CONFIG_ADDR, (u8*)&savedConfig, sizeof (struct Config));
     if (savedConfig.initial_startup != STARUP_FLAG)  // 确认是否初次启动，此处为初次启动
     {
@@ -293,17 +246,24 @@ void ReadConfigEEPROM(){
         config.mode = 0;
         config.beeper = 0;  // not using beeper
         config.wpm = DEF_WPM;
+
         config.morse_config.dot_len = DEF_DOT_LEN;
         config.morse_config.dash_len = DEF_DASH_LEN;
         config.morse_config.break_len = DEF_BREAK_LEN;
         config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
         config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
         config.morse_config.cut_num = 0;
+
+        config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
+        config.button_func.bt1_func = & ButtonChangeBeeper;
+        config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
+        config.button_func.bt2_func = & ButtonChangeMode;
         WriteConfigEEPROM();
     } else {
         config.mode = savedConfig.mode;
         config.beeper = savedConfig.beeper;
         config.wpm = savedConfig.wpm;
+
         config.morse_config.dot_len = DEF_DOT_LEN;
         config.morse_config.dash_len = DEF_DASH_LEN;
         config.morse_config.break_len = DEF_BREAK_LEN;
@@ -312,10 +272,15 @@ void ReadConfigEEPROM(){
         config.morse_config.word_break_len =
             savedConfig.morse_config.word_break_len;
         config.morse_config.cut_num = savedConfig.morse_config.cut_num;
+
+        config.button_func.bt1_func_index = savedConfig.button_func.bt1_func_index;
+        config.button_func.bt1_func = savedConfig.button_func.bt1_func;
+        config.button_func.bt2_func_index = savedConfig.button_func.bt2_func_index;
+        config.button_func.bt2_func = savedConfig.button_func.bt2_func;
     }
 
     // memcpy (msg, (uint8_t *)(CONFIG_ADDR + 16), 12);
-    AT24CXX_Read(EEPROM_CONFIG_ADDR + 32, msg, MSG_NUM);
+    AT24CXX_Read(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
 }
 
 void ReadSavedMsgEEPROM(uint8_t sn) {
@@ -323,9 +288,8 @@ void ReadSavedMsgEEPROM(uint8_t sn) {
 
     uint8_t buff[MSG_ZONE_SIZE];
 
-    AT24CXX_Read(addr, buff, MSG_ZONE_SIZE);
-
     if (msg[sn] == 0xcd) {
+        AT24CXX_Read(addr, buff, MSG_ZONE_SIZE);
         inputBuffSize = *(uint32_t *)(buff + BUFFSIZE - 4);
         memcpy (inputBuff, (uint32_t *)buff, inputBuffSize);
         inputBuff[inputBuffSize] = '\0';
@@ -339,35 +303,9 @@ void ReadSavedMsgEEPROM(uint8_t sn) {
     }
 }
 
-// void ReadSavedMsg (uint8_t sn) {
-//     uint32_t addr;
-
-//     if (sn < 4) {
-//         addr = MSG_ADDR + sn * MSG_ZONE_SIZE;
-//     } else if (sn < 8) {
-//         addr = MSG_ADDR + 0x1000 + (sn - 4) * MSG_ZONE_SIZE;
-//     } else {
-//         addr = MSG_ADDR + 0x2000 + (sn - 8) * MSG_ZONE_SIZE;
-//     }
-
-//     if (msg[sn] == 0xcd) {
-//         inputBuffSize = *(uint32_t *)(addr + BUFFSIZE - 4);
-//         memset(inputBuff, 0, INPUTZONE_SIZE);
-//         memcpy (inputBuff, (uint32_t *)addr, inputBuffSize);
-//         inputBuff[inputBuffSize] = '\0';
-//         if (!config.mode) {
-//             sendCount = 0;
-//             starSending();
-//         }
-//     } else {
-//         sprintf (inputBuff, "no saved msg");
-//         inputBuffSize = strlen (inputBuff);
-//     }
-// }
-
 void WriteMsgEEPROM (uint8_t sn)
 {
-    uint16_t msgWriteAddr = 0x00000000 + sn * 256;
+    uint16_t msgWriteAddr = 0x00000000 + sn * MSG_ZONE_SIZE;
     uint8_t buff[MSG_ZONE_SIZE];
     uint32_t saveingBuffSize = inputBuffSize;
 
@@ -378,7 +316,8 @@ void WriteMsgEEPROM (uint8_t sn)
     memcpy (buff, inputBuff, saveingBuffSize);
     *(uint32_t *)(buff + BUFFSIZE - 4) = saveingBuffSize;
 
-    AT24CXX_Write(msgWriteAddr, buff, MSG_ZONE_SIZE);
+    // AT24CXX_Write(msgWriteAddr, buff, MSG_ZONE_SIZE);
+    AT24CXX_WriteMultiPage(msgWriteAddr, buff, MSG_ZONE_SIZE);
 
     msg[sn] = 0xcd;
 
@@ -387,54 +326,32 @@ void WriteMsgEEPROM (uint8_t sn)
     saving = 0;
 }
 
-// void WriteMsg (uint8_t sn) {
-//     uint32_t eraseAddr;
-//     uint8_t buff[0x0800];
-//     uint32_t saveingBuffSize;
+void ResetConfig()
+{
+        config.initial_startup = STARUP_FLAG;
+        config.mode = 0;
+        config.beeper = 0;  // not using beeper
+        config.wpm = DEF_WPM;
 
-//     saving = 1;
+        config.morse_config.dot_len = DEF_DOT_LEN;
+        config.morse_config.dash_len = DEF_DASH_LEN;
+        config.morse_config.break_len = DEF_BREAK_LEN;
+        config.morse_config.letter_break_len = DEF_LETTER_BREAK_LEN;
+        config.morse_config.word_break_len = DEF_WORD_BREAK_LEN;
+        config.morse_config.cut_num = 0;
 
-//     if (sn < 4)
-//         eraseAddr = MSG_ADDR;
-//     else if (sn < 8)
-//         eraseAddr = MSG_ADDR + 0x1000;
-//     else
-//         eraseAddr = MSG_ADDR + 0x2000;
+        config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
+        config.button_func.bt1_func = & ButtonChangeBeeper;
+        config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
+        config.button_func.bt2_func = & ButtonChangeMode;
 
-//     memcpy (buff, (uint8_t *)eraseAddr, 0x0800);
+        for(int i = 0; i < 12; i++)
+        {
+            msg[i]= 0x00;
+        }
+        WriteConfigEEPROM();
+}
 
-//     FLASH_Unlock();
-
-//     FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
-//     FLASH_ErasePage (eraseAddr);
-
-//     saveingBuffSize = inputBuffSize;
-//     if (saveingBuffSize > MAXSAVEBUFSIZE)
-//         saveingBuffSize = MAXSAVEBUFSIZE;
-
-//     if (sn < 4) {
-//         memcpy (buff + MSG_ZONE_SIZE * sn, inputBuff, saveingBuffSize);
-//         *(uint32_t *)(buff + MSG_ZONE_SIZE * sn + BUFFSIZE - 4) = saveingBuffSize;
-//     } else if (sn < 8) {
-//         memcpy (buff + MSG_ZONE_SIZE * (sn - 4), inputBuff, saveingBuffSize);
-//         *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 4) + BUFFSIZE - 4) =
-//             saveingBuffSize;
-//     } else {
-//         memcpy (buff + MSG_ZONE_SIZE * (sn - 8), inputBuff, saveingBuffSize);
-//         *(uint32_t *)(buff + MSG_ZONE_SIZE * (sn - 8) + BUFFSIZE - 4) =
-//             saveingBuffSize;
-//     }
-
-//     FLASH_ROM_WRITE (eraseAddr, (uint32_t *)buff, 0x0800);
-
-//     FLASH_Lock();
-
-//     msg[sn] = 0xcd;
-//     // WriteConfig();
-//     WriteConfigEEPROM();
-
-//     saving = 0;
-// }
 
 void TIM4_IRQHandler (void) __attribute__ ((interrupt ("WCH-Interrupt-fast")));
 

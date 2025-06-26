@@ -127,3 +127,55 @@ void AT24CXX_Write(u16 WriteAddr, u8 *pBuffer, u16 NumToWrite)
 		Delay_Ms(5);
 	}
 }
+
+void AT24CXX_WriteOnePage(u16 WriteAddr, u8 *pBuffer, u16 NumToWrite)
+{
+	while( I2C_GetFlagStatus( I2C2, I2C_FLAG_BUSY ) != RESET );
+	I2C_GenerateSTART( I2C2, ENABLE );
+
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_MODE_SELECT ) );
+	I2C_Send7bitAddress( I2C2, 0XA0, I2C_Direction_Transmitter );
+
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED ) );
+
+#if (Address_Lenth  == Address_8bit)
+	I2C_SendData( I2C2, (u8)(WriteAddr&0x00FF) );
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) );
+
+#elif (Address_Lenth  == Address_16bit)
+	I2C_SendData( I2C2, (u8)(WriteAddr>>8) );
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) );
+
+	I2C_SendData( I2C2, (u8)(WriteAddr&0x00FF) );
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) );
+
+#endif
+
+	while(NumToWrite--)
+	{
+	if( I2C_GetFlagStatus( I2C2, I2C_FLAG_TXE ) !=  RESET )
+	{
+		I2C_SendData( I2C2, *pBuffer);
+	}
+		pBuffer++;
+	while( !I2C_CheckEvent( I2C2, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) );
+	}
+
+
+	I2C_GenerateSTOP( I2C2, ENABLE );
+}
+
+void AT24CXX_WriteMultiPage(u16 WriteAddr, u8 *pBuffer, int32_t NumToWrite)
+{
+	while(NumToWrite > 0) 
+	{
+		if(NumToWrite >= PageSize)
+			AT24CXX_WriteOnePage(WriteAddr, pBuffer, PageSize);
+		else
+			AT24CXX_WriteOnePage(WriteAddr, pBuffer, NumToWrite); ;
+		WriteAddr += PageSize;
+		pBuffer += PageSize;
+		Delay_Ms(5);
+		NumToWrite -= PageSize;
+	}
+}

@@ -17,6 +17,13 @@ void WriteConfigEEPROM();
 uint32_t sendBufLen = 0;
 uint8_t sendbuf[256];  // max for 6 dash 6*20+5*20+20
 
+const char KochAplhaTable[41] = {
+    'K', 'M', 'U', 'R', 'E', 'S', 'N', 'A', 'P', 'T',
+    'L', 'W', 'I', '.', 'J', 'Z', '=', 'F', 'O', 'Y', ',',
+'V', 'G', '5', '/', 'Q', '9', '2', 'H', '3', '8',
+'B', '?', '4', '7', 'C', '1', 'D', '6', '0', 'X' 
+};
+
 struct MorseCodeMap {
     uint8_t len;
     uint8_t code;

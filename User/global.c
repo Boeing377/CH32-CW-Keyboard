@@ -8,6 +8,7 @@
 #include "global.h"
 
 struct Config config;
+struct Train_Info train_info;
 
 uint8_t stge = 0;         // µ±Ç°×´Ì¬           0£ºstb        1£ºsending
 uint8_t bufCovnMark = 0;
@@ -18,7 +19,13 @@ uint8_t disp_menu = 0;
 uint8_t menu_item = 0;
 uint8_t disp_ver = 0;
 uint8_t disp_morse_conf = 0;
+uint8_t disp_button_func = 0;
 uint8_t morse_conf_item = 0;
+uint8_t button_conf_item = 0;
+uint8_t disp_confirm_reset = 0;
+uint8_t disp_train_menu = 0;
+uint8_t tain_menu_item = 0;
+
 int sendCount = 0, send_now;
 uint8_t curse_flash = 0;
 uint16_t bat_adc_val;

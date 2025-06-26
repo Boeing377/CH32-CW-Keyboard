@@ -14,6 +14,7 @@
 /* Header File */
 #include "usb_host_conf.h"
 #include "morse_send.h"
+#include "ButtonFunc.h"
 
 /*******************************************************************************/
 /* Variable Definition */
@@ -134,6 +135,10 @@ void CombufDeal() {
                         {
                             disp_menu = 1 - disp_menu;
                         }
+                        else if (Com_Buf[i] == 0x17)      // t键
+                        {
+                            disp_train_menu = 1 - disp_train_menu;
+                        }
                     } else {
                         if (caps_lock_stg == 0)
                             New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
@@ -162,7 +167,10 @@ void CombufDeal() {
                     } else if (disp_morse_conf) {
                         if (morse_conf_item < 2)
                             morse_conf_item++;
-                    } else if (menu_item < 4)
+                    } else if (disp_button_func) {
+                        if (button_conf_item < 2)
+                            button_conf_item++;
+                    } else if (menu_item < 6)
                         menu_item++;
                 } else if (New_Pressed[i] == 0x2) {  // 按下上键
                     if (disp_ver) {
@@ -170,21 +178,58 @@ void CombufDeal() {
                     } else if (disp_morse_conf) {
                         if (morse_conf_item > 0)
                             morse_conf_item--;
+                    }else if (disp_button_func){
+                        if (button_conf_item > 0)
+                            button_conf_item--;
                     } else if (menu_item > 0)
                         menu_item--;
                 } else if (New_Pressed[i] == 28) {  // 按下左键
                     if (disp_ver == 1) {
                         disp_ver = 0;
-                    } else if (disp_morse_conf == 1) {
+                    } else if (disp_morse_conf) {
                         if (morse_conf_item == 0) {
                             if (config.morse_config.word_break_len == 10)
                                 config.morse_config.word_break_len = 7;
                             else if (config.morse_config.word_break_len == 14)
                                 config.morse_config.word_break_len = 10;
+                            else
+                                 config.morse_config.word_break_len = 7;
                         }
                         if (morse_conf_item == 1) {
                             if (config.morse_config.cut_num > 0)
                                 config.morse_config.cut_num -= 1;
+                        }
+                    } else if (disp_button_func) {
+                        if(button_conf_item == 0) {
+                            if(config.button_func.bt1_func_index > 0)
+                                config.button_func.bt1_func_index --;
+                            switch (config.button_func.bt1_func_index) {
+                                case 0:
+                                 config.button_func.bt1_func = & ButtonChangeBeeper;
+                                 break;
+                                case 1:
+                                 config.button_func.bt1_func = & ButtonChangeMode;
+                                 break;
+                                 case 2:
+                                 config.button_func.bt1_func = & ButtonOpenMenu;
+                                 break;
+                            }
+                        }
+                        if(button_conf_item == 1)
+                        {
+                            if(config.button_func.bt2_func_index > 0)
+                                config.button_func.bt2_func_index --;
+                                                            switch (config.button_func.bt2_func_index) {
+                                case 0:
+                                 config.button_func.bt2_func = & ButtonChangeBeeper;
+                                 break;
+                                case 1:
+                                 config.button_func.bt2_func = & ButtonChangeMode;
+                                 break;
+                                 case 2:
+                                 config.button_func.bt2_func = & ButtonOpenMenu;
+                                 break;
+                            }
                         }
                     } else {
                         if (menu_item == 0)
@@ -195,11 +240,13 @@ void CombufDeal() {
                 } else if (New_Pressed[i] == 29) {  // 按下右键
                     if (disp_ver == 1) {
                         disp_ver = 0;
-                    } else if (disp_morse_conf == 1) {
+                    } else if (disp_morse_conf) {
                         if (morse_conf_item == 0) {
                             if (config.morse_config.word_break_len == 7)
                                 config.morse_config.word_break_len = 10;
                             else if (config.morse_config.word_break_len == 10)
+                                config.morse_config.word_break_len = 14;
+                            else
                                 config.morse_config.word_break_len = 14;
                         }
                         if (morse_conf_item == 1) {
@@ -209,7 +256,39 @@ void CombufDeal() {
                         if (morse_conf_item == 2) {
                             disp_morse_conf = 0;
                         }
-                    } else {
+                    } else if (disp_button_func) {
+                        if(button_conf_item == 0) {
+                            if(config.button_func.bt1_func_index < 2)
+                                config.button_func.bt1_func_index ++;
+                            switch (config.button_func.bt1_func_index) {
+                                case 0:
+                                 config.button_func.bt1_func = & ButtonChangeBeeper;
+                                 break;
+                                case 1:
+                                 config.button_func.bt1_func = & ButtonChangeMode;
+                                 break;
+                                 case 2:
+                                 config.button_func.bt1_func = & ButtonOpenMenu;
+                                 break;
+                            }
+                        }
+                        if(button_conf_item == 1)
+                        {
+                            if(config.button_func.bt2_func_index < 2)
+                                config.button_func.bt2_func_index ++;
+                                                            switch (config.button_func.bt2_func_index) {
+                                case 0:
+                                 config.button_func.bt2_func = & ButtonChangeBeeper;
+                                 break;
+                                case 1:
+                                 config.button_func.bt2_func = & ButtonChangeMode;
+                                 break;
+                                 case 2:
+                                 config.button_func.bt2_func = & ButtonOpenMenu;
+                                 break;
+                            }
+                        }
+                    }else {
                         if (menu_item == 0)
                             config.mode = 1 - config.mode;
                         if (menu_item == 1)
@@ -217,8 +296,12 @@ void CombufDeal() {
                         if (menu_item == 2)
                             disp_morse_conf = 1;
                         if (menu_item == 3)
+                            disp_button_func = 1;
+                        if (menu_item == 4)
                             disp_ver = 1;
-                        if (menu_item == 4) {
+                        if (menu_item == 5)
+                            disp_confirm_reset = 1;
+                        if (menu_item == 6) {
                             disp_menu = 0;
                             // WriteConfig();
                             WriteConfigEEPROM();
@@ -227,20 +310,45 @@ void CombufDeal() {
                 } else if (New_Pressed[i] == 31) {  // 按下回车
                     if (disp_ver == 1) {
                         disp_ver = 0;
-                    } else if (disp_morse_conf == 1) {
+                    } else if (disp_morse_conf) {
                         if (morse_conf_item == 2) {
                             disp_morse_conf = 0;
+                            morse_conf_item = 0;
                         }
-                    } else {
+                    } 
+                    else if (disp_button_func) {
+                        if (button_conf_item == 2) {
+                            disp_button_func = 0;
+                            button_conf_item = 0;
+                        }
+                    } else if (disp_confirm_reset){
+                         ResetConfig();
+                         disp_confirm_reset = 0;
+                         menu_item = 0;
+                         disp_menu = 0;
+                    } 
+                    else {
                         if (menu_item == 2)
                             disp_morse_conf = 1;
                         if (menu_item == 3)
+                            disp_button_func = 1;
+                        if (menu_item == 4)
                             disp_ver = 1;
-                        if (menu_item == 4) {
+                        if (menu_item == 5)
+                            disp_confirm_reset = 1;
+                        if (menu_item == 6) {
                             disp_menu = 0;
-                            // WriteConfig();
+
+                            menu_item = 0;
                             WriteConfigEEPROM();
                         }
+                    }
+                } else if (New_Pressed[i] == 27) {  // 按下esc
+                    if(disp_confirm_reset)
+                    {
+                        disp_confirm_reset = 0;
+                    } else {
+                        disp_menu = 0;
                     }
                 }
             } else {

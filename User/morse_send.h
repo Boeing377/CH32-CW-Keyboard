@@ -10,6 +10,8 @@
 
 #include "global.h"
 
+extern const char KochAplhaTable[];
+
 void TIM2_Init (uint16_t arr, uint16_t psc);
 void bufCovn (uint8_t theChar);
 void add_wpm (int num);
