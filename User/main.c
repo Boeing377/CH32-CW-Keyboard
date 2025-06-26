@@ -118,10 +118,9 @@ int main (void) {
 
         USBH_MainDeal();
 
-        bat_adc_val = Get_ADC_Val(ADC_Channel_2);
+        bat_adc_val = Get_ADC_Val(ADC_Channel_2); 
+        bat_Voltage = kalmanFilter(&KFP_Voltage,(float)bat_adc_val);
         bat_adc_val = (int)((float)(bat_adc_val * 20 / 4096.0) * (float)3.3); 
-        kalman_bat_Voltage = kalmanFilter(&KFP_Voltage,(float)bat_adc_val);
-        bat_Voltage = kalman_bat_Voltage;
 
         dispf();
 
