@@ -38,10 +38,24 @@ uint8_t key1 = 0, key1old = 0, key2 = 0, key2old = 0;
 void InitGPIOs();
 void InitADC();
 
+typedef struct 
+{
+    float LastP;//上次估算协方差 初始化值为0.02
+    float Now_P;//当前估算协方差 初始化值为0
+    float out;//卡尔曼滤波器输出 初始化值为0
+    float Kg;//卡尔曼增益 初始化值为0
+    float Q;//过程噪声协方差 初始化值为0.001
+    float R;//观测噪声协方差 初始化值为0.543
+}KFP;//Kalman Filter parameter
+
+KFP KFP_Voltage={0.02,0,0,0,0.001,0.543};
+
+int bat_Voltage;
+int kalman_bat_Voltage = 0;
+
 u16 Get_ADC_Val(u8 ch);
 
-// void ReadConfig();
-// void WriteConfig();
+float kalmanFilter(KFP *kfp,float input);
 
 void ReadConfigEEPROM();
 void WriteConfigEEPROM();
@@ -106,27 +120,17 @@ int main (void) {
 
         bat_adc_val = Get_ADC_Val(ADC_Channel_2);
         bat_adc_val = (int)((float)(bat_adc_val * 20 / 4096.0) * (float)3.3); 
+        kalman_bat_Voltage = kalmanFilter(&KFP_Voltage,(float)bat_adc_val);
+        bat_Voltage = kalman_bat_Voltage;
 
         dispf();
 
         if (key1 == 1 && key1old == 0)          // key1 pressed
         {
-            // config.beeper = 1 - config.beeper;  // 切换是否使用蜂鸣器
-            // // WriteConfig();
-            // WriteConfigEEPROM();
             config.button_func.bt1_func();
         }
         if (key2 == 1 && key2old == 0)      // key2 pressed
         {
-            // config.mode = 1 - config.mode;  // 切换模式
-            // endSending();
-            // inputBuffSize = 0;
-            // memset (inputBuff, '\0', BUFFSIZE);
-            // outputBuffSize = 0;
-            // memset (outputBuff, '\0', BUFFSIZE);
-            // sendCount = 0;
-            // // WriteConfig();
-            // WriteConfigEEPROM();
             config.button_func.bt2_func();
         }
         if (keyboard_in) {
@@ -226,6 +230,20 @@ u16 Get_ADC_Val(u8 ch)
     return val;
 }
 
+/**
+ *卡尔曼滤波器
+ *@param KFP *kfp 卡尔曼结构体参数
+ *   float input 需要滤波的参数的测量值（即传感器的采集值）
+ *@return 滤波后的参数（最优值）
+ */
+ float kalmanFilter(KFP *kfp,float input)
+ {
+     kfp->Now_P = kfp->LastP + kfp->Q;
+     kfp->Kg = kfp->Now_P / (kfp->Now_P + kfp->R);
+     kfp->out = kfp->out + kfp->Kg * (input -kfp->out);
+     kfp->LastP = (1-kfp->Kg) * kfp->Now_P;
+     return kfp->out;
+ }
 
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;

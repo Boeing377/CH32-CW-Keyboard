@@ -382,8 +382,10 @@ void CombufDeal() {
                     if (inputBuffSize > 0)
                         inputBuffSize--;
                     inputBuff[inputBuffSize] = '\0';
+                    if (config.mode == 0)
+                    {
                     if (inputBuffSize < sendCount)
-                        sendCount = inputBuffSize;
+                        sendCount = inputBuffSize;}
                 } else if (New_Pressed[i] == 0x1) {                         // 按下下键
                     sub_wpm (1);
                 } else if (New_Pressed[i] == 0x2) {                         // 按下上键
