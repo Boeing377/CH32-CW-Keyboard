@@ -1,7 +1,7 @@
 /*
  * global.c
  *
- *  Created on: 2024Äê9ÔÂ8ÈÕ
+ *  Created on: 2024ï¿½ï¿½9ï¿½ï¿½8ï¿½ï¿½
  *      Author: lyj98
  */
 
@@ -10,9 +10,9 @@
 struct Config config;
 struct Train_Info train_info;
 
-uint8_t stge = 0;         // µ±Ç°×´Ì¬           0£ºstb        1£ºsending
+uint8_t stge = 0;         // ï¿½ï¿½Ç°×´Ì¬           0ï¿½ï¿½stb        1ï¿½ï¿½sending
 uint8_t bufCovnMark = 0;
-uint8_t keyboard_in = 0;  // ¼üÅÌ½ÓÈë×´Ì¬    0£ºÎ´½ÓÈë           1£ºÒÑ½ÓÈë
+uint8_t keyboard_in = 0;  // ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½×´Ì¬    0ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½           1ï¿½ï¿½ï¿½Ñ½ï¿½ï¿½ï¿½
 uint8_t caps_lock_stg = 0;
 uint8_t saving = 0;
 uint8_t disp_menu = 0;
@@ -29,10 +29,11 @@ uint8_t tain_menu_item = 0;
 int sendCount = 0, send_now;
 uint8_t curse_flash = 0;
 uint16_t bat_adc_val;
+volatile uint32_t app_tick_ms = 0;
 
 uint8_t msg[MSG_NUM];
 
-char inputBuff[INPUTZONE_SIZE], outputBuff[INPUTZONE_SIZE];  // ¼üÈëbufferºÍÊä³öbuffer
+char inputBuff[INPUTZONE_SIZE], outputBuff[INPUTZONE_SIZE];  // ï¿½ï¿½ï¿½ï¿½bufferï¿½ï¿½ï¿½ï¿½ï¿½buffer
 
 uint32_t inputBuffSize = 0, outputBuffSize = 0;
 

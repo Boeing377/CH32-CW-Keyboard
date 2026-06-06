@@ -1,7 +1,7 @@
 /*
  * morse_send.h
  *
- *  Created on: 2024Äê8ÔÂ19ÈÕ
+ *  Created on: 2024ï¿½ï¿½8ï¿½ï¿½19ï¿½ï¿½
  *      Author: lyj98
  */
 
@@ -14,6 +14,7 @@ extern const char KochAplhaTable[];
 
 void TIM2_Init (uint16_t arr, uint16_t psc);
 void bufCovn (uint8_t theChar);
+uint8_t Morse_CanEncodeChar (uint8_t theChar);
 void add_wpm (int num);
 void sub_wpm (int num);
 void starSending();

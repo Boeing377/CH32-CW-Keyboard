@@ -31,24 +31,400 @@ void WriteConfigEEPROM();
 void ReadSavedMsgEEPROM (uint8_t sn);
 void WriteMsgEEPROM (uint8_t sn);
 
-//  0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
-uint8_t codmap[] = {
-    0,  0,  0,  0,'a','b','c','d','e','f','g','h','i','j','k','l',  // 0
-  'm','n','o','p','q','r','s','t','u','v','w','x','y','z','1','2',  // 1
-  '3','4','5','6','7','8','9','0', 31, 27,127,  0,' ','-','=',  0,  // 2
-    0,  0,  0,';','\'',  0,',','.','/',  0,  3,  4,  5,  6,  7,  8,  // 3
-    9, 10, 11, 12, 13, 14,  0,  0,  0,  0,  0,  0,  0,  0,  0, 29,  // 4
-   28,  1,  2,  0,'/',  0,'-','+', 31,'1','2','3','4','5','6','7',  // 5
-  '8','9','0',  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0};  // 6
+#define KEY_USAGE_MAP_SIZE 104
+#define KEY_MODIFIER_CTRL_MASK 0x11
+#define KEY_MODIFIER_SHIFT_MASK 0x22
 
-uint8_t codmapWithShift[] = {
-    0,  0,  0,  0,'A','B','C','D','E','F','G','H','I','J','K','L',  // 0
-  'M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','!','2',  // 1
-  '3','4','5','6','7','8','9','0', 31, 27,127,  0,' ',  0,'+',  0,  // 2
-    0,  0,  0,':','"',  0,  0,  0,'?',  0, 15, 16, 17, 18, 19, 20,  // 3
-   21, 22, 23, 24, 25, 26,  0,  0,  0,  0,  0,  0,  0,  0,  0, 29,  // 4
-   28,  1,  2,  0,'/',  0,'-','+', 31,'1','2','3','4','5','6','7',  // 5
-  '8','9','0',  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0}; // 6
+struct KeyboardLayoutEntry {
+    uint8_t normal;
+    uint8_t shifted;
+};
+
+static const struct KeyboardLayoutEntry qwerty_keymap[KEY_USAGE_MAP_SIZE] = {
+    [0x04] = {'a', 'A'}, [0x05] = {'b', 'B'}, [0x06] = {'c', 'C'},
+    [0x07] = {'d', 'D'}, [0x08] = {'e', 'E'}, [0x09] = {'f', 'F'},
+    [0x0A] = {'g', 'G'}, [0x0B] = {'h', 'H'}, [0x0C] = {'i', 'I'},
+    [0x0D] = {'j', 'J'}, [0x0E] = {'k', 'K'}, [0x0F] = {'l', 'L'},
+    [0x10] = {'m', 'M'}, [0x11] = {'n', 'N'}, [0x12] = {'o', 'O'},
+    [0x13] = {'p', 'P'}, [0x14] = {'q', 'Q'}, [0x15] = {'r', 'R'},
+    [0x16] = {'s', 'S'}, [0x17] = {'t', 'T'}, [0x18] = {'u', 'U'},
+    [0x19] = {'v', 'V'}, [0x1A] = {'w', 'W'}, [0x1B] = {'x', 'X'},
+    [0x1C] = {'y', 'Y'}, [0x1D] = {'z', 'Z'}, [0x1E] = {'1', '!'},
+    [0x1F] = {'2', '@'}, [0x20] = {'3', 0}, [0x21] = {'4', '$'},
+    [0x22] = {'5', 0}, [0x23] = {'6', 0}, [0x24] = {'7', '&'},
+    [0x25] = {'8', 0}, [0x26] = {'9', '('}, [0x27] = {'0', ')'},
+    [0x28] = {31, 31}, [0x29] = {27, 27}, [0x2A] = {127, 127},
+    [0x2C] = {' ', ' '}, [0x2D] = {'-', '_'}, [0x2E] = {'=', '+'},
+    [0x33] = {';', ':'}, [0x34] = {'\'', '"'}, [0x36] = {',', 0},
+    [0x37] = {'.', 0}, [0x38] = {'/', '?'}, [0x3A] = {3, 15},
+    [0x3B] = {4, 16}, [0x3C] = {5, 17}, [0x3D] = {6, 18},
+    [0x3E] = {7, 19}, [0x3F] = {8, 20}, [0x40] = {9, 21},
+    [0x41] = {10, 22}, [0x42] = {11, 23}, [0x43] = {12, 24},
+    [0x44] = {13, 25}, [0x45] = {14, 26}, [0x4F] = {29, 29},
+    [0x50] = {28, 28}, [0x51] = {1, 1}, [0x52] = {2, 2},
+    [0x54] = {'/', '/'}, [0x56] = {'-', '-'}, [0x57] = {'+', '+'},
+    [0x58] = {31, 31}, [0x59] = {'1', '1'}, [0x5A] = {'2', '2'},
+    [0x5B] = {'3', '3'}, [0x5C] = {'4', '4'}, [0x5D] = {'5', '5'},
+    [0x5E] = {'6', '6'}, [0x5F] = {'7', '7'}, [0x60] = {'8', '8'},
+    [0x61] = {'9', '9'}, [0x62] = {'0', '0'},
+};
+
+static const struct KeyboardLayoutEntry azerty_keymap[KEY_USAGE_MAP_SIZE] = {
+    [0x04] = {'q', 'Q'}, [0x05] = {'b', 'B'}, [0x06] = {'c', 'C'},
+    [0x07] = {'d', 'D'}, [0x08] = {'e', 'E'}, [0x09] = {'f', 'F'},
+    [0x0A] = {'g', 'G'}, [0x0B] = {'h', 'H'}, [0x0C] = {'i', 'I'},
+    [0x0D] = {'j', 'J'}, [0x0E] = {'k', 'K'}, [0x0F] = {'l', 'L'},
+    [0x10] = {',', '?'}, [0x11] = {'n', 'N'}, [0x12] = {'o', 'O'},
+    [0x13] = {'p', 'P'}, [0x14] = {'a', 'A'}, [0x15] = {'r', 'R'},
+    [0x16] = {'s', 'S'}, [0x17] = {'t', 'T'}, [0x18] = {'u', 'U'},
+    [0x19] = {'v', 'V'}, [0x1A] = {'z', 'Z'}, [0x1B] = {'x', 'X'},
+    [0x1C] = {'y', 'Y'}, [0x1D] = {'w', 'W'}, [0x1E] = {'&', '1'},
+    [0x1F] = {0, '2'}, [0x20] = {'"', '3'}, [0x21] = {'\'', '4'},
+    [0x22] = {'(', '5'}, [0x23] = {'-', '6'}, [0x24] = {0, '7'},
+    [0x25] = {'_', '8'}, [0x26] = {0, '9'}, [0x27] = {0, '0'},
+    [0x28] = {31, 31}, [0x29] = {27, 27}, [0x2A] = {127, 127},
+    [0x2C] = {' ', ' '}, [0x2D] = {')', '='}, [0x2E] = {'=', '+'},
+    [0x33] = {'m', 'M'}, [0x34] = {'\'', '"'}, [0x36] = {';', '.'},
+    [0x37] = {':', '/'}, [0x38] = {'!', '?'}, [0x3A] = {3, 15},
+    [0x3B] = {4, 16},
+    [0x3C] = {5, 17}, [0x3D] = {6, 18}, [0x3E] = {7, 19},
+    [0x3F] = {8, 20}, [0x40] = {9, 21}, [0x41] = {10, 22},
+    [0x42] = {11, 23}, [0x43] = {12, 24}, [0x44] = {13, 25},
+    [0x45] = {14, 26}, [0x4F] = {29, 29}, [0x50] = {28, 28},
+    [0x51] = {1, 1}, [0x52] = {2, 2}, [0x54] = {'/', '/'},
+    [0x56] = {'-', '-'}, [0x57] = {'+', '+'}, [0x58] = {31, 31},
+    [0x59] = {'1', '1'}, [0x5A] = {'2', '2'}, [0x5B] = {'3', '3'},
+    [0x5C] = {'4', '4'}, [0x5D] = {'5', '5'}, [0x5E] = {'6', '6'},
+    [0x5F] = {'7', '7'}, [0x60] = {'8', '8'}, [0x61] = {'9', '9'},
+    [0x62] = {'0', '0'},
+};
+
+static const struct KeyboardLayoutEntry *GetActiveKeyboardLayout (void) {
+    switch (config.keyboard_layout) {
+    case KEYBOARD_LAYOUT_AZERTY:
+        return azerty_keymap;
+
+    case KEYBOARD_LAYOUT_QWERTY:
+    default:
+        return qwerty_keymap;
+    }
+}
+
+static uint8_t IsModifierActive (uint8_t modifier, uint8_t mask) {
+    return (modifier & mask) != 0;
+}
+
+static uint8_t IsAlphabetEntry (const struct KeyboardLayoutEntry *entry) {
+    if ((entry->normal < 'a') || (entry->normal > 'z')) {
+        return 0;
+    }
+
+    return entry->shifted == (entry->normal - ('a' - 'A'));
+}
+
+static uint8_t TranslateKeyUsage (uint8_t modifier, uint8_t usage,
+                                  uint8_t *translated) {
+    const struct KeyboardLayoutEntry *keymap = GetActiveKeyboardLayout ();
+    const struct KeyboardLayoutEntry *entry;
+    uint8_t shift_active;
+
+    if ((translated == 0) || (usage >= KEY_USAGE_MAP_SIZE)) {
+        return 0;
+    }
+
+    entry = &keymap[usage];
+    shift_active = IsModifierActive (modifier, KEY_MODIFIER_SHIFT_MASK);
+
+    if (IsAlphabetEntry (entry) && caps_lock_stg) {
+        *translated = shift_active ? entry->normal : entry->shifted;
+    } else {
+        *translated = shift_active ? entry->shifted : entry->normal;
+    }
+
+    return *translated != 0;
+}
+
+static uint8_t HandleCtrlShortcut (uint8_t usage) {
+    uint8_t translated = 0;
+    const struct KeyboardLayoutEntry *keymap = GetActiveKeyboardLayout ();
+
+    if (usage >= KEY_USAGE_MAP_SIZE) {
+        return 0;
+    }
+
+    translated = keymap[usage].normal;
+    if ((translated >= 'A') && (translated <= 'Z')) {
+        translated += 'a' - 'A';
+    }
+
+    if (translated == 'm') {
+        disp_menu = 1 - disp_menu;
+        return 1;
+    }
+
+    if (translated == 't') {
+        disp_train_menu = 1 - disp_train_menu;
+        return 1;
+    }
+
+    return 0;
+}
+
+static uint8_t WasPressedInLastReport (uint8_t usage) {
+    int j;
+
+    for (j = 2; j < 8; j++) {
+        if (Last_Com_Buf[j] == usage) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int CollectNewPressedKeys (uint8_t *new_pressed) {
+    int i;
+    int new_pressed_num = 0;
+    uint8_t usage;
+    uint8_t translated;
+
+    for (i = 2; i < 8; i++) {
+        usage = Com_Buf[i];
+        if ((usage == 0) || WasPressedInLastReport (usage)) {
+            continue;
+        }
+
+        if (usage == DEF_KEY_CAPS) {
+            caps_lock_stg = 1 - caps_lock_stg;
+        }
+
+        if (IsModifierActive (Com_Buf[0], KEY_MODIFIER_CTRL_MASK) &&
+            HandleCtrlShortcut (usage)) {
+            continue;
+        }
+
+        if (TranslateKeyUsage (Com_Buf[0], usage, &translated)) {
+            new_pressed[new_pressed_num++] = translated;
+        }
+    }
+
+    return new_pressed_num;
+}
+
+static void HandleMenuKey (uint8_t key_value) {
+    if (key_value == 0x1) {
+        if (disp_ver) {
+            disp_ver = 0;
+        } else if (disp_morse_conf) {
+            if (morse_conf_item < 2)
+                morse_conf_item++;
+        } else if (disp_button_func) {
+            if (button_conf_item < 2)
+                button_conf_item++;
+        } else if (menu_item < 7)
+            menu_item++;
+    } else if (key_value == 0x2) {
+        if (disp_ver) {
+            disp_ver = 0;
+        } else if (disp_morse_conf) {
+            if (morse_conf_item > 0)
+                morse_conf_item--;
+        } else if (disp_button_func) {
+            if (button_conf_item > 0)
+                button_conf_item--;
+        } else if (menu_item > 0)
+            menu_item--;
+    } else if (key_value == 28) {
+        if (disp_ver == 1) {
+            disp_ver = 0;
+        } else if (disp_morse_conf) {
+            if (morse_conf_item == 0) {
+                if (config.morse_config.word_break_len == 10)
+                    config.morse_config.word_break_len = 7;
+                else if (config.morse_config.word_break_len == 14)
+                    config.morse_config.word_break_len = 10;
+                else
+                    config.morse_config.word_break_len = 7;
+            }
+            if (morse_conf_item == 1) {
+                if (config.morse_config.cut_num > 0)
+                    config.morse_config.cut_num -= 1;
+            }
+        } else if (disp_button_func) {
+            if (button_conf_item == 0) {
+                if (config.button_func.bt1_func_index > 0)
+                    config.button_func.bt1_func_index--;
+                ButtonApplyActionIndex (BUTTON_ID_1,
+                                        config.button_func.bt1_func_index);
+            }
+            if (button_conf_item == 1) {
+                if (config.button_func.bt2_func_index > 0)
+                    config.button_func.bt2_func_index--;
+                ButtonApplyActionIndex (BUTTON_ID_2,
+                                        config.button_func.bt2_func_index);
+            }
+        } else {
+            if (menu_item == 0)
+                config.mode = 1 - config.mode;
+            if (menu_item == 1)
+                config.beeper = 1 - config.beeper;
+            if (menu_item == 4) {
+                if (config.keyboard_layout > KEYBOARD_LAYOUT_QWERTY)
+                    config.keyboard_layout--;
+            }
+        }
+    } else if (key_value == 29) {
+        if (disp_ver == 1) {
+            disp_ver = 0;
+        } else if (disp_morse_conf) {
+            if (morse_conf_item == 0) {
+                if (config.morse_config.word_break_len == 7)
+                    config.morse_config.word_break_len = 10;
+                else if (config.morse_config.word_break_len == 10)
+                    config.morse_config.word_break_len = 14;
+                else
+                    config.morse_config.word_break_len = 14;
+            }
+            if (morse_conf_item == 1) {
+                if (config.morse_config.cut_num < 3)
+                    config.morse_config.cut_num += 1;
+            }
+            if (morse_conf_item == 2) {
+                disp_morse_conf = 0;
+            }
+        } else if (disp_button_func) {
+            if (button_conf_item == 0) {
+                if (config.button_func.bt1_func_index < 2)
+                    config.button_func.bt1_func_index++;
+                ButtonApplyActionIndex (BUTTON_ID_1,
+                                        config.button_func.bt1_func_index);
+            }
+            if (button_conf_item == 1) {
+                if (config.button_func.bt2_func_index < 2)
+                    config.button_func.bt2_func_index++;
+                ButtonApplyActionIndex (BUTTON_ID_2,
+                                        config.button_func.bt2_func_index);
+            }
+        } else {
+            if (menu_item == 0)
+                config.mode = 1 - config.mode;
+            if (menu_item == 1)
+                config.beeper = 1 - config.beeper;
+            if (menu_item == 2)
+                disp_morse_conf = 1;
+            if (menu_item == 3)
+                disp_button_func = 1;
+            if (menu_item == 4) {
+                if (config.keyboard_layout + 1 < KEYBOARD_LAYOUT_COUNT)
+                    config.keyboard_layout++;
+            }
+            if (menu_item == 5)
+                disp_ver = 1;
+            if (menu_item == 6)
+                disp_confirm_reset = 1;
+            if (menu_item == 7) {
+                disp_menu = 0;
+                WriteConfigEEPROM();
+            }
+        }
+    } else if (key_value == 31) {
+        if (disp_ver == 1) {
+            disp_ver = 0;
+        } else if (disp_morse_conf) {
+            if (morse_conf_item == 2) {
+                disp_morse_conf = 0;
+                morse_conf_item = 0;
+            }
+        } else if (disp_button_func) {
+            if (button_conf_item == 2) {
+                disp_button_func = 0;
+                button_conf_item = 0;
+            }
+        } else if (disp_confirm_reset) {
+            ResetConfig();
+            disp_confirm_reset = 0;
+            menu_item = 0;
+            disp_menu = 0;
+        } else {
+            if (menu_item == 2)
+                disp_morse_conf = 1;
+            if (menu_item == 3)
+                disp_button_func = 1;
+            if (menu_item == 4) {
+                config.keyboard_layout++;
+                if (config.keyboard_layout >= KEYBOARD_LAYOUT_COUNT)
+                    config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+            }
+            if (menu_item == 5)
+                disp_ver = 1;
+            if (menu_item == 6)
+                disp_confirm_reset = 1;
+            if (menu_item == 7) {
+                disp_menu = 0;
+                menu_item = 0;
+                WriteConfigEEPROM();
+            }
+        }
+    } else if (key_value == 27) {
+        if (disp_confirm_reset) {
+            disp_confirm_reset = 0;
+        } else {
+            disp_menu = 0;
+        }
+    }
+}
+
+static void HandleTextKey (uint8_t key_value) {
+    if (Morse_CanEncodeChar (key_value)) {
+        if (inputBuffSize < INPUTZONE_SIZE - 1) {
+            inputBuff[inputBuffSize++] = key_value;
+            inputBuff[inputBuffSize] = '\0';
+            if (!config.mode) {
+                if (!stge)
+                    starSending();
+            }
+        }
+    } else if (key_value == 31) {
+        if (config.mode) {
+            memset (outputBuff, '\0', BUFFSIZE);
+            memcpy (outputBuff, inputBuff, inputBuffSize);
+            outputBuffSize = inputBuffSize;
+            outputBuff[outputBuffSize] = '\0';
+            inputBuffSize = 0;
+            memset (inputBuff, '\0', BUFFSIZE);
+            starSending();
+        }
+    } else if (key_value == 27) {
+        endSending();
+        memset (inputBuff, 0, 512);
+        inputBuffSize = 0;
+        memset (inputBuff, '\0', BUFFSIZE);
+        sendCount = 0;
+    } else if (key_value == 127) {
+        if (inputBuffSize > 0)
+            inputBuffSize--;
+        inputBuff[inputBuffSize] = '\0';
+        if (config.mode == 0) {
+            if (inputBuffSize < sendCount)
+                sendCount = inputBuffSize;
+        }
+    } else if (key_value == 0x1) {
+        sub_wpm (1);
+    } else if (key_value == 0x2) {
+        add_wpm (1);
+    } else if (key_value == 28) {
+        sub_wpm (5);
+    } else if (key_value == 29) {
+        add_wpm (5);
+    } else if (key_value >= 3 && key_value <= 14) {
+        ReadSavedMsgEEPROM (key_value - 3);
+    } else if (key_value >= 15 && key_value <= 26) {
+        WriteMsgEEPROM (key_value - 15);
+        inputBuffSize = 0;
+        sendCount = 0;
+        memset (inputBuff, '\0', BUFFSIZE);
+    }
+}
 
 /*******************************************************************************/
 /* Interrupt Function Declaration */
@@ -103,307 +479,16 @@ void TIM3_Init (uint16_t arr, uint16_t psc) {
  * @return  none
  */
 void CombufDeal() {
-    uint8_t New_Pressed[6], newFlag = 1;
-    int i, j, newPressedNum = 0;
-
-    if (Com_Buf[2] != Com_Buf[7]) {
-        for (i = 2; i < 8; i++) {
-            if (Com_Buf[i] != 0) {
-                for (j = 2; j < 8; j++) {
-                    if (Com_Buf[i] == Last_Com_Buf[j])
-                        newFlag = 0;
-                }
-                if (newFlag) {
-                    if (Com_Buf[i] == DEF_KEY_CAPS) {
-                        caps_lock_stg = 1 - caps_lock_stg;
-                    }
-                    if (Com_Buf[0] & 0x22) {
-                        if (caps_lock_stg == 0)
-                            New_Pressed[newPressedNum++] =
-                                codmapWithShift[Com_Buf[i]];
-                        else {
-                            if ((Com_Buf[i] > 0x03) && (Com_Buf[i] < 0x1E))
-                                New_Pressed[newPressedNum++] =
-                                    codmap[Com_Buf[i]];
-                            else {
-                                New_Pressed[newPressedNum++] =
-                                    codmapWithShift[Com_Buf[i]];
-                            }
-                        }
-                    } else if (Com_Buf[0] & 0x11) {  // 左右ctrl键
-                        if (Com_Buf[i] == 0x10)      // m键
-                        {
-                            disp_menu = 1 - disp_menu;
-                        }
-                        else if (Com_Buf[i] == 0x17)      // t键
-                        {
-                            disp_train_menu = 1 - disp_train_menu;
-                        }
-                    } else {
-                        if (caps_lock_stg == 0)
-                            New_Pressed[newPressedNum++] = codmap[Com_Buf[i]];
-                        else {
-                            if ((Com_Buf[i] > 0x03) && (Com_Buf[i] < 0x1E))
-                                New_Pressed[newPressedNum++] =
-                                    codmapWithShift[Com_Buf[i]];
-                            else {
-                                New_Pressed[newPressedNum++] =
-                                    codmap[Com_Buf[i]];
-                            }
-                        }
-                    }
-                }
-            }
-            newFlag = 1;
-        }
-    }
+    uint8_t New_Pressed[6];
+    int i;
+    int newPressedNum = CollectNewPressedKeys (New_Pressed);
 
     if (newPressedNum) {
         for (i = 0; i < newPressedNum; i++) {
             if (disp_menu) {
-                if (New_Pressed[i] == 0x1) {  // 按下下键
-                    if (disp_ver) {
-                        disp_ver = 0;
-                    } else if (disp_morse_conf) {
-                        if (morse_conf_item < 2)
-                            morse_conf_item++;
-                    } else if (disp_button_func) {
-                        if (button_conf_item < 2)
-                            button_conf_item++;
-                    } else if (menu_item < 6)
-                        menu_item++;
-                } else if (New_Pressed[i] == 0x2) {  // 按下上键
-                    if (disp_ver) {
-                        disp_ver = 0;
-                    } else if (disp_morse_conf) {
-                        if (morse_conf_item > 0)
-                            morse_conf_item--;
-                    }else if (disp_button_func){
-                        if (button_conf_item > 0)
-                            button_conf_item--;
-                    } else if (menu_item > 0)
-                        menu_item--;
-                } else if (New_Pressed[i] == 28) {  // 按下左键
-                    if (disp_ver == 1) {
-                        disp_ver = 0;
-                    } else if (disp_morse_conf) {
-                        if (morse_conf_item == 0) {
-                            if (config.morse_config.word_break_len == 10)
-                                config.morse_config.word_break_len = 7;
-                            else if (config.morse_config.word_break_len == 14)
-                                config.morse_config.word_break_len = 10;
-                            else
-                                 config.morse_config.word_break_len = 7;
-                        }
-                        if (morse_conf_item == 1) {
-                            if (config.morse_config.cut_num > 0)
-                                config.morse_config.cut_num -= 1;
-                        }
-                    } else if (disp_button_func) {
-                        if(button_conf_item == 0) {
-                            if(config.button_func.bt1_func_index > 0)
-                                config.button_func.bt1_func_index --;
-                            switch (config.button_func.bt1_func_index) {
-                                case 0:
-                                 config.button_func.bt1_func = & ButtonChangeBeeper;
-                                 break;
-                                case 1:
-                                 config.button_func.bt1_func = & ButtonChangeMode;
-                                 break;
-                                 case 2:
-                                 config.button_func.bt1_func = & ButtonOpenMenu;
-                                 break;
-                            }
-                        }
-                        if(button_conf_item == 1)
-                        {
-                            if(config.button_func.bt2_func_index > 0)
-                                config.button_func.bt2_func_index --;
-                                                            switch (config.button_func.bt2_func_index) {
-                                case 0:
-                                 config.button_func.bt2_func = & ButtonChangeBeeper;
-                                 break;
-                                case 1:
-                                 config.button_func.bt2_func = & ButtonChangeMode;
-                                 break;
-                                 case 2:
-                                 config.button_func.bt2_func = & ButtonOpenMenu;
-                                 break;
-                            }
-                        }
-                    } else {
-                        if (menu_item == 0)
-                            config.mode = 1 - config.mode;
-                        if (menu_item == 1)
-                            config.beeper = 1 - config.beeper;
-                    }
-                } else if (New_Pressed[i] == 29) {  // 按下右键
-                    if (disp_ver == 1) {
-                        disp_ver = 0;
-                    } else if (disp_morse_conf) {
-                        if (morse_conf_item == 0) {
-                            if (config.morse_config.word_break_len == 7)
-                                config.morse_config.word_break_len = 10;
-                            else if (config.morse_config.word_break_len == 10)
-                                config.morse_config.word_break_len = 14;
-                            else
-                                config.morse_config.word_break_len = 14;
-                        }
-                        if (morse_conf_item == 1) {
-                            if (config.morse_config.cut_num < 3)
-                                config.morse_config.cut_num += 1;
-                        }
-                        if (morse_conf_item == 2) {
-                            disp_morse_conf = 0;
-                        }
-                    } else if (disp_button_func) {
-                        if(button_conf_item == 0) {
-                            if(config.button_func.bt1_func_index < 2)
-                                config.button_func.bt1_func_index ++;
-                            switch (config.button_func.bt1_func_index) {
-                                case 0:
-                                 config.button_func.bt1_func = & ButtonChangeBeeper;
-                                 break;
-                                case 1:
-                                 config.button_func.bt1_func = & ButtonChangeMode;
-                                 break;
-                                 case 2:
-                                 config.button_func.bt1_func = & ButtonOpenMenu;
-                                 break;
-                            }
-                        }
-                        if(button_conf_item == 1)
-                        {
-                            if(config.button_func.bt2_func_index < 2)
-                                config.button_func.bt2_func_index ++;
-                                                            switch (config.button_func.bt2_func_index) {
-                                case 0:
-                                 config.button_func.bt2_func = & ButtonChangeBeeper;
-                                 break;
-                                case 1:
-                                 config.button_func.bt2_func = & ButtonChangeMode;
-                                 break;
-                                 case 2:
-                                 config.button_func.bt2_func = & ButtonOpenMenu;
-                                 break;
-                            }
-                        }
-                    }else {
-                        if (menu_item == 0)
-                            config.mode = 1 - config.mode;
-                        if (menu_item == 1)
-                            config.beeper = 1 - config.beeper;
-                        if (menu_item == 2)
-                            disp_morse_conf = 1;
-                        if (menu_item == 3)
-                            disp_button_func = 1;
-                        if (menu_item == 4)
-                            disp_ver = 1;
-                        if (menu_item == 5)
-                            disp_confirm_reset = 1;
-                        if (menu_item == 6) {
-                            disp_menu = 0;
-                            // WriteConfig();
-                            WriteConfigEEPROM();
-                        }
-                    }
-                } else if (New_Pressed[i] == 31) {  // 按下回车
-                    if (disp_ver == 1) {
-                        disp_ver = 0;
-                    } else if (disp_morse_conf) {
-                        if (morse_conf_item == 2) {
-                            disp_morse_conf = 0;
-                            morse_conf_item = 0;
-                        }
-                    } 
-                    else if (disp_button_func) {
-                        if (button_conf_item == 2) {
-                            disp_button_func = 0;
-                            button_conf_item = 0;
-                        }
-                    } else if (disp_confirm_reset){
-                         ResetConfig();
-                         disp_confirm_reset = 0;
-                         menu_item = 0;
-                         disp_menu = 0;
-                    } 
-                    else {
-                        if (menu_item == 2)
-                            disp_morse_conf = 1;
-                        if (menu_item == 3)
-                            disp_button_func = 1;
-                        if (menu_item == 4)
-                            disp_ver = 1;
-                        if (menu_item == 5)
-                            disp_confirm_reset = 1;
-                        if (menu_item == 6) {
-                            disp_menu = 0;
-
-                            menu_item = 0;
-                            WriteConfigEEPROM();
-                        }
-                    }
-                } else if (New_Pressed[i] == 27) {  // 按下esc
-                    if(disp_confirm_reset)
-                    {
-                        disp_confirm_reset = 0;
-                    } else {
-                        disp_menu = 0;
-                    }
-                }
+                HandleMenuKey (New_Pressed[i]);
             } else {
-                if ((New_Pressed[i] >= 'a' && New_Pressed[i] <= 'z') || (New_Pressed[i] >= 'A' && New_Pressed[i] <= 'Z') || New_Pressed[i] == ' ' || (New_Pressed[i] >= '0' && New_Pressed[i] <= '9') || New_Pressed[i] == '?' || New_Pressed[i] == '!' || New_Pressed[i] == '.' || New_Pressed[i] == ',' || New_Pressed[i] == ':' || New_Pressed[i] == ';' || New_Pressed[i] == '+' || New_Pressed[i] == '-' || New_Pressed[i] == '/' || New_Pressed[i] == '=' || New_Pressed[i] == '\'' ||New_Pressed[i] == '"' ) {
-                    if (inputBuffSize < INPUTZONE_SIZE - 1)  // 避免溢出
-                    {
-                        inputBuff[inputBuffSize++] = New_Pressed[i];
-                        inputBuff[inputBuffSize] = '\0';
-                        if (!config.mode) {
-                            if (!stge)
-                                starSending();
-                        }
-                    }
-                } else if (New_Pressed[i] == 31) {  // 按下回车
-                    if (config.mode) {
-                        memset (outputBuff, '\0', BUFFSIZE);
-                        memcpy (outputBuff, inputBuff, inputBuffSize);
-                        outputBuffSize = inputBuffSize;
-                        outputBuff[outputBuffSize] = '\0';
-                        inputBuffSize = 0;
-                        memset (inputBuff, '\0', BUFFSIZE);
-                        starSending();
-                    }
-                } else if (New_Pressed[i] == 27) {  // 按下esc
-                    endSending();
-                    memset (inputBuff, 0, 512);
-                    inputBuffSize = 0;
-                    memset (inputBuff, '\0', BUFFSIZE);
-                    sendCount = 0;
-                } else if (New_Pressed[i] == 127) {  // 按下退格
-                    if (inputBuffSize > 0)
-                        inputBuffSize--;
-                    inputBuff[inputBuffSize] = '\0';
-                    if (config.mode == 0)
-                    {
-                    if (inputBuffSize < sendCount)
-                        sendCount = inputBuffSize;}
-                } else if (New_Pressed[i] == 0x1) {                         // 按下下键
-                    sub_wpm (1);
-                } else if (New_Pressed[i] == 0x2) {                         // 按下上键
-                    add_wpm (1);
-                } else if (New_Pressed[i] == 28) {                          // 按下左键
-                    sub_wpm (5);
-                } else if (New_Pressed[i] == 29) {                          // 按下右键
-                    add_wpm (5);
-                } else if (New_Pressed[i] >= 3 && New_Pressed[i] <= 14) {   // 读取F1-F12
-                    // ReadSavedMsg (New_Pressed[i] - 3);
-                    ReadSavedMsgEEPROM (New_Pressed[i] - 3);
-                } else if (New_Pressed[i] >= 15 && New_Pressed[i] <= 26) {  // 存储F1-F12
-                    // WriteMsg (New_Pressed[i] - 15);
-                    WriteMsgEEPROM(New_Pressed[i] - 15);
-                    inputBuffSize = 0;
-                    sendCount = 0;
-                    memset (inputBuff, '\0', BUFFSIZE);
-                }
+                HandleTextKey (New_Pressed[i]);
             }
         }
     }
@@ -426,6 +511,7 @@ void TIM3_IRQHandler (void) {
     if (TIM_GetITStatus (TIM3, TIM_IT_Update) != RESET) {
         /* Clear interrupt flag */
         TIM_ClearITPendingBit (TIM3, TIM_IT_Update);
+        app_tick_ms++;
 
         /* USB HID Device Input Endpoint Timing */
         if (RootHubDev.bStatus >= ROOT_DEV_SUCCESS) {

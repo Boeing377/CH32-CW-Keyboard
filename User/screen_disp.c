@@ -1,6 +1,13 @@
 #include "screen_disp.h"
-#include "stdio.h"
 #include "string.h"
+
+#ifndef UI_SHOW_BATTERY_ICON
+#define UI_SHOW_BATTERY_ICON 0
+#endif
+
+#define STATUS_SPEAKER_ICON_X 119
+#define STATUS_BATTERY_ICON_X 91
+#define STATUS_BATTERY_TEXT_X 95
 
 
 static const uint8_t image_Volup_bits[] = {0x48,0x8c,0xaf,0xaf,0x8c,0x48};
@@ -13,6 +20,60 @@ static const uint8_t image_Battery_bits[] ={
 static const uint8_t image_Pin_arrow_up_bits[] = {0x08,0x1c,0x3e,0x7f,0x1c,0x1c,0x1c,0x1c,0x1c};
 
 char str_buff[64];
+
+static void CopyText (char *dst, const char *src)
+{
+    strcpy (dst, src);
+}
+
+static char *AppendUnsigned (char *dst, uint32_t value)
+{
+    char digits[10];
+    uint8_t count = 0;
+
+    do {
+        digits[count++] = '0' + (value % 10);
+        value /= 10;
+    } while (value > 0);
+
+    while (count > 0) {
+        *dst++ = digits[--count];
+    }
+
+    *dst = '\0';
+    return dst;
+}
+
+static void FormatUnsigned (char *dst, uint32_t value)
+{
+    AppendUnsigned (dst, value);
+}
+
+static void FormatWpmText (char *dst, uint8_t wpm)
+{
+    *dst++ = 'W';
+    *dst++ = 'P';
+    *dst++ = 'M';
+    *dst++ = ':';
+    *dst++ = '0' + (wpm / 10);
+    *dst++ = '0' + (wpm % 10);
+    *dst = '\0';
+}
+
+static void FormatMsgLenText (char *dst, uint32_t msg_len)
+{
+    memcpy (dst, "MsgLen:", 7);
+    AppendUnsigned (dst + 7, msg_len);
+}
+
+static void FormatBatteryText (char *dst, uint16_t decivolt)
+{
+    dst = AppendUnsigned (dst, decivolt / 10);
+    *dst++ = '.';
+    *dst++ = '0' + (decivolt % 10);
+    *dst++ = 'V';
+    *dst = '\0';
+}
 
 void show_welcome()
 {
@@ -107,11 +168,16 @@ void menu_page_1()
 
     u8g2_DrawStr(&u8g2, 5, 49 - now_y_shift, "Btn Func");
 
-    u8g2_DrawStr(&u8g2, 5, 61 - now_y_shift, "Version");
+    u8g2_DrawStr(&u8g2, 5, 61 - now_y_shift, "Keyboard");
+    u8g2_DrawStr(&u8g2, 83, 61 - now_y_shift,
+                 config.keyboard_layout == KEYBOARD_LAYOUT_AZERTY ? "AZERTY"
+                                                                  : "QWERTY");
 
-    u8g2_DrawStr(&u8g2, 5, 73 - now_y_shift, "RESET");
+    u8g2_DrawStr(&u8g2, 5, 73 - now_y_shift, "Version");
 
-    u8g2_DrawStr(&u8g2, 5, 85 - now_y_shift, "SAVE&EXIT");
+    u8g2_DrawStr(&u8g2, 5, 85 - now_y_shift, "RESET");
+
+    u8g2_DrawStr(&u8g2, 5, 97 - now_y_shift, "SAVE&EXIT");
 
     // Layer 6
     target_y = 2 + menu_item * 12;
@@ -167,7 +233,7 @@ void menu_train_page()
     u8g2_DrawStr(&u8g2, 90, 13 - now_y_shift, train_info.methon == 1 ? "NORM" : "KOCH");
 
     char char_buf[20];
-    sprintf(char_buf, "%d", train_info.lesson);
+    FormatUnsigned (char_buf, train_info.lesson);
 
     u8g2_DrawStr(&u8g2, 5, 25 - now_y_shift, "LESSON");
     u8g2_DrawStr(&u8g2, 101, 25 - now_y_shift, char_buf);
@@ -208,19 +274,19 @@ void menu_page_morse()
 
     switch (config.morse_config.cut_num) {
         case 0:
-            sprintf (str_buff, "OFF");
+            CopyText (str_buff, "OFF");
             break;
         case 1:
-            sprintf (str_buff, "Mod A");
+            CopyText (str_buff, "Mod A");
             break;
         case 2:
-            sprintf (str_buff, "Mod B");
+            CopyText (str_buff, "Mod B");
             break;
         case 3:
-            sprintf (str_buff, "Mod C");
+            CopyText (str_buff, "Mod C");
             break;
         default:
-            sprintf (str_buff, "ERR");
+            CopyText (str_buff, "ERR");
             break;
     }
     // Layer 1 (copy)
@@ -228,16 +294,16 @@ void menu_page_morse()
     
     switch (config.morse_config.word_break_len) {
         case 7:
-            sprintf (str_buff, "Short");
+            CopyText (str_buff, "Short");
             break;
         case 10:
-            sprintf (str_buff, "Mid");
+            CopyText (str_buff, "Mid");
             break;
         case 14:
-            sprintf (str_buff, "Long");
+            CopyText (str_buff, "Long");
             break;
         default:
-            sprintf (str_buff, "ERR");
+            CopyText (str_buff, "ERR");
     }
     // Layer 1 (copy) (copy)
     u8g2_DrawStr(&u8g2, 74, 25, str_buff);
@@ -271,16 +337,16 @@ void menu_page_button()
 
     switch (config.button_func.bt2_func_index) {
         case 0:
-            sprintf (str_buff, "BEEPER SW");
+            CopyText (str_buff, "BEEPER SW");
             break;
         case 1:
-            sprintf (str_buff, "MODE SW");
+            CopyText (str_buff, "MODE SW");
             break;
         case 2:
-            sprintf (str_buff, "OPEN MENU");
+            CopyText (str_buff, "OPEN MENU");
             break;
         default:
-            sprintf (str_buff, "ERR");
+            CopyText (str_buff, "ERR");
             break;
     }
     // Layer 1 (copy)
@@ -288,16 +354,16 @@ void menu_page_button()
     
     switch (config.button_func.bt1_func_index) {
         case 0:
-            sprintf (str_buff, "BEEPER SW");
+            CopyText (str_buff, "BEEPER SW");
             break;
         case 1:
-            sprintf (str_buff, "MODE SW");
+            CopyText (str_buff, "MODE SW");
             break;
         case 2:
-            sprintf (str_buff, "OPEN MENU");
+            CopyText (str_buff, "OPEN MENU");
             break;
         default:
-            sprintf (str_buff, "ERR");
+            CopyText (str_buff, "ERR");
             break;
     }
     // Layer 1 (copy) (copy)
@@ -455,23 +521,27 @@ void show_main_page(void) {
     u8g2_DrawLine(&u8g2, 127, 8, 0, 8);
 
     if(config.beeper)
-        u8g2_DrawXBM(&u8g2, 92, 1, 8, 6, image_Volup_bits);
+        u8g2_DrawXBM(&u8g2, STATUS_SPEAKER_ICON_X, 1, 8, 6, image_Volup_bits);
     else
-        u8g2_DrawXBM(&u8g2, 92, 0, 8, 8, image_Muted_bits);
+        u8g2_DrawXBM(&u8g2, STATUS_SPEAKER_ICON_X, 0, 8, 8, image_Muted_bits);
 
-    u8g2_DrawXBM(&u8g2, 102, 0, 26, 8, image_Battery_bits);
+#if UI_SHOW_BATTERY_ICON
+    u8g2_DrawXBM(&u8g2, STATUS_BATTERY_ICON_X, 0, 26, 8, image_Battery_bits);
+#endif
 
     u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
 
-    sprintf (str_buff, "WPM:%02d", config.wpm);
+    FormatWpmText (str_buff, config.wpm);
     u8g2_DrawStr(&u8g2, 2, 7, str_buff);
 
-    sprintf (str_buff, "MsgLen:%d", strlen(inputBuff));
+    FormatMsgLenText (str_buff, strlen(inputBuff));
     u8g2_DrawStr(&u8g2, 35, 7, str_buff);
 
+#if UI_SHOW_BATTERY_ICON
     u8g2_SetFont(&u8g2, u8g2_font_tinyunicode_tr);
-    sprintf(str_buff, "%d.%dV", bat_adc_val / 10 , bat_adc_val % 10);
-    u8g2_DrawStr(&u8g2, 106, 6, str_buff);
+    FormatBatteryText (str_buff, bat_adc_val);
+    u8g2_DrawStr(&u8g2, STATUS_BATTERY_TEXT_X, 6, str_buff);
+#endif
 
     memset(str_buff, 0, 64);
 

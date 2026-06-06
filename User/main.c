@@ -35,27 +35,23 @@
 /* Global Variable */
 uint8_t key1 = 0, key1old = 0, key2 = 0, key2old = 0;
 
+#define BUTTON_LONG_PRESS_MS 800
+
+typedef struct {
+    uint8_t was_pressed;
+    uint8_t long_press_handled;
+    uint32_t pressed_at_ms;
+} ButtonState;
+
 void InitGPIOs();
 void InitADC();
-
-typedef struct 
-{
-    float LastP;//ÉÏ´Î¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0.02
-    float Now_P;//µ±Ç°¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0
-    float out;//¿¨¶ûÂüÂË²¨Æ÷Êä³ö ³õÊ¼»¯ÖµÎª0
-    float Kg;//¿¨¶ûÂüÔöÒæ ³õÊ¼»¯ÖµÎª0
-    float Q;//¹ý³ÌÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.001
-    float R;//¹Û²âÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.543
-}KFP;//Kalman Filter parameter
-
-KFP KFP_Voltage={0.02,0,0,0,0.001,0.543};
-
-int bat_Voltage;
-int kalman_bat_Voltage = 0;
+static void HandleButtonState (ButtonState *state, uint8_t is_pressed,
+                               uint8_t button_id);
+static void ProcessButtonInputs (void);
 
 u16 Get_ADC_Val(u8 ch);
-
-float kalmanFilter(KFP *kfp,float input);
+static uint16_t FilterBatteryAdc (uint16_t sample);
+static uint16_t ConvertBatteryToDeciVolt (uint16_t adc_value);
 
 void ReadConfigEEPROM();
 void WriteConfigEEPROM();
@@ -112,26 +108,18 @@ int main (void) {
     Delay_Ms (1500);
 
     while (1) {
-        
         key1 = GPIO_ReadInputDataBit (KEY_1_IN_PORT, KEY_1_IN);
         key2 = GPIO_ReadInputDataBit (KEY_2_IN_PORT, KEY_2_IN);
 
         USBH_MainDeal();
 
-        bat_adc_val = Get_ADC_Val(ADC_Channel_2); 
-        bat_Voltage = kalmanFilter(&KFP_Voltage,(float)bat_adc_val);
-        bat_adc_val = (int)((float)(bat_adc_val * 20 / 4096.0) * (float)3.3); 
+        bat_adc_val = FilterBatteryAdc (Get_ADC_Val (ADC_Channel_2));
+        bat_adc_val = ConvertBatteryToDeciVolt (bat_adc_val);
 
         dispf();
 
-        if (key1 == 1 && key1old == 0)          // key1 pressed
-        {
-            config.button_func.bt1_func();
-        }
-        if (key2 == 1 && key2old == 0)      // key2 pressed
-        {
-            config.button_func.bt2_func();
-        }
+        ProcessButtonInputs();
+
         if (keyboard_in) {
             GPIO_WriteBit (LED_OUT_PORT, LED_OUT, Bit_SET);
         } else {
@@ -143,6 +131,46 @@ int main (void) {
         key1old = key1;
         key2old = key2;
     }
+}
+
+static void HandleButtonState (ButtonState *state, uint8_t is_pressed,
+                               uint8_t button_id) {
+    if (is_pressed) {
+        if (!state->was_pressed) {
+            state->was_pressed = 1;
+            state->long_press_handled = 0;
+            state->pressed_at_ms = app_tick_ms;
+            return;
+        }
+
+        if (!state->long_press_handled &&
+            (app_tick_ms - state->pressed_at_ms >= BUTTON_LONG_PRESS_MS)) {
+            state->long_press_handled = 1;
+            if (button_id == BUTTON_ID_1) {
+                ButtonHandleKey1LongPress();
+            } else if (button_id == BUTTON_ID_2) {
+                ButtonHandleKey2LongPress();
+            }
+        }
+
+        return;
+    }
+
+    if (state->was_pressed && !state->long_press_handled) {
+        ButtonExecuteConfiguredAction (button_id);
+    }
+
+    state->was_pressed = 0;
+    state->long_press_handled = 0;
+    state->pressed_at_ms = 0;
+}
+
+static void ProcessButtonInputs (void) {
+    static ButtonState key1_state = {0};
+    static ButtonState key2_state = {0};
+
+    HandleButtonState (&key1_state, key1, BUTTON_ID_1);
+    HandleButtonState (&key2_state, key2, BUTTON_ID_2);
 }
 
 void InitGPIOs() {
@@ -229,20 +257,26 @@ u16 Get_ADC_Val(u8 ch)
     return val;
 }
 
-/**
- *¿¨¶ûÂüÂË²¨Æ÷
- *@param KFP *kfp ¿¨¶ûÂü½á¹¹Ìå²ÎÊý
- *   float input ÐèÒªÂË²¨µÄ²ÎÊýµÄ²âÁ¿Öµ£¨¼´´«¸ÐÆ÷µÄ²É¼¯Öµ£©
- *@return ÂË²¨ºóµÄ²ÎÊý£¨×îÓÅÖµ£©
- */
- float kalmanFilter(KFP *kfp,float input)
- {
-     kfp->Now_P = kfp->LastP + kfp->Q;
-     kfp->Kg = kfp->Now_P / (kfp->Now_P + kfp->R);
-     kfp->out = kfp->out + kfp->Kg * (input -kfp->out);
-     kfp->LastP = (1-kfp->Kg) * kfp->Now_P;
-     return kfp->out;
- }
+static uint16_t FilterBatteryAdc (uint16_t sample)
+{
+    static uint32_t filtered_q4 = 0;
+    uint32_t sample_q4 = ((uint32_t)sample) << 4;
+
+    if (filtered_q4 == 0) {
+        filtered_q4 = sample_q4;
+    } else {
+        int32_t delta = (int32_t)sample_q4 - (int32_t)filtered_q4;
+
+        filtered_q4 = (uint32_t)((int32_t)filtered_q4 + (delta >> 2));
+    }
+
+    return (uint16_t)(filtered_q4 >> 4);
+}
+
+static uint16_t ConvertBatteryToDeciVolt (uint16_t adc_value)
+{
+    return (uint16_t)((((uint32_t)adc_value) * 66 + 2048) / 4096);
+}
 
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;
@@ -256,8 +290,10 @@ void WriteConfigEEPROM(){
 
 void ReadConfigEEPROM(){
     struct Config savedConfig;
+    uint8_t needs_config_rewrite = 0;
+
     AT24CXX_Read(EEPROM_CONFIG_ADDR, (u8*)&savedConfig, sizeof (struct Config));
-    if (savedConfig.initial_startup != STARUP_FLAG)  // È·ÈÏÊÇ·ñ³õ´ÎÆô¶¯£¬´Ë´¦Îª³õ´ÎÆô¶¯
+    if (savedConfig.initial_startup != STARUP_FLAG)  // È·ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë´ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     {
         config.initial_startup = STARUP_FLAG;
         config.mode = 0;
@@ -272,9 +308,9 @@ void ReadConfigEEPROM(){
         config.morse_config.cut_num = 0;
 
         config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
-        config.button_func.bt1_func = & ButtonChangeBeeper;
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
-        config.button_func.bt2_func = & ButtonChangeMode;
+        ButtonApplyConfiguredActions();
+        config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
         WriteConfigEEPROM();
     } else {
         config.mode = savedConfig.mode;
@@ -291,9 +327,25 @@ void ReadConfigEEPROM(){
         config.morse_config.cut_num = savedConfig.morse_config.cut_num;
 
         config.button_func.bt1_func_index = savedConfig.button_func.bt1_func_index;
-        config.button_func.bt1_func = savedConfig.button_func.bt1_func;
         config.button_func.bt2_func_index = savedConfig.button_func.bt2_func_index;
-        config.button_func.bt2_func = savedConfig.button_func.bt2_func;
+        if (savedConfig.button_func.bt1_func_reserved != 0 ||
+            savedConfig.button_func.bt2_func_reserved != 0 ||
+            savedConfig.button_func.bt1_func_index >= BUTTON_ACTION_COUNT ||
+            savedConfig.button_func.bt2_func_index >= BUTTON_ACTION_COUNT) {
+            needs_config_rewrite = 1;
+        }
+        ButtonApplyConfiguredActions();
+
+        if (savedConfig.keyboard_layout < KEYBOARD_LAYOUT_COUNT) {
+            config.keyboard_layout = savedConfig.keyboard_layout;
+        } else {
+            config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+            needs_config_rewrite = 1;
+        }
+
+        if (needs_config_rewrite) {
+            WriteConfigEEPROM();
+        }
     }
 
     // memcpy (msg, (uint8_t *)(CONFIG_ADDR + 16), 12);
@@ -315,8 +367,10 @@ void ReadSavedMsgEEPROM(uint8_t sn) {
             starSending();
         }
     } else {
-        sprintf (inputBuff, "no saved msg");
-        inputBuffSize = strlen (inputBuff);
+        static const char no_saved_msg[] = "no saved msg";
+
+        memcpy (inputBuff, no_saved_msg, sizeof (no_saved_msg));
+        inputBuffSize = sizeof (no_saved_msg) - 1;
     }
 }
 
@@ -358,9 +412,9 @@ void ResetConfig()
         config.morse_config.cut_num = 0;
 
         config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
-        config.button_func.bt1_func = & ButtonChangeBeeper;
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
-        config.button_func.bt2_func = & ButtonChangeMode;
+        ButtonApplyConfiguredActions();
+        config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
 
         for(int i = 0; i < 12; i++)
         {

@@ -1,7 +1,7 @@
 /*
  * global.h
  *
- *  Created on: 2024Äê9ÔÂ8ÈÕ
+ *  Created on: 2024ï¿½ï¿½9ï¿½ï¿½8ï¿½ï¿½
  *      Author: lyj98
  */
 
@@ -12,7 +12,7 @@
 
 #define VERSION "Ver 1.1.6"
 
-#define STARUP_FLAG 0x20
+#define STARUP_FLAG 0x25
 
 #define KEY_OUT GPIO_Pin_1
 #define BEEP_OUT GPIO_Pin_9
@@ -44,6 +44,10 @@
 #define DEF_BT1_FUN_INDEX 0
 #define DEF_BT2_FUN_INDEX 1
 
+#define KEYBOARD_LAYOUT_QWERTY 0
+#define KEYBOARD_LAYOUT_AZERTY 1
+#define KEYBOARD_LAYOUT_COUNT 2
+
 #define BUFFSIZE 2048
 #define INPUTZONE_SIZE 2048
 #define MAXSAVEBUFSIZE (BUFFSIZE - 4)
@@ -68,25 +72,26 @@ struct Morse_Config {
 
 struct Button_Func {
     uint8_t bt1_func_index;
-    void (* bt1_func)();
+    uint32_t bt1_func_reserved;
     uint8_t bt2_func_index;
-    void (* bt2_func)();
+    uint32_t bt2_func_reserved;
 };
 
 struct Config {
     uint8_t beeper;
-    uint8_t mode;  // Ä£Ê½        0£º°´ÏÂÁ¢¼´Êä³ö         1£º»Ø³µÊä³ö
+    uint8_t mode;  // Ä£Ê½        0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½         1ï¿½ï¿½ï¿½Ø³ï¿½ï¿½ï¿½ï¿½
     int8_t wpm;
     uint8_t initial_startup;
     struct Morse_Config morse_config;
     struct Button_Func button_func;
+    uint8_t keyboard_layout;
 };
 
 struct Train_Info{
-    uint8_t methon; //·½Ê½ 0£ºKOCH 1£ºË³Ðò
-    uint8_t lesson; //µ±Ç°½ø¶È
-    uint8_t group_num; //ÑµÁ·×ÖÄ¸×éÊý
-    uint8_t letter_num_per_group; //Ã¿×é×ÖÄ¸ÊýÁ¿
+    uint8_t methon; //ï¿½ï¿½Ê½ 0ï¿½ï¿½KOCH 1ï¿½ï¿½Ë³ï¿½ï¿½
+    uint8_t lesson; //ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½
+    uint8_t group_num; //Ñµï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½
+    uint8_t letter_num_per_group; //Ã¿ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½
 };
 
 extern struct Config config;
@@ -100,6 +105,7 @@ extern char inputBuff[], outputBuff[];
 extern int sendCount, send_now;
 extern uint32_t inputBuffSize, outputBuffSize;
 extern uint16_t bat_adc_val;
+extern volatile uint32_t app_tick_ms;
 
 extern struct Config config;
 

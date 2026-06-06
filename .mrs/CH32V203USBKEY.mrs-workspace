@@ -5,11 +5,12 @@
 		},
 		{
 			"name": "CH32V203USBKEY",
-			"path": "../"
+			"path": "D:\\Github\\CH32-CW-Keyboard"
 		}
 	],
 	"settings": {
 		"mrs.workspace.type": "project",
+		"mrs.init.arg": "",
 		"files.associations": {
 			"*.c": "c",
 			"*.h": "cpp",
