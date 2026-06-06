@@ -177,12 +177,14 @@ uint8_t u8x8_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *ar
  
 void u8g2Init(u8g2_t *u8g2)
 {
-	// u8g2_Setup_ssd1306_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay); // 初始化u8g2 结构体
+#if COMPARE_FOR_VERSION_WITH_EEPROM
     u8g2_Setup_sh1106_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay);
-    u8g2_InitDisplay(u8g2);                                                                       // 
-	u8g2_SetPowerSave(u8g2, 0);           
-    //设置亮度
-    u8g2_SetContrast(u8g2,128);                                                    // 
+#else
+    u8g2_Setup_ssd1306_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay); // 初始化u8g2 结构体
+#endif
+    u8g2_InitDisplay(u8g2);                                                              // 初始化显示器
+	u8g2_SetPowerSave(u8g2, 0);                                                          // wake up display from sleep mode
+    u8g2_SetContrast(u8g2,128);                                                          // 设置对比度，范围是0-255，默认是128
 	u8g2_ClearBuffer(u8g2);
 }
  

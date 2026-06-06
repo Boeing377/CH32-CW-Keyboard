@@ -8,7 +8,6 @@
 #include "string.h"
 #include "ch32_u8g2.h"
 #include "screen_disp.h"
-#include "i2c_eeprom.h"
 
 #define BUTTON_ID_1 0
 #define BUTTON_ID_2 1

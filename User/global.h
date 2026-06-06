@@ -10,6 +10,10 @@
 #include "ch32v20x.h"
 #include "u8g2/u8g2.h"
 
+#ifndef COMPARE_FOR_VERSION_WITH_EEPROM
+#define COMPARE_FOR_VERSION_WITH_EEPROM 1
+#endif
+
 #define VERSION "Ver 1.1.6"
 
 #define STARUP_FLAG 0x25
@@ -50,10 +54,16 @@
 
 #define BUFFSIZE 2048
 #define INPUTZONE_SIZE 2048
-#define MAXSAVEBUFSIZE (BUFFSIZE - 4)
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 #define MSG_ADDR 0x0800D000
 #define MSG_ZONE_SIZE 2048
+#else
+#define MSG_ADDR 0x0800E800UL
+#define MSG_ZONE_SIZE 0x0200
+#endif
+
+#define MAXSAVEBUFSIZE (MSG_ZONE_SIZE - 4)
 #define U8G2_WITHOUT_UNICODE
 #define U8G2_WITHOUT_FONT_ROTATION
 
@@ -113,6 +123,8 @@ extern u8g2_t u8g2;
 
 void WriteConfigEEPROM();
 void ReadConfigEEPROM();
+void ReadSavedMsgEEPROM (uint8_t sn);
+void WriteMsgEEPROM (uint8_t sn);
 void ResetConfig();
 
 #endif /* USER_GLOBAL_H_ */

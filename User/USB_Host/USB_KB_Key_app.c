@@ -27,9 +27,6 @@ struct __HOST_CTL HostCtl[DEF_TOTAL_ROOT_HUB * DEF_ONE_USB_SUP_DEV_TOTAL];
 void ReadSavedMsg (uint8_t sn);
 void WriteMsg (uint8_t sn);
 void WriteConfig();
-void WriteConfigEEPROM();
-void ReadSavedMsgEEPROM (uint8_t sn);
-void WriteMsgEEPROM (uint8_t sn);
 
 #define KEY_USAGE_MAP_SIZE 104
 #define KEY_MODIFIER_CTRL_MASK 0x11

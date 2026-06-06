@@ -25,13 +25,12 @@
 #include "string.h"
 #include "ch32_u8g2.h"
 #include "screen_disp.h"
-#include "i2c_eeprom.h"
 #include "ButtonFunc.h"
+#include "storage_backend.h"
 
 /* Global typedef */
 
 /* Global define */
-
 /* Global Variable */
 uint8_t key1 = 0, key1old = 0, key2 = 0, key2old = 0;
 
@@ -281,18 +280,18 @@ static uint16_t ConvertBatteryToDeciVolt (uint16_t adc_value)
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;
     Delay_Ms(10);
-    // AT24CXX_Write(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
-    AT24CXX_WriteMultiPage(EEPROM_CONFIG_ADDR, (u8*)&config, sizeof (struct Config));
+    StorageBackend_WriteConfigRegion ((const uint8_t *)&config,
+                                      sizeof (struct Config));
     Delay_Ms(10);
-    // AT24CXX_Write(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
-    AT24CXX_WriteMultiPage(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
+    StorageBackend_WriteMsgDirectory (msg, MSG_NUM);
 }
 
 void ReadConfigEEPROM(){
     struct Config savedConfig;
     uint8_t needs_config_rewrite = 0;
 
-    AT24CXX_Read(EEPROM_CONFIG_ADDR, (u8*)&savedConfig, sizeof (struct Config));
+    StorageBackend_ReadConfigRegion ((uint8_t *)&savedConfig,
+                                     sizeof (struct Config));
     if (savedConfig.initial_startup != STARUP_FLAG)  // ȷ���Ƿ�����������˴�Ϊ��������
     {
         config.initial_startup = STARUP_FLAG;
@@ -349,18 +348,22 @@ void ReadConfigEEPROM(){
     }
 
     // memcpy (msg, (uint8_t *)(CONFIG_ADDR + 16), 12);
-    AT24CXX_Read(EEPROM_CONFIG_ADDR + 64, msg, MSG_NUM);
+    StorageBackend_ReadMsgDirectory (msg, MSG_NUM);
 }
 
 void ReadSavedMsgEEPROM(uint8_t sn) {
-    uint16_t addr = 0x0000 + sn * MSG_ZONE_SIZE;
-
     uint8_t buff[MSG_ZONE_SIZE];
+    uint32_t saved_size;
 
     if (msg[sn] == 0xcd) {
-        AT24CXX_Read(addr, buff, MSG_ZONE_SIZE);
-        inputBuffSize = *(uint32_t *)(buff + BUFFSIZE - 4);
-        memcpy (inputBuff, (uint32_t *)buff, inputBuffSize);
+        StorageBackend_ReadMsgSlot (sn, buff, MSG_ZONE_SIZE);
+        saved_size = *(uint32_t *)(buff + MAXSAVEBUFSIZE);
+        if (saved_size > MAXSAVEBUFSIZE) {
+            saved_size = MAXSAVEBUFSIZE;
+        }
+
+        inputBuffSize = saved_size;
+        memcpy (inputBuff, buff, inputBuffSize);
         inputBuff[inputBuffSize] = '\0';
         if (!config.mode) {
             sendCount = 0;
@@ -376,8 +379,7 @@ void ReadSavedMsgEEPROM(uint8_t sn) {
 
 void WriteMsgEEPROM (uint8_t sn)
 {
-    uint16_t msgWriteAddr = 0x00000000 + sn * MSG_ZONE_SIZE;
-    uint8_t buff[MSG_ZONE_SIZE];
+    uint8_t buff[MSG_ZONE_SIZE] = {0};
     uint32_t saveingBuffSize = inputBuffSize;
 
     saving = 1;
@@ -385,10 +387,9 @@ void WriteMsgEEPROM (uint8_t sn)
     if (saveingBuffSize > MAXSAVEBUFSIZE)
         saveingBuffSize = MAXSAVEBUFSIZE;
     memcpy (buff, inputBuff, saveingBuffSize);
-    *(uint32_t *)(buff + BUFFSIZE - 4) = saveingBuffSize;
+    *(uint32_t *)(buff + MAXSAVEBUFSIZE) = saveingBuffSize;
 
-    // AT24CXX_Write(msgWriteAddr, buff, MSG_ZONE_SIZE);
-    AT24CXX_WriteMultiPage(msgWriteAddr, buff, MSG_ZONE_SIZE);
+    StorageBackend_WriteMsgSlot (sn, buff, MSG_ZONE_SIZE);
 
     msg[sn] = 0xcd;
 

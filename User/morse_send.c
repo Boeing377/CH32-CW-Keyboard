@@ -11,9 +11,6 @@
 void ReadConfig();
 void WriteConfig();
 
-void ReadConfigEEPROM();
-void WriteConfigEEPROM();
-
 uint32_t sendBufLen = 0;
 uint8_t sendbuf[256];  // max for 6 dash 6*20+5*20+20
 
