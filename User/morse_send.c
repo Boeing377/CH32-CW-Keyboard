@@ -329,6 +329,27 @@ void endSending() {
         TIM_Cmd (TIM2, DISABLE);
         GPIO_WriteBit (KEY_OUT_PORT, KEY_OUT, Bit_RESET);
         GPIO_WriteBit (BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
+
+        /* Repeat mode: handle send completion */
+        if (repeat_active) {
+            if (repeat_phase == REPEAT_PHASE_BUF_PEND) {
+                /* Initial buf mode send completed, start countdown for first repeat */
+                repeat_phase = REPEAT_PHASE_COUNTDOWN;
+                repeat_counter = 1;
+                repeat_countdown_s = config.repeat_config.repeat_interval_s;
+            } else if (repeat_phase == REPEAT_PHASE_SENDING) {
+                /* A repeat send completed */
+                repeat_counter++;
+                if (config.repeat_config.repeat_count != 0
+                    && repeat_counter > config.repeat_config.repeat_count) {
+                    repeat_active = 0;
+                } else {
+                    /* Restart countdown for next repeat */
+                    repeat_phase = REPEAT_PHASE_COUNTDOWN;
+                    repeat_countdown_s = config.repeat_config.repeat_interval_s;
+                }
+            }
+        }
     }
 }
 

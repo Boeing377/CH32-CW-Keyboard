@@ -1,9 +1,6 @@
 #include "screen_disp.h"
 #include "string.h"
 
-#ifndef UI_SHOW_BATTERY_ICON
-#define UI_SHOW_BATTERY_ICON 0
-#endif
 #if COMPARE_FOR_VERSION_WITH_EEPROM
 #define UI_SHOW_BATTERY_ICON 1
 #else
@@ -71,6 +68,7 @@ static void FormatMsgLenText (char *dst, uint32_t msg_len)
     AppendUnsigned (dst + 7, msg_len);
 }
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 static void FormatBatteryText (char *dst, uint16_t decivolt)
 {
     dst = AppendUnsigned (dst, decivolt / 10);
@@ -79,6 +77,7 @@ static void FormatBatteryText (char *dst, uint16_t decivolt)
     *dst++ = 'V';
     *dst = '\0';
 }
+#endif
 
 void show_welcome()
 {
@@ -102,6 +101,25 @@ void show_welcome()
 
 void show_ver()
 {
+#if FW_CUSTOM_VERSION
+    // Layer 1 - 标题用小号字体
+    u8g2_SetFont(&u8g2, u8g2_font_profont12_tr);
+    u8g2_DrawStr(&u8g2, 43, 11, "VERSION");
+
+    // Layer 2 - 版本号用大字体
+    u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
+    u8g2_DrawStr(&u8g2, 24, 28, VERSION);
+
+    // Layer 3 - 定制信息分两行，交错排列
+    u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
+    u8g2_DrawStr(&u8g2, 3, 41, "BG6VSK Provided to");
+
+    // Layer 4 - 接收者独立一行，右偏移形成错落感
+    u8g2_DrawStr(&u8g2, 48, 52, FW_CUSTOM_RECIPIENT);
+
+    // Layer 5
+    u8g2_DrawStr(&u8g2, 29, 63, "Press ENT Back");
+#else
     // Layer 1
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
     u8g2_DrawStr(&u8g2, 33, 23, "VERSION");
@@ -112,6 +130,7 @@ void show_ver()
     // Layer 3
     u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
     u8g2_DrawStr(&u8g2, 29, 52, "Press ENT Back");
+#endif
 }
 
 void show_confirm_reset()
@@ -173,16 +192,18 @@ void menu_page_1()
 
     u8g2_DrawStr(&u8g2, 5, 49 - now_y_shift, "Btn Func");
 
-    u8g2_DrawStr(&u8g2, 5, 61 - now_y_shift, "Keyboard");
-    u8g2_DrawStr(&u8g2, 83, 61 - now_y_shift,
+    u8g2_DrawStr(&u8g2, 5, 61 - now_y_shift, "Repeat");
+
+    u8g2_DrawStr(&u8g2, 5, 73 - now_y_shift, "Keyboard");
+    u8g2_DrawStr(&u8g2, 83, 73 - now_y_shift,
                  config.keyboard_layout == KEYBOARD_LAYOUT_AZERTY ? "AZERTY"
                                                                   : "QWERTY");
 
-    u8g2_DrawStr(&u8g2, 5, 73 - now_y_shift, "Version");
+    u8g2_DrawStr(&u8g2, 5, 85 - now_y_shift, "Version");
 
-    u8g2_DrawStr(&u8g2, 5, 85 - now_y_shift, "RESET");
+    u8g2_DrawStr(&u8g2, 5, 97 - now_y_shift, "RESET");
 
-    u8g2_DrawStr(&u8g2, 5, 97 - now_y_shift, "SAVE&EXIT");
+    u8g2_DrawStr(&u8g2, 5, 109 - now_y_shift, "SAVE&EXIT");
 
     // Layer 6
     target_y = 2 + menu_item * 12;
@@ -386,6 +407,74 @@ void menu_page_button()
     u8g2_DrawBox(&u8g2, 3, now_y, 93, 11);
 }
 
+void menu_page_repeat()
+{
+    static int target_y = 2;
+    static int now_y = 2;
+
+    u8g2_SetDrawColor(&u8g2, 2);
+    u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
+
+    /* Row 0: RPT COUNT */
+    u8g2_DrawStr(&u8g2, 5, 12, "RPT COUNT");
+    {
+        char buf[5] = "    ";
+        uint16_t val;
+        if (disp_repeat_input && repeat_input_target == 0) {
+            val = repeat_input_value > 999 ? 999 : repeat_input_value;
+        } else {
+            val = config.repeat_config.repeat_count;
+        }
+        if (!disp_repeat_input && val == 0) {
+            /* Infinite mode */
+            u8g2_DrawStr(&u8g2, 13, 23, " INF");
+        } else {
+            buf[0] = ' ';
+            buf[1] = '0' + ((val / 100) % 10);
+            buf[2] = '0' + ((val / 10) % 10);
+            buf[3] = '0' + (val % 10);
+            buf[4] = '\0';
+            u8g2_DrawStr(&u8g2, 13, 23, buf);
+        }
+        if (disp_repeat_input && repeat_input_target == 0 && curse_flash) {
+            u8g2_DrawLine(&u8g2, 13 + repeat_input_pos * 9, 24,
+                          13 + repeat_input_pos * 9 + 7, 24);
+        }
+    }
+
+    /* Row 1: RPT INTER */
+    u8g2_DrawStr(&u8g2, 5, 36, "RPT INTER");
+    {
+        char buf[8];
+        uint16_t val;
+        if (disp_repeat_input && repeat_input_target == 1) {
+            val = repeat_input_value;
+        } else {
+            val = config.repeat_config.repeat_interval_s;
+        }
+        buf[0] = ' ';
+        FormatUnsigned (buf + 1, val);
+        strcpy (buf + strlen (buf), "s");
+        u8g2_DrawStr(&u8g2, 13, 47, buf);
+        if (disp_repeat_input && repeat_input_target == 1 && curse_flash) {
+            u8g2_DrawLine(&u8g2, 13 + repeat_input_pos * 9, 48,
+                          13 + repeat_input_pos * 9 + 7, 48);
+        }
+    }
+
+    /* Row 2: BACK */
+    u8g2_DrawStr(&u8g2, 5, 60, "BACK");
+
+    target_y = 2 + repeat_conf_item * 24;
+    if (now_y != target_y) {
+        if (target_y > now_y)
+            now_y += 4;
+        else
+            now_y -= 4;
+    }
+    u8g2_DrawBox(&u8g2, 3, now_y, 115, repeat_conf_item < 2 ? 22 : 11);
+}
+
 void show_menu()
 {
     if(disp_ver)
@@ -394,6 +483,8 @@ void show_menu()
         menu_page_morse();
     else if(disp_button_func)
         menu_page_button();
+    else if(disp_repeat_conf)
+        menu_page_repeat();
     else if(disp_confirm_reset)
         show_confirm_reset();
     else
@@ -539,8 +630,32 @@ void show_main_page(void) {
     FormatWpmText (str_buff, config.wpm);
     u8g2_DrawStr(&u8g2, 2, 7, str_buff);
 
-    FormatMsgLenText (str_buff, strlen(inputBuff));
-    u8g2_DrawStr(&u8g2, 35, 7, str_buff);
+    if (repeat_active) {
+        /* Compact repeat display: "R1/3 5s" or infinite "R123 5s" */
+        char rpt_buf[20];
+        char *p = rpt_buf;
+        if (repeat_phase == REPEAT_PHASE_BUF_PEND) {
+            /* Initial send in buf mode: show "R--- SND" */
+            memcpy (p, "R--- SND", 8);
+            p += 8;
+        } else {
+            *p++ = 'R';
+            p = AppendUnsigned (p, repeat_counter);
+            if (config.repeat_config.repeat_count != 0) {
+                /* Finite: show counter/total */
+                *p++ = '/';
+                p = AppendUnsigned (p, config.repeat_config.repeat_count);
+            }
+            *p++ = ' ';
+            p = AppendUnsigned (p, repeat_countdown_s);
+            *p++ = 's';
+        }
+        *p = '\0';
+        u8g2_DrawStr(&u8g2, 35, 7, rpt_buf);
+    } else {
+        FormatMsgLenText (str_buff, strlen(inputBuff));
+        u8g2_DrawStr(&u8g2, 35, 7, str_buff);
+    }
 
 #if UI_SHOW_BATTERY_ICON
     u8g2_SetFont(&u8g2, u8g2_font_tinyunicode_tr);

@@ -11,6 +11,7 @@
  * microcontroller manufactured by Nanjing Qinheng Microelectronics.
  *******************************************************************************/
 #include "debug.h"
+#include <stddef.h>
 
 static uint8_t p_us = 0;
 static uint16_t p_ms = 0;
@@ -144,6 +145,7 @@ void USART_Printf_Init (uint32_t baudrate) {
 #endif
 }
 #endif
+#if (SDI_PRINT == SDI_PR_OPEN)
 /*********************************************************************
  * @fn      SDI_Printf_Enable
  *
@@ -158,7 +160,9 @@ void SDI_Printf_Enable (void) {
     Delay_Init();
     Delay_Ms (1);
 }
+#endif /* SDI_PRINT == SDI_PR_OPEN */
 
+#if (DEBUG) || (SDI_PRINT == SDI_PR_OPEN)
 /*********************************************************************
  * @fn      _write
  *
@@ -219,6 +223,7 @@ __attribute__ ((used)) int _write (int fd, char *buf, int size) {
 #endif
     return size;
 }
+#endif /* (DEBUG) || (SDI_PRINT == SDI_PR_OPEN) */
 
 /*********************************************************************
  * @fn      _sbrk
@@ -227,7 +232,7 @@ __attribute__ ((used)) int _write (int fd, char *buf, int size) {
  *
  * @return  size: Data length
  */
-__attribute__ ((used)) void *_sbrk (ptrdiff_t incr) {
+void *_sbrk (ptrdiff_t incr) {
     extern char _end[];
     extern char _heap_end[];
     static char *curbrk = _end;

@@ -28,12 +28,14 @@ static uint8_t ButtonSanitizeActionIndex (uint8_t action_index) {
 
 void ButtonChangeBeeper()
 {
-    config.beeper = 1 - config.beeper;  // �л��Ƿ�ʹ�÷�����
+    if (repeat_active) return;
+    config.beeper = 1 - config.beeper;  // 切换是否使用蜂鸣器
     WriteConfigEEPROM();
 }
 
 void ButtonChangeMode()
 {
+    if (repeat_active) return;
     config.mode = 1 - config.mode;  // �л�ģʽ
     endSending();
     inputBuffSize = 0;
@@ -46,6 +48,7 @@ void ButtonChangeMode()
 
 void ButtonOpenMenu()
 {
+    if (repeat_active) return;
     disp_menu = 1 - disp_menu;
 }
 

@@ -82,10 +82,19 @@ set(EXCLUDED_SOURCES
 
 list(REMOVE_ITEM APP_SOURCES ${EXCLUDED_SOURCES})
 
+# 自动生成 version.h（每次构建时更新）
+add_custom_target(gen_version ALL
+    COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_version.ps1" -ProjectRoot "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Generating version.h..."
+    BYPRODUCTS "${CMAKE_CURRENT_SOURCE_DIR}/User/version.h"
+)
+
 add_executable(${PROJECT_NAME}.elf
     ${APP_SOURCES}
     "${CMAKE_CURRENT_SOURCE_DIR}/Startup/startup_ch32v20x_D6.S"
 )
+
+add_dependencies(${PROJECT_NAME}.elf gen_version)
 
 target_include_directories(${PROJECT_NAME}.elf PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/Startup"

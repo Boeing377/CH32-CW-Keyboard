@@ -66,9 +66,13 @@ CXXFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -MMD -MP
 ASFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -x assembler-with-cpp -MMD -MP
 LDFLAGS ?= $(MCU_FLAGS) -Os -T $(LINKER_SCRIPT) -nostartfiles -Wl,--gc-sections -Wl,-Map,$(BUILD_DIR)/$(TARGET_NAME).map --specs=nano.specs --specs=nosys.specs
 
-.PHONY: all clean size
+.PHONY: all clean size gen_version
 
-all: $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(TARGET_HEX) $(BUILD_DIR)/$(TARGET_BIN) $(BUILD_DIR)/$(TARGET_LST) size
+all: gen_version $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(TARGET_HEX) $(BUILD_DIR)/$(TARGET_BIN) $(BUILD_DIR)/$(TARGET_LST) size
+
+# 自动生成 version.h
+gen_version:
+	powershell -ExecutionPolicy Bypass -File tools/gen_version.ps1 -ProjectRoot .
 
 $(BUILD_DIR)/$(TARGET_ELF): $(OBJS)
 	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"

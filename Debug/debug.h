@@ -13,7 +13,6 @@
 #ifndef __DEBUG_H
 #define __DEBUG_H
 
-#include "stdio.h"
 #include "ch32v20x.h"
 
 #ifdef __cplusplus
@@ -43,13 +42,17 @@ extern "C" {
 void Delay_Init (void);
 void Delay_Us (uint32_t n);
 void Delay_Ms (uint32_t n);
-void USART_Printf_Init (uint32_t baudrate);
-void SDI_Printf_Enable (void);
 
-#if (DEBUG)
+#if DEBUG
+#include "stdio.h"
+void USART_Printf_Init (uint32_t baudrate);
 #define PRINT(format, ...) printf (format, ##__VA_ARGS__)
 #else
 #define PRINT(X...)
+#endif
+
+#if (SDI_PRINT == SDI_PR_OPEN)
+void SDI_Printf_Enable (void);
 #endif
 
 #ifdef __cplusplus

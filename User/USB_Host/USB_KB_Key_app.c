@@ -164,6 +164,44 @@ static uint8_t HandleCtrlShortcut (uint8_t usage) {
         return 1;
     }
 
+    if (translated == 'r') {
+        /* Toggle repeat mode */
+        if (repeat_active) {
+            repeat_active = 0;
+            return 1;
+        }
+        if (inputBuffSize == 0) {
+            return 1;
+        }
+        repeat_active = 1;
+        repeat_counter = 0;
+        repeat_saved_text_size = inputBuffSize;
+        memcpy (repeat_saved_text, inputBuff, inputBuffSize);
+        repeat_saved_text[repeat_saved_text_size] = '\0';
+
+        if (config.mode == 1) {
+            /* Buf mode: send current buffer first, then countdown */
+            endSending();
+            repeat_phase = REPEAT_PHASE_BUF_PEND;
+            repeat_counter = 0;  /* 0 = initial send, not yet a repeat */
+            memset (outputBuff, '\0', BUFFSIZE);
+            memcpy (outputBuff, inputBuff, inputBuffSize);
+            outputBuffSize = inputBuffSize;
+            outputBuff[outputBuffSize] = '\0';
+            inputBuffSize = 0;
+            memset (inputBuff, '\0', BUFFSIZE);
+            sendCount = 0;
+            starSending();
+        } else {
+            /* Direct mode: stop any current send, then countdown */
+            endSending();
+            repeat_phase = REPEAT_PHASE_COUNTDOWN;
+            repeat_counter = 1;  /* 1 = first repeat upcoming */
+            repeat_countdown_s = config.repeat_config.repeat_interval_s;
+        }
+        return 1;
+    }
+
     return 0;
 }
 
@@ -209,6 +247,39 @@ static int CollectNewPressedKeys (uint8_t *new_pressed) {
 }
 
 static void HandleMenuKey (uint8_t key_value) {
+    if (disp_repeat_input) {
+        if (key_value >= '0' && key_value <= '9') {
+            if (repeat_input_pos < 3) {
+                repeat_input_value =
+                    repeat_input_value * 10 + (uint16_t)(key_value - '0');
+                repeat_input_pos++;
+            }
+        } else if (key_value == 127) {
+            if (repeat_input_pos > 0) {
+                repeat_input_value /= 10;
+                repeat_input_pos--;
+            }
+        } else if (key_value == 31) {
+            if (repeat_input_target == 0) {
+                if (repeat_input_value > 999)
+                    repeat_input_value = 999;
+                config.repeat_config.repeat_count =
+                    repeat_input_value;
+            } else {
+                if (repeat_input_value > 999)
+                    repeat_input_value = 999;
+                if (repeat_input_value < 1)
+                    repeat_input_value = 1;
+                config.repeat_config.repeat_interval_s =
+                    repeat_input_value;
+            }
+            disp_repeat_input = 0;
+        } else if (key_value == 27) {
+            disp_repeat_input = 0;
+        }
+        return;
+    }
+
     if (key_value == 0x1) {
         if (disp_ver) {
             disp_ver = 0;
@@ -218,7 +289,10 @@ static void HandleMenuKey (uint8_t key_value) {
         } else if (disp_button_func) {
             if (button_conf_item < 2)
                 button_conf_item++;
-        } else if (menu_item < 7)
+        } else if (disp_repeat_conf) {
+            if (repeat_conf_item < 2)
+                repeat_conf_item++;
+        } else if (menu_item < 8)
             menu_item++;
     } else if (key_value == 0x2) {
         if (disp_ver) {
@@ -229,6 +303,9 @@ static void HandleMenuKey (uint8_t key_value) {
         } else if (disp_button_func) {
             if (button_conf_item > 0)
                 button_conf_item--;
+        } else if (disp_repeat_conf) {
+            if (repeat_conf_item > 0)
+                repeat_conf_item--;
         } else if (menu_item > 0)
             menu_item--;
     } else if (key_value == 28) {
@@ -260,12 +337,21 @@ static void HandleMenuKey (uint8_t key_value) {
                 ButtonApplyActionIndex (BUTTON_ID_2,
                                         config.button_func.bt2_func_index);
             }
+        } else if (disp_repeat_conf) {
+            if (repeat_conf_item == 0) {
+                if (config.repeat_config.repeat_count > 0)
+                    config.repeat_config.repeat_count--;
+            }
+            if (repeat_conf_item == 1) {
+                if (config.repeat_config.repeat_interval_s > 1)
+                    config.repeat_config.repeat_interval_s--;
+            }
         } else {
             if (menu_item == 0)
                 config.mode = 1 - config.mode;
             if (menu_item == 1)
                 config.beeper = 1 - config.beeper;
-            if (menu_item == 4) {
+            if (menu_item == 5) {
                 if (config.keyboard_layout > KEYBOARD_LAYOUT_QWERTY)
                     config.keyboard_layout--;
             }
@@ -302,6 +388,18 @@ static void HandleMenuKey (uint8_t key_value) {
                 ButtonApplyActionIndex (BUTTON_ID_2,
                                         config.button_func.bt2_func_index);
             }
+        } else if (disp_repeat_conf) {
+            if (repeat_conf_item == 0) {
+                if (config.repeat_config.repeat_count < 999)
+                    config.repeat_config.repeat_count++;
+            }
+            if (repeat_conf_item == 1) {
+                if (config.repeat_config.repeat_interval_s < 999)
+                    config.repeat_config.repeat_interval_s++;
+            }
+            if (repeat_conf_item == 2) {
+                disp_repeat_conf = 0;
+            }
         } else {
             if (menu_item == 0)
                 config.mode = 1 - config.mode;
@@ -311,15 +409,17 @@ static void HandleMenuKey (uint8_t key_value) {
                 disp_morse_conf = 1;
             if (menu_item == 3)
                 disp_button_func = 1;
-            if (menu_item == 4) {
+            if (menu_item == 4)
+                disp_repeat_conf = 1;
+            if (menu_item == 5) {
                 if (config.keyboard_layout + 1 < KEYBOARD_LAYOUT_COUNT)
                     config.keyboard_layout++;
             }
-            if (menu_item == 5)
-                disp_ver = 1;
             if (menu_item == 6)
+                disp_ver = 1;
+            if (menu_item == 7)
                 disp_confirm_reset = 1;
-            if (menu_item == 7) {
+            if (menu_item == 8) {
                 disp_menu = 0;
                 WriteConfigEEPROM();
             }
@@ -337,6 +437,21 @@ static void HandleMenuKey (uint8_t key_value) {
                 disp_button_func = 0;
                 button_conf_item = 0;
             }
+        } else if (disp_repeat_conf) {
+            if (repeat_conf_item == 0) {
+                disp_repeat_input = 1;
+                repeat_input_target = 0;
+                repeat_input_value = 0;
+                repeat_input_pos = 0;
+            } else if (repeat_conf_item == 1) {
+                disp_repeat_input = 1;
+                repeat_input_target = 1;
+                repeat_input_value = 0;
+                repeat_input_pos = 0;
+            } else if (repeat_conf_item == 2) {
+                disp_repeat_conf = 0;
+                repeat_conf_item = 0;
+            }
         } else if (disp_confirm_reset) {
             ResetConfig();
             disp_confirm_reset = 0;
@@ -347,23 +462,28 @@ static void HandleMenuKey (uint8_t key_value) {
                 disp_morse_conf = 1;
             if (menu_item == 3)
                 disp_button_func = 1;
-            if (menu_item == 4) {
+            if (menu_item == 4)
+                disp_repeat_conf = 1;
+            if (menu_item == 5) {
                 config.keyboard_layout++;
                 if (config.keyboard_layout >= KEYBOARD_LAYOUT_COUNT)
                     config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
             }
-            if (menu_item == 5)
-                disp_ver = 1;
             if (menu_item == 6)
+                disp_ver = 1;
+            if (menu_item == 7)
                 disp_confirm_reset = 1;
-            if (menu_item == 7) {
+            if (menu_item == 8) {
                 disp_menu = 0;
                 menu_item = 0;
                 WriteConfigEEPROM();
             }
         }
     } else if (key_value == 27) {
-        if (disp_confirm_reset) {
+        if (disp_repeat_conf) {
+            disp_repeat_conf = 0;
+            repeat_conf_item = 0;
+        } else if (disp_confirm_reset) {
             disp_confirm_reset = 0;
         } else {
             disp_menu = 0;
@@ -372,6 +492,20 @@ static void HandleMenuKey (uint8_t key_value) {
 }
 
 static void HandleTextKey (uint8_t key_value) {
+    /* During repeat mode, only allow Escape to cancel */
+    if (repeat_active) {
+        if (key_value == 27) {
+            repeat_active = 0;
+            endSending();
+            memset (inputBuff, 0, BUFFSIZE);
+            memset (outputBuff, 0, BUFFSIZE);
+            inputBuffSize = 0;
+            outputBuffSize = 0;
+            sendCount = 0;
+        }
+        return;
+    }
+
     if (Morse_CanEncodeChar (key_value)) {
         if (inputBuffSize < INPUTZONE_SIZE - 1) {
             inputBuff[inputBuffSize++] = key_value;

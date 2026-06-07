@@ -14,7 +14,18 @@
 #define COMPARE_FOR_VERSION_WITH_EEPROM 1
 #endif
 
-#define VERSION "Ver 1.1.6"
+/* 固件版本类型：1=定制版本，0=通用版本 */
+#ifndef FW_CUSTOM_VERSION
+#define FW_CUSTOM_VERSION 0
+#endif
+
+/* 定制版本的接收者（仅 FW_CUSTOM_VERSION=1 时生效） */
+#ifndef FW_CUSTOM_RECIPIENT
+#define FW_CUSTOM_RECIPIENT "F5GKW"
+#endif
+
+/* 版本号由 tools/gen_version.ps1 自动生成，Git 提交后 BUILD 号自动递增 */
+#include "version.h"
 
 #define STARUP_FLAG 0x25
 
@@ -25,7 +36,9 @@
 #define KEY_2_IN GPIO_Pin_14
 #define POWBOTTON_OUT GPIO_Pin_3
 #define USB_SW_OUT GPIO_Pin_15
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 #define BAT_ADC_PIN GPIO_Pin_2
+#endif
 
 #define KEY_OUT_PORT GPIOA
 #define BEEP_OUT_PORT GPIOB
@@ -33,7 +46,9 @@
 #define KEY_1_IN_PORT GPIOB
 #define KEY_2_IN_PORT GPIOB
 #define POWBOTTON_PORT GPIOA
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 #define BAT_ADC_PORT GPIOA
+#endif
 
 #define MAX_WPM 99
 #define MIN_WPN 1
@@ -47,6 +62,9 @@
 
 #define DEF_BT1_FUN_INDEX 0
 #define DEF_BT2_FUN_INDEX 1
+
+#define DEF_REPEAT_COUNT 3
+#define DEF_REPEAT_INTERVAL_S 5
 
 #define KEYBOARD_LAYOUT_QWERTY 0
 #define KEYBOARD_LAYOUT_AZERTY 1
@@ -87,6 +105,11 @@ struct Button_Func {
     uint32_t bt2_func_reserved;
 };
 
+struct Repeat_Config {
+    uint16_t repeat_count;
+    uint16_t repeat_interval_s;
+};
+
 struct Config {
     uint8_t beeper;
     uint8_t mode;  // ģʽ        0�������������         1���س����
@@ -95,6 +118,7 @@ struct Config {
     struct Morse_Config morse_config;
     struct Button_Func button_func;
     uint8_t keyboard_layout;
+    struct Repeat_Config repeat_config;
 };
 
 struct Train_Info{
@@ -110,11 +134,26 @@ extern uint8_t msg[];
 extern struct Train_Info train_info;
 
 extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
-    menu_item, disp_ver, disp_morse_conf, disp_button_func, morse_conf_item, button_conf_item ,curse_flash, disp_confirm_reset, disp_train_menu, tain_menu_item;
+    menu_item, disp_ver, disp_morse_conf, disp_button_func, morse_conf_item, button_conf_item ,curse_flash, disp_confirm_reset, disp_train_menu, tain_menu_item, disp_repeat_conf, repeat_conf_item, disp_repeat_input, repeat_input_target;
+extern uint16_t repeat_input_value;
+extern uint8_t repeat_input_pos;
 extern char inputBuff[], outputBuff[];
 extern int sendCount, send_now;
 extern uint32_t inputBuffSize, outputBuffSize;
+
+/* Repeat mode state */
+#define REPEAT_PHASE_COUNTDOWN 0
+#define REPEAT_PHASE_SENDING    1
+#define REPEAT_PHASE_BUF_PEND   2
+extern uint8_t repeat_active;
+extern uint8_t repeat_phase;
+extern uint32_t repeat_counter;
+extern uint16_t repeat_countdown_s;
+extern char repeat_saved_text[];
+extern uint32_t repeat_saved_text_size;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 extern uint16_t bat_adc_val;
+#endif
 extern volatile uint32_t app_tick_ms;
 
 extern struct Config config;

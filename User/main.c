@@ -43,14 +43,18 @@ typedef struct {
 } ButtonState;
 
 void InitGPIOs();
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 void InitADC();
+#endif
 static void HandleButtonState (ButtonState *state, uint8_t is_pressed,
                                uint8_t button_id);
 static void ProcessButtonInputs (void);
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 u16 Get_ADC_Val(u8 ch);
 static uint16_t FilterBatteryAdc (uint16_t sample);
 static uint16_t ConvertBatteryToDeciVolt (uint16_t adc_value);
+#endif
 
 void ReadConfigEEPROM();
 void WriteConfigEEPROM();
@@ -60,7 +64,9 @@ void WriteMsg (uint8_t sn);
 
 void TIM4_Init (uint16_t arr, uint16_t psc);
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 s16 Calibrattion_Val = 0;
+#endif
 /*********************************************************************
  * @fn      main
  *
@@ -79,7 +85,9 @@ int main (void) {
 
     /*Init GPIO*/
     InitGPIOs();
+#if COMPARE_FOR_VERSION_WITH_EEPROM
     InitADC();
+#endif
 
     /*Init OLED*/
     Delay_Ms (100); //wait for OLED hardware OK
@@ -112,8 +120,32 @@ int main (void) {
 
         USBH_MainDeal();
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
         bat_adc_val = FilterBatteryAdc (Get_ADC_Val (ADC_Channel_2));
         bat_adc_val = ConvertBatteryToDeciVolt (bat_adc_val);
+#endif
+
+        /* Repeat mode: trigger send when countdown reaches 0 */
+        if (repeat_active && repeat_phase == REPEAT_PHASE_COUNTDOWN
+            && repeat_countdown_s == 0) {
+            /* Restore saved text and start sending */
+            if (config.mode == 1) {
+                memset (outputBuff, '\0', BUFFSIZE);
+                memcpy (outputBuff, repeat_saved_text,
+                        repeat_saved_text_size);
+                outputBuffSize = repeat_saved_text_size;
+                outputBuff[outputBuffSize] = '\0';
+                sendCount = 0;
+            } else {
+                memcpy (inputBuff, repeat_saved_text,
+                        repeat_saved_text_size);
+                inputBuffSize = repeat_saved_text_size;
+                inputBuff[inputBuffSize] = '\0';
+                sendCount = 0;
+            }
+            repeat_phase = REPEAT_PHASE_SENDING;
+            starSending();
+        }
 
         dispf();
 
@@ -203,6 +235,7 @@ void InitGPIOs() {
     GPIO_WriteBit (POWBOTTON_PORT, POWBOTTON_OUT, Bit_SET);
 }
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 void InitADC() {
     ADC_InitTypeDef  ADC_InitStructure = {0};
     GPIO_InitTypeDef GPIO_InitStructure = {0};
@@ -276,6 +309,7 @@ static uint16_t ConvertBatteryToDeciVolt (uint16_t adc_value)
 {
     return (uint16_t)((((uint32_t)adc_value) * 66 + 2048) / 4096);
 }
+#endif /* COMPARE_FOR_VERSION_WITH_EEPROM */
 
 void WriteConfigEEPROM(){
     config.initial_startup = STARUP_FLAG;
@@ -310,6 +344,8 @@ void ReadConfigEEPROM(){
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
         ButtonApplyConfiguredActions();
         config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+        config.repeat_config.repeat_count = DEF_REPEAT_COUNT;
+        config.repeat_config.repeat_interval_s = DEF_REPEAT_INTERVAL_S;
         WriteConfigEEPROM();
     } else {
         config.mode = savedConfig.mode;
@@ -339,6 +375,19 @@ void ReadConfigEEPROM(){
             config.keyboard_layout = savedConfig.keyboard_layout;
         } else {
             config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+            needs_config_rewrite = 1;
+        }
+
+        if (savedConfig.repeat_config.repeat_count <= 999 &&
+            savedConfig.repeat_config.repeat_interval_s >= 1 &&
+            savedConfig.repeat_config.repeat_interval_s <= 999) {
+            config.repeat_config.repeat_count =
+                savedConfig.repeat_config.repeat_count;
+            config.repeat_config.repeat_interval_s =
+                savedConfig.repeat_config.repeat_interval_s;
+        } else {
+            config.repeat_config.repeat_count = DEF_REPEAT_COUNT;
+            config.repeat_config.repeat_interval_s = DEF_REPEAT_INTERVAL_S;
             needs_config_rewrite = 1;
         }
 
@@ -416,6 +465,8 @@ void ResetConfig()
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
         ButtonApplyConfiguredActions();
         config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+        config.repeat_config.repeat_count = DEF_REPEAT_COUNT;
+        config.repeat_config.repeat_interval_s = DEF_REPEAT_INTERVAL_S;
 
         for(int i = 0; i < 12; i++)
         {
@@ -461,6 +512,7 @@ void TIM4_IRQHandler (void) {
         TIM_ClearITPendingBit (TIM4, TIM_IT_Update);
         static int powbutton_timer;
         static int curse_flash_timer;
+        static uint8_t repeat_tick_acc;  /* TIM4 = 24Hz, 24 ticks = 1 second */
         
         if (powbutton_timer > 0)
             powbutton_timer--;
@@ -478,6 +530,19 @@ void TIM4_IRQHandler (void) {
         else{
             curse_flash = ! curse_flash;
             curse_flash_timer = 10;
+        }
+
+        /* Repeat mode: 1-second countdown via TIM4 (12 ticks/sec) */
+        if (repeat_active && repeat_phase == REPEAT_PHASE_COUNTDOWN) {
+            repeat_tick_acc++;
+            if (repeat_tick_acc >= 24) {
+                repeat_tick_acc = 0;
+                if (repeat_countdown_s > 0) {
+                    repeat_countdown_s--;
+                }
+            }
+        } else {
+            repeat_tick_acc = 0;
         }
     }
 }
