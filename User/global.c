@@ -8,7 +8,9 @@
 #include "global.h"
 
 struct Config config;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 struct Train_Info train_info;
+#endif
 
 uint8_t stge = 0;         // ��ǰ״̬           0��stb        1��sending
 uint8_t bufCovnMark = 0;
@@ -23,8 +25,10 @@ uint8_t disp_button_func = 0;
 uint8_t morse_conf_item = 0;
 uint8_t button_conf_item = 0;
 uint8_t disp_confirm_reset = 0;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 uint8_t disp_train_menu = 0;
 uint8_t tain_menu_item = 0;
+#endif
 uint8_t disp_repeat_conf = 0;
 uint8_t repeat_conf_item = 0;
 uint8_t disp_repeat_input = 0;

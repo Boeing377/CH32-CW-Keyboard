@@ -343,7 +343,7 @@ void ReadConfigEEPROM(){
         config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
         ButtonApplyConfiguredActions();
-        config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+        config.keyboard_layout = DEFAULT_KEYBOARD;
         config.repeat_config.repeat_count = DEF_REPEAT_COUNT;
         config.repeat_config.repeat_interval_s = DEF_REPEAT_INTERVAL_S;
         WriteConfigEEPROM();
@@ -374,7 +374,7 @@ void ReadConfigEEPROM(){
         if (savedConfig.keyboard_layout < KEYBOARD_LAYOUT_COUNT) {
             config.keyboard_layout = savedConfig.keyboard_layout;
         } else {
-            config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+            config.keyboard_layout = DEFAULT_KEYBOARD;
             needs_config_rewrite = 1;
         }
 
@@ -464,7 +464,7 @@ void ResetConfig()
         config.button_func.bt1_func_index = DEF_BT1_FUN_INDEX;
         config.button_func.bt2_func_index = DEF_BT2_FUN_INDEX;
         ButtonApplyConfiguredActions();
-        config.keyboard_layout = KEYBOARD_LAYOUT_QWERTY;
+        config.keyboard_layout = DEFAULT_KEYBOARD;
         config.repeat_config.repeat_count = DEF_REPEAT_COUNT;
         config.repeat_config.repeat_interval_s = DEF_REPEAT_INTERVAL_S;
 

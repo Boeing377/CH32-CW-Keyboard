@@ -159,10 +159,12 @@ static uint8_t HandleCtrlShortcut (uint8_t usage) {
         return 1;
     }
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
     if (translated == 't') {
         disp_train_menu = 1 - disp_train_menu;
         return 1;
     }
+#endif
 
     if (translated == 'r') {
         /* Toggle repeat mode */

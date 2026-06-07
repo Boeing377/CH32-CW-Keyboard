@@ -54,7 +54,9 @@ void ButtonOpenMenu()
 
 void ButtonHandleKey1LongPress()
 {
+#if COMPARE_FOR_VERSION_WITH_EEPROM
     disp_train_menu = 0;
+#endif
     disp_ver = 0;
     disp_morse_conf = 0;
     disp_button_func = 0;
@@ -99,8 +101,10 @@ void ButtonExecuteConfiguredAction (uint8_t button_id)
     action();
 }
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 void ButtonOpenTrain()
 {
     disp_train_menu = 1 - disp_train_menu;
 }
+#endif
 

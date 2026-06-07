@@ -70,6 +70,10 @@
 #define KEYBOARD_LAYOUT_AZERTY 1
 #define KEYBOARD_LAYOUT_COUNT 2
 
+#ifndef DEFAULT_KEYBOARD
+#define DEFAULT_KEYBOARD KEYBOARD_LAYOUT_QWERTY
+#endif
+
 #define BUFFSIZE 2048
 #define INPUTZONE_SIZE 2048
 
@@ -121,20 +125,27 @@ struct Config {
     struct Repeat_Config repeat_config;
 };
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 struct Train_Info{
-    uint8_t methon; //��ʽ 0��KOCH 1��˳��
-    uint8_t lesson; //��ǰ����
-    uint8_t group_num; //ѵ����ĸ����
-    uint8_t letter_num_per_group; //ÿ����ĸ����
+    uint8_t methon;
+    uint8_t lesson;
+    uint8_t group_num;
+    uint8_t letter_num_per_group;
 };
+#endif
 
 extern struct Config config;
 extern uint8_t msg[];
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
 extern struct Train_Info train_info;
+#endif
 
 extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
-    menu_item, disp_ver, disp_morse_conf, disp_button_func, morse_conf_item, button_conf_item ,curse_flash, disp_confirm_reset, disp_train_menu, tain_menu_item, disp_repeat_conf, repeat_conf_item, disp_repeat_input, repeat_input_target;
+    menu_item, disp_ver, disp_morse_conf, disp_button_func, morse_conf_item, button_conf_item ,curse_flash, disp_confirm_reset, disp_repeat_conf, repeat_conf_item, disp_repeat_input, repeat_input_target;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+extern uint8_t disp_train_menu, tain_menu_item;
+#endif
 extern uint16_t repeat_input_value;
 extern uint8_t repeat_input_pos;
 extern char inputBuff[], outputBuff[];
