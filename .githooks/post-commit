@@ -1,38 +1,32 @@
-#!/usr/bin/env pwsh
+#!/bin/sh
 # Git post-commit hook - 每次提交后自动递增 BUILD 号
-# 安装方式: 将此文件复制到 .git/hooks/post-commit，或运行:
-#   git config core.hooksPath .githooks
+# 通过 Git Bash 执行，调用 PowerShell 完成实际工作
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = git rev-parse --show-toplevel
-Set-Location $repoRoot
+REPO_ROOT=$(git rev-parse --show-toplevel)
+VERSION_FILE="$REPO_ROOT/version.txt"
 
-$versionFile = Join-Path $repoRoot "version.txt"
-
-if (-not (Test-Path $versionFile)) {
-    Write-Warning "version.txt not found, skipping version bump."
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "version.txt not found, skipping version bump."
     exit 0
-}
+fi
 
-$version = Get-Content $versionFile -Raw
-$version = $version.Trim()
-$parts = $version -split '\.'
+# 读取并递增 BUILD 号
+OLD_VERSION=$(cat "$VERSION_FILE" | tr -d '\r\n')
+MAJOR=$(echo "$OLD_VERSION" | cut -d. -f1)
+MINOR=$(echo "$OLD_VERSION" | cut -d. -f2)
+BUILD=$(echo "$OLD_VERSION" | cut -d. -f3)
 
-if ($parts.Count -lt 3) {
-    Write-Warning "version.txt format invalid (expected MAJOR.MINOR.BUILD), skipping."
+if [ -z "$BUILD" ]; then
+    echo "version.txt format invalid (expected MAJOR.MINOR.BUILD), skipping."
     exit 0
-}
+fi
 
-# 递增 BUILD 号
-$build = [int]$parts[2] + 1
-$newVersion = "$($parts[0]).$($parts[1]).$build"
-Set-Content -Path $versionFile -Value $newVersion -NoNewline
+NEW_BUILD=$((BUILD + 1))
+NEW_VERSION="${MAJOR}.${MINOR}.${NEW_BUILD}"
+echo "$NEW_VERSION" > "$VERSION_FILE"
 
-# 生成 version.h
-$genScript = Join-Path $repoRoot "tools\gen_version.ps1"
-if (Test-Path $genScript) {
-    & $genScript -ProjectRoot $repoRoot
-}
+# 调用 PowerShell 生成 version.h
+powershell -ExecutionPolicy Bypass -File "$REPO_ROOT/tools/gen_version.ps1" -ProjectRoot "$REPO_ROOT"
 
-Write-Host "Version bumped: $version -> $newVersion"
-Write-Host "Hint: version.txt has been updated; include it in your next commit."
+echo "Version bumped: $OLD_VERSION -> $NEW_VERSION"
+echo "Hint: version.txt has been updated; include it in your next commit."
