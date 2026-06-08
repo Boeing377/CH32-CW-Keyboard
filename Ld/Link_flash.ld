@@ -180,4 +180,20 @@ SECTIONS
         PROVIDE( _eusrstack = .);
     } >RAM
 
+    /* ── Legacy upgrade detection guard ───────────────────────────── */
+    /* Old firmware (no-EEPROM flash version) stored user Config at   */
+    /* 0x0800CF00.  This section MUST NOT be loaded so the ISP        */
+    /* programmer leaves the old data intact.                         */
+    /*                                                                */
+    /* If this assertion fires your firmware has grown past 32 KiB    */
+    /* and the old-settings detection will break.                     */
+    /*                                                                */
+    /* Threshold: 0xCF00 – 0x5000 = 0x7F00 (32 512 bytes)            */
+    /* ────────────────────────────────────────────────────────────── */
+    _flash_app_end = _data_lma + SIZEOF(.data);
 }
+
+ASSERT(
+    _flash_app_end <= 0x0000CF00,
+    "ERROR: Firmware code+data exceeds 0xCF00! Old-settings upgrade detection will fail. Reduce code size."
+)

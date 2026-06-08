@@ -27,7 +27,19 @@
 /* 版本号由 tools/gen_version.ps1 自动生成，Git 提交后 BUILD 号自动递增 */
 #include "version.h"
 
-#define STARUP_FLAG 0x25
+#define STARUP_FLAG      0x25
+#define OLD_STARUP_FLAG  0x15  /* v1.x firmware used 0x15; accepted during upgrade detection */
+
+/* ── Legacy upgrade detection ─────────────────────────────────── */
+/* Old no-EEPROM flash firmware stored Config at 0x0800CF00.       */
+/* We probe that address on boot to decide whether this is an      */
+/* in-place upgrade (old data survived ISP programming) or a       */
+/* fresh flash onto a blank / pirated chip.                        */
+/* Only active in FLASH (no-EEPROM) builds.                        */
+/* ─────────────────────────────────────────────────────────────── */
+#if !COMPARE_FOR_VERSION_WITH_EEPROM
+#define OLD_CONFIG_ADDR     0x0800CF00UL
+#endif
 
 #define KEY_OUT GPIO_Pin_1
 #define BEEP_OUT GPIO_Pin_9

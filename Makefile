@@ -60,11 +60,11 @@ CPP_DEFS ?= -DU8G2_USE_LARGE_FONTS -DCOMPARE_FOR_VERSION_WITH_EEPROM=$(STORAGE_U
 RISCV_ABI ?= ilp32
 MCU_FLAGS ?= -march=rv32imacxw -mabi=$(RISCV_ABI) -msmall-data-limit=8 -msave-restore
 
-COMMON_FLAGS ?= $(MCU_FLAGS) -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g
+COMMON_FLAGS ?= $(MCU_FLAGS) -Os -flto -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g
 CFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -std=gnu99 -MMD -MP
 CXXFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -MMD -MP
 ASFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -x assembler-with-cpp -MMD -MP
-LDFLAGS ?= $(MCU_FLAGS) -Os -T $(LINKER_SCRIPT) -nostartfiles -Wl,--gc-sections -Wl,-Map,$(BUILD_DIR)/$(TARGET_NAME).map --specs=nano.specs --specs=nosys.specs
+LDFLAGS ?= $(MCU_FLAGS) -Os -flto -T $(LINKER_SCRIPT) -nostartfiles -Wl,--gc-sections -Wl,-Map,$(BUILD_DIR)/$(TARGET_NAME).map --specs=nano.specs --specs=nosys.specs
 
 .PHONY: all clean size gen_version
 
