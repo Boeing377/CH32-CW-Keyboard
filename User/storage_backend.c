@@ -170,4 +170,67 @@ void StorageBackend_WriteMsgSlot (uint8_t slot, const uint8_t *buffer,
     FlashStorage_Write (FlashStorage_GetSlotAddress (slot), buffer, size);
 }
 
+/* ── Migration stamp with UID binding (FLASH version only) ───────── */
+/* Stored at offset 44 inside the config page — outside both the      */
+/* Config struct and the msg directory, so WriteConfigEEPROM() and    */
+/* ResetConfig() never touch it.                                      */
+/*                                                                    */
+/* Offsets within the 16-byte stamp:                                  */
+/*   [ 0.. 3]  magic "MGRT"                                           */
+/*   [ 4..15]  96-bit chip UID                                        */
+
+static void ReadChipUid (uint8_t *uid_out)
+{
+    uint32_t *uid32 = (uint32_t *)MCU_UID_ADDR;
+
+    memcpy (uid_out, uid32, 12);
+}
+
+uint8_t StorageBackend_IsMigrationValid (void)
+{
+    uint8_t  stamp[STORAGE_FLASH_MIGRATION_SIZE];
+    uint32_t stored_magic;
+    uint8_t  chip_uid[12];
+    uint8_t  stored_uid[12];
+
+    FlashStorage_Read (STORAGE_FLASH_MIGRATION_ADDR, stamp, sizeof (stamp));
+
+    stored_magic = *(uint32_t *)(stamp + 0);
+    if (stored_magic != STORAGE_FLASH_MIGRATION_MAGIC) {
+        return 0;  /* magic mismatch — never migrated */
+    }
+
+    /* Magic OK, verify UID binding */
+    ReadChipUid (chip_uid);
+    memcpy (stored_uid, stamp + 4, 12);
+
+    if (memcmp (chip_uid, stored_uid, 12) != 0) {
+        return 0;  /* UID mismatch — cloned from different chip */
+    }
+
+    return 1;
+}
+
+void StorageBackend_WriteMigrationStamp (void)
+{
+    uint8_t stamp[STORAGE_FLASH_MIGRATION_SIZE];
+    uint32_t magic = STORAGE_FLASH_MIGRATION_MAGIC;
+
+    memcpy (stamp + 0, &magic, 4);
+    ReadChipUid (stamp + 4);
+
+    FlashStorage_Write (STORAGE_FLASH_MIGRATION_ADDR,
+                        stamp, sizeof (stamp));
+}
+
+void StorageBackend_EraseOldConfigArea (void)
+{
+    uint32_t old_page = OLD_CONFIG_ADDR;
+
+    FLASH_Unlock_Fast ();
+    FLASH_ClearFlag (FLASH_FLAG_BSY | FLASH_FLAG_EOP | FLASH_FLAG_WRPRTERR);
+    FLASH_ErasePage_Fast (old_page);
+    FLASH_Lock_Fast ();
+}
+
 #endif
