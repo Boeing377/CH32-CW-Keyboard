@@ -15,6 +15,9 @@
 #include "usb_host_conf.h"
 #include "morse_send.h"
 #include "ButtonFunc.h"
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+#include "train.h"
+#endif
 
 /*******************************************************************************/
 /* Variable Definition */
@@ -155,13 +158,21 @@ static uint8_t HandleCtrlShortcut (uint8_t usage) {
     }
 
     if (translated == 'm') {
+        if (disp_training) return 1;  /* blocked during training */
         disp_menu = 1 - disp_menu;
         return 1;
     }
 
 #if COMPARE_FOR_VERSION_WITH_EEPROM
     if (translated == 't') {
+        if (disp_training) {
+            Train_Exit ();
+            return 1;
+        }
         disp_train_menu = 1 - disp_train_menu;
+        if (disp_train_menu) {
+            tain_menu_item = 0;
+        }
         return 1;
     }
 #endif
@@ -233,6 +244,18 @@ static int CollectNewPressedKeys (uint8_t *new_pressed) {
 
         if (usage == DEF_KEY_CAPS) {
             caps_lock_stg = 1 - caps_lock_stg;
+            /* Sync keyboard CapsLock LED via SetReport */
+            {
+                uint8_t idx = DEF_USBFS_PORT_INDEX;
+                uint8_t n;
+                for (n = 0; n < HostCtl[idx].InterfaceNum; n++) {
+                    if (HostCtl[idx].Interface[n].Type == DEC_KEY) {
+                        HostCtl[idx].Interface[n].SetReport_Value =
+                            caps_lock_stg ? 0x02 : 0x00;
+                        HostCtl[idx].Interface[n].SetReport_Flag = 1;
+                    }
+                }
+            }
         }
 
         if (IsModifierActive (Com_Buf[0], KEY_MODIFIER_CTRL_MASK) &&
@@ -281,6 +304,188 @@ static void HandleMenuKey (uint8_t key_value) {
         }
         return;
     }
+
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+    if (disp_train_menu) {
+        const uint8_t is_free = (train_info.methon == TRAIN_METHOD_FREE);
+
+        if (key_value == 0x1) {
+            /* Down arrow: move cursor down */
+            if (is_free && tain_menu_item == 0)
+                tain_menu_item = 2;  /* skip LESSON in FREE mode */
+            else if (tain_menu_item < 4)
+                tain_menu_item++;
+        } else if (key_value == 0x2) {
+            /* Up arrow: move cursor up */
+            if (is_free && tain_menu_item == 2)
+                tain_menu_item = 0;  /* skip LESSON in FREE mode */
+            else if (tain_menu_item > 0)
+                tain_menu_item--;
+        } else if (key_value == 28) {
+            /* Left arrow: adjust value left */
+            if (tain_menu_item == 0) {
+                /* METHOD: cycle KOCH(0)->FREE(2)->SEQU(1)->KOCH(0) */
+                if (train_info.methon > TRAIN_METHOD_KOCH)
+                    train_info.methon--;
+                else
+                    train_info.methon = TRAIN_METHOD_FREE;
+                /* If switched to FREE while on LESSON, move cursor */
+                if (train_info.methon == TRAIN_METHOD_FREE
+                    && tain_menu_item == 1)
+                    tain_menu_item = 0;
+            } else if (tain_menu_item == 1) {
+                /* LESSON: decrease */
+                if (train_info.lesson > 1)
+                    train_info.lesson--;
+            }
+        } else if (key_value == 29) {
+            /* Right arrow: adjust value right */
+            if (tain_menu_item == 0) {
+                /* METHOD: cycle KOCH(0)->SEQU(1)->FREE(2)->KOCH(0) */
+                if (train_info.methon < TRAIN_METHOD_FREE)
+                    train_info.methon++;
+                else
+                    train_info.methon = TRAIN_METHOD_KOCH;
+                /* If switched to FREE while on LESSON, move cursor */
+                if (train_info.methon == TRAIN_METHOD_FREE
+                    && tain_menu_item == 1)
+                    tain_menu_item = 0;
+            } else if (tain_menu_item == 1) {
+                /* LESSON: increase (up to 40) */
+                if (train_info.lesson < 40)
+                    train_info.lesson++;
+            }
+        } else if (key_value == 31) {
+            /* Enter: activate current item */
+            if (tain_menu_item == 2) {
+                /* SETTING: enter settings submenu */
+                disp_train_menu = 0;
+                disp_train_setting = 1;
+                train_setting_item = 0;
+                tain_menu_item = 0;
+            } else if (tain_menu_item == 3) {
+                /* START: generate text and enter training */
+                disp_train_menu = 0;
+                Train_Start ();
+            } else if (tain_menu_item == 4) {
+                /* EXIT: close training menu */
+                disp_train_menu = 0;
+                tain_menu_item = 0;
+            }
+        } else if (key_value == 27) {
+            /* Escape: exit training menu */
+            disp_train_menu = 0;
+            tain_menu_item = 0;
+        }
+        return;
+    }
+
+    /* ── Training SETTING submenu ────────────────────────── */
+    if (disp_train_setting) {
+        const uint8_t is_free = (train_info.methon == TRAIN_METHOD_FREE);
+        const uint8_t max_item = Train_GetSettingItemMax ();
+        const uint8_t wpm_item = is_free ? 0 : 1;
+
+        /* ── WPM direct numeric input ─────────────────── */
+        if (train_setting_wpm_input) {
+            if (key_value >= '0' && key_value <= '9') {
+                if (train_setting_wpm_pos < 2) {
+                    train_setting_wpm_val =
+                        train_setting_wpm_val * 10
+                        + (uint16_t)(key_value - '0');
+                    train_setting_wpm_pos++;
+                }
+            } else if (key_value == 127) {
+                if (train_setting_wpm_pos > 0) {
+                    train_setting_wpm_val /= 10;
+                    train_setting_wpm_pos--;
+                }
+            } else if (key_value == 31) {
+                uint16_t v = train_setting_wpm_val;
+                if (v < 1) v = 1;
+                if (v > MAX_WPM) v = MAX_WPM;
+                config.wpm = (int8_t)v;
+                train_setting_wpm_input = 0;
+            } else if (key_value == 27) {
+                train_setting_wpm_input = 0;
+            }
+            return;
+        }
+
+        if (key_value == 0x1) {
+            /* Down */
+            if (train_setting_item < max_item)
+                train_setting_item++;
+        } else if (key_value == 0x2) {
+            /* Up */
+            if (train_setting_item > 0)
+                train_setting_item--;
+        } else if (key_value == 28) {
+            /* Left: decrease value */
+            if (!is_free && train_setting_item == 0) {
+                /* CHAR/GRP: 2→3→4→5→6→7→RAND(0)→2... */
+                if (train_info.chars_per_group == 0)
+                    train_info.chars_per_group = 7;
+                else if (train_info.chars_per_group > 2)
+                    train_info.chars_per_group--;
+                else
+                    train_info.chars_per_group = 0; /* RAND */
+            } else if (train_setting_item == wpm_item) {
+                if (config.wpm > 1) { config.wpm--; }
+            } else if (!is_free && train_setting_item == 2) {
+                /* GAP: 1-5 */
+                if (train_info.group_gap_spaces > 1)
+                    train_info.group_gap_spaces--;
+            } else if (train_setting_item == (is_free ? 1 : 3)) {
+                /* TIME: 1-5 */
+                if (train_info.train_duration_min > 1)
+                    train_info.train_duration_min--;
+            }
+        } else if (key_value == 29) {
+            /* Right: increase value */
+            if (!is_free && train_setting_item == 0) {
+                /* CHAR/GRP: 2→7→RAND(0)→2... */
+                if (train_info.chars_per_group == 0)
+                    train_info.chars_per_group = 2;
+                else if (train_info.chars_per_group < 7)
+                    train_info.chars_per_group++;
+                else
+                    train_info.chars_per_group = 0; /* RAND */
+            } else if (train_setting_item == wpm_item) {
+                if (config.wpm < MAX_WPM) { config.wpm++; }
+            } else if (!is_free && train_setting_item == 2) {
+                /* GAP: 1-5 */
+                if (train_info.group_gap_spaces < 5)
+                    train_info.group_gap_spaces++;
+            } else if (train_setting_item == (is_free ? 1 : 3)) {
+                /* TIME: 1-5 */
+                if (train_info.train_duration_min < 5)
+                    train_info.train_duration_min++;
+            }
+        } else if (key_value == 31) {
+            /* Enter */
+            if (train_setting_item == wpm_item) {
+                /* Enter WPM direct input mode */
+                train_setting_wpm_input = 1;
+                train_setting_wpm_val = 0;
+                train_setting_wpm_pos = 0;
+            } else if (train_setting_item == max_item) {
+                /* BACK: return to train menu */
+                disp_train_setting = 0;
+                train_setting_item = 0;
+                tain_menu_item = 0;
+                disp_train_menu = 1;
+            }
+        } else if (key_value == 27) {
+            /* Escape: back to train menu */
+            disp_train_setting = 0;
+            train_setting_item = 0;
+            tain_menu_item = 0;
+            disp_train_menu = 1;
+        }
+        return;
+    }
+#endif /* COMPARE_FOR_VERSION_WITH_EEPROM */
 
     if (key_value == 0x1) {
         if (disp_ver) {
@@ -618,9 +823,19 @@ void CombufDeal() {
 
     if (newPressedNum) {
         for (i = 0; i < newPressedNum; i++) {
-            if (disp_menu) {
+            if (disp_menu
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+                || disp_train_menu || disp_train_setting
+#endif
+                ) {
                 HandleMenuKey (New_Pressed[i]);
-            } else {
+            }
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+            else if (disp_training) {
+                Train_HandleKey (New_Pressed[i]);
+            }
+#endif
+            else {
                 HandleTextKey (New_Pressed[i]);
             }
         }

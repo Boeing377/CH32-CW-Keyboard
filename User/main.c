@@ -27,6 +27,9 @@
 #include "screen_disp.h"
 #include "ButtonFunc.h"
 #include "storage_backend.h"
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+#include "train.h"
+#endif
 
 /* Global typedef */
 
@@ -110,6 +113,10 @@ int main (void) {
     // ReadConfig();
     ReadConfigEEPROM();
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+    Train_InitDefaults ();
+#endif
+
     TIM2_Init (3999, (60 * SystemCoreClock / (config.wpm * 50 * 1000) - 1));
 
     Delay_Ms (1500);
@@ -121,6 +128,7 @@ int main (void) {
         USBH_MainDeal();
 
 #if COMPARE_FOR_VERSION_WITH_EEPROM
+        Train_Poll ();
         bat_adc_val = FilterBatteryAdc (Get_ADC_Val (ADC_Channel_2));
         bat_adc_val = ConvertBatteryToDeciVolt (bat_adc_val);
 #endif

@@ -2,6 +2,7 @@
 #include "string.h"
 
 #if COMPARE_FOR_VERSION_WITH_EEPROM
+#include "train.h"
 #define UI_SHOW_BATTERY_ICON 1
 #else
 #define UI_SHOW_BATTERY_ICON 0
@@ -258,14 +259,28 @@ void menu_train_page()
     u8g2_SetDrawColor(&u8g2, 2);
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
 
-    u8g2_DrawStr(&u8g2, 5, 13 - now_y_shift, "METHOD");
-    u8g2_DrawStr(&u8g2, 90, 13 - now_y_shift, train_info.methon == 1 ? "NORM" : "KOCH");
+    {
+        const char *method_str;
+        if (train_info.methon == TRAIN_METHOD_KOCH)
+            method_str = "KOCH";
+        else if (train_info.methon == TRAIN_METHOD_SEQU)
+            method_str = "SEQU";
+        else
+            method_str = "FREE";
+        u8g2_DrawStr(&u8g2, 5, 13 - now_y_shift, "METHOD");
+        u8g2_DrawStr(&u8g2, 90, 13 - now_y_shift, method_str);
+    }
 
-    char char_buf[20];
-    FormatUnsigned (char_buf, train_info.lesson);
-
-    u8g2_DrawStr(&u8g2, 5, 25 - now_y_shift, "LESSON");
-    u8g2_DrawStr(&u8g2, 101, 25 - now_y_shift, char_buf);
+    {
+        char char_buf[20];
+        u8g2_DrawStr(&u8g2, 5, 25 - now_y_shift, "LESSON");
+        if (train_info.methon == TRAIN_METHOD_FREE) {
+            u8g2_DrawStr(&u8g2, 101, 25 - now_y_shift, "---");
+        } else {
+            FormatUnsigned (char_buf, train_info.lesson);
+            u8g2_DrawStr(&u8g2, 101, 25 - now_y_shift, char_buf);
+        }
+    }
 
     u8g2_DrawStr(&u8g2, 5, 37 - now_y_shift, "SETTING");
 
@@ -273,11 +288,13 @@ void menu_train_page()
 
     u8g2_DrawStr(&u8g2, 5, 61 - now_y_shift, "EXIT");
 
-    // Layer 6
+    // Layer 6: snap if gap > 1 row (page re-entry), else animate
     target_y = 2 + tain_menu_item * 12;
     if(now_y != target_y)
     {
-        if (target_y > now_y)
+        if (target_y > now_y + 12 || now_y > target_y + 12)
+            now_y = target_y;
+        else if (target_y > now_y)
             now_y +=2;
         else
             now_y -=2;
@@ -502,6 +519,345 @@ void show_train_menu()
 }
 #endif
 
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+/* ── Training active page ────────────────────────────────── */
+void show_training_page (void)
+{
+    int line;
+    const int chars_per_line = 14;
+
+    if (train_phase == TRAIN_PHASE_SCORING) {
+        /* ── SCORING: dual-pane comparison ──────────────── */
+        const char *user   = train_align_user;  /* aligned */
+        const char *answer = train_buf;         /* aligned */
+        const uint8_t *match = train_align_match;
+        uint16_t total = train_align_len;
+        uint16_t pos;
+        uint16_t correct = 0;
+
+        for (pos = 0; pos < total; pos++) {
+            if (match[pos]) correct++;
+        }
+
+        /* Status bar */
+        u8g2_DrawLine (&u8g2, 127, 8, 0, 8);
+        u8g2_SetFont (&u8g2, u8g2_font_profont10_tr);
+        {
+            char score_buf[24];
+            uint16_t pct = (total > 0) ? (correct * 100 / total) : 0;
+            score_buf[0] = 'S'; score_buf[1] = 'c'; score_buf[2] = 'o';
+            score_buf[3] = 'r'; score_buf[4] = 'e'; score_buf[5] = ':';
+            score_buf[6] = ' ';
+            {
+                char *p = score_buf + 7;
+                p = AppendUnsigned (p, correct);
+                *p++ = '/';
+                p = AppendUnsigned (p, total);
+                *p++ = ' ';
+                p = AppendUnsigned (p, pct);
+                *p++ = '%';
+                *p = '\0';
+            }
+            u8g2_DrawStr (&u8g2, 2, 7, score_buf);
+            u8g2_DrawStr (&u8g2, 98, 7, "Esc=exit");
+        }
+
+        /* Vertical divider */
+        u8g2_DrawVLine (&u8g2, 64, 10, 54);
+
+        /* Text body: one group per line */
+        u8g2_SetFont (&u8g2, u8g2_font_profont17_tr);
+        u8g2_SetFontMode (&u8g2, 1);  /* transparent */
+        {
+            /* Build group index: record start/len of each group */
+            uint16_t g_start[32], g_len[32];
+            uint8_t  g_count = 0;
+            uint16_t p = 0;
+            while (p < total && g_count < 32) {
+                uint16_t s = p;
+                while (p < total && answer[p] != ' ') p++;
+                g_start[g_count] = s;
+                g_len[g_count]   = p - s;
+                g_count++;
+                if (p < total) p++;  /* skip space */
+            }
+
+            if (g_count < 1) { g_start[0] = 0; g_len[0] = total; g_count = 1; }
+
+            /* Clamp scroll */
+            if (train_score_scroll + 4 > g_count)
+                train_score_scroll = (g_count > 4) ? (uint8_t)(g_count - 4) : 0;
+
+            uint8_t gi;
+            for (gi = 0; gi < 4; gi++) {
+                uint8_t idx = train_score_scroll + gi;
+                if (idx >= g_count) break;
+                uint16_t gs = g_start[idx];
+                uint16_t gl = g_len[idx];
+                int y = 21 + gi * 12;
+
+                /* Too-long group: wrap to next line(s) if needed */
+                uint16_t chunk_start = gs;
+                while (chunk_start < gs + gl) {
+                    uint16_t chunk_len = gl - (chunk_start - gs);
+                    if (chunk_len > 7) chunk_len = 7;
+
+                    {
+                        char buf[8]; uint8_t i;
+                        for (i = 0; i < chunk_len; i++)
+                            buf[i] = user[chunk_start + i];
+                        buf[i] = '\0';
+                        u8g2_SetDrawColor (&u8g2, 2);
+                        u8g2_DrawStr (&u8g2, 1, y, buf);
+                    }
+                    {
+                        char buf[8]; uint8_t i;
+                        for (i = 0; i < chunk_len; i++)
+                            buf[i] = answer[chunk_start + i];
+                        buf[i] = '\0';
+                        u8g2_SetDrawColor (&u8g2, 2);
+                        u8g2_DrawStr (&u8g2, 65, y, buf);
+                    }
+                    /* Error boxes */
+                    {
+                        uint8_t i;
+                        for (i = 0; i < chunk_len; i++) {
+                            uint16_t idx = chunk_start + i;
+                            if (!match[idx]) {
+                                u8g2_SetDrawColor (&u8g2, 2);
+                                u8g2_DrawBox (&u8g2, 1 + i * 9, y - 11, 9, 13);
+                                u8g2_DrawBox (&u8g2, 65 + i * 9, y - 11, 9, 13);
+                            }
+                        }
+                    }
+                    chunk_start += chunk_len;
+                    if (chunk_start < gs + gl) {
+                        y += 12;
+                        if (y > 63) break;
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    /* ── READY / RUNNING : common status bar ──────────── */
+    u8g2_DrawLine (&u8g2, 127, 8, 0, 8);
+    u8g2_SetFont (&u8g2, u8g2_font_profont10_tr);
+
+    {
+        char buf[32];
+        const char *method;
+        if (train_info.methon == TRAIN_METHOD_KOCH)
+            method = "KOCH";
+        else if (train_info.methon == TRAIN_METHOD_SEQU)
+            method = "SEQU";
+        else
+            method = "FREE";
+
+        buf[0] = 'W'; buf[1] = 'P'; buf[2] = 'M'; buf[3] = ':';
+        buf[4] = '0' + (config.wpm / 10);
+        buf[5] = '0' + (config.wpm % 10);
+        buf[6] = ' ';
+        buf[7] = 'L';
+        {
+            char *p = buf + 8;
+            p = AppendUnsigned (p, train_info.lesson);
+            *p++ = ' ';
+            {
+                uint8_t mi = 0;
+                while (method[mi]) { *p++ = method[mi++]; }
+                *p = '\0';
+            }
+        }
+        u8g2_DrawStr (&u8g2, 2, 7, buf);
+    }
+
+    if (train_phase == TRAIN_PHASE_READY) {
+        /* Pre-roll prompt */
+        u8g2_SetFont (&u8g2, u8g2_font_profont17_tr);
+        u8g2_SetDrawColor (&u8g2, 2);
+        u8g2_DrawStr (&u8g2, 1, 25, "Get ready...");
+        u8g2_SetFont (&u8g2, u8g2_font_profont12_tr);
+        u8g2_DrawStr (&u8g2, 1, 42, "Training starting");
+        u8g2_DrawStr (&u8g2, 1, 56, "Esc = cancel");
+    } else {
+        /* RUNNING: 3 lines input + status bar at bottom */
+        uint16_t len = inputBuffSize;
+        const char *src = inputBuff;
+        int total_lines = (len > 0) ? ((len - 1) / chars_per_line) + 1 : 0;
+        int start_line = (total_lines > 3) ? (total_lines - 3) : 0;
+
+        /* 3 input lines (scroll when > 3 lines) */
+        u8g2_SetFont (&u8g2, u8g2_font_profont17_tr);
+        u8g2_SetDrawColor (&u8g2, 2);
+
+        for (line = 0; line < 3; line++) {
+            char line_buf[15];
+            int src_line = start_line + line;
+            uint16_t line_start = (uint16_t)src_line * chars_per_line;
+            uint8_t i;
+
+            if (line_start >= len) break;
+
+            for (i = 0; i < chars_per_line && (line_start + i) < len; i++) {
+                line_buf[i] = src[line_start + i];
+            }
+            line_buf[i] = '\0';
+            u8g2_DrawStr (&u8g2, 1, 21 + line * 12, line_buf);
+        }
+
+        /* Blinking cursor: always in the visible area */
+        if (curse_flash) {
+            int cur_line = (len > 0) ? (int)(len / chars_per_line) : 0;
+            int cur_col  = (len > 0) ? (int)(len % chars_per_line) : 0;
+            int vis_line = cur_line - start_line;
+            if (vis_line >= 0 && vis_line < 3) {
+                u8g2_SetDrawColor (&u8g2, 1);
+                u8g2_DrawLine (&u8g2,
+                    1 + cur_col * 9,
+                    11 + vis_line * 12,
+                    1 + cur_col * 9,
+                    21 + vis_line * 12);
+            }
+        }
+
+        /* Divider line below 3rd input line (y=45+12=57, divider at y=51) */
+        u8g2_DrawHLine (&u8g2, 0, 52, 128);
+
+        /* Bottom status */
+        u8g2_SetFont (&u8g2, u8g2_font_profont12_tr);
+        if (stge) {
+            u8g2_DrawStr (&u8g2, 2, 63, "Playing...");
+        } else {
+            u8g2_DrawStr (&u8g2, 2, 63, "Done  Ent=finish");
+        }
+    }
+}
+
+/* ── Training SETTING submenu ────────────────────────────── */
+void show_train_setting (void)
+{
+    static int target_y = 2;
+    static int now_y = 2;
+    const uint8_t is_free = (train_info.methon == TRAIN_METHOD_FREE);
+
+    u8g2_SetDrawColor (&u8g2, 2);
+    u8g2_SetFont (&u8g2, u8g2_font_profont17_tr);
+
+    if (is_free) {
+        /* FREE mode: WPM, TIME, BACK */
+        {
+            char buf[8];
+            if (train_setting_wpm_input) {
+                buf[0] = ' ';
+                if (train_setting_wpm_pos > 0)
+                    buf[1] = '0' + ((train_setting_wpm_val / 10) % 10);
+                else
+                    buf[1] = ' ';
+                buf[2] = '0' + (train_setting_wpm_val % 10);
+                buf[3] = '\0';
+            } else {
+                buf[0] = ' '; buf[1] = '0' + (config.wpm / 10);
+                buf[2] = '0' + (config.wpm % 10);
+                buf[3] = '\0';
+            }
+            u8g2_DrawStr (&u8g2, 5, 13, "WPM");
+            u8g2_DrawStr (&u8g2, 101, 13, buf);
+            if (train_setting_wpm_input && curse_flash) {
+                u8g2_DrawLine (&u8g2,
+                    101 + train_setting_wpm_pos * 9, 13,
+                    101 + train_setting_wpm_pos * 9 + 7, 13);
+            }
+        }
+
+        {
+            char buf[8];
+            buf[0] = ' ';
+            buf[1] = '0' + train_info.train_duration_min;
+            buf[2] = 'm';
+            buf[3] = 'i';
+            buf[4] = 'n';
+            buf[5] = '\0';
+            u8g2_DrawStr (&u8g2, 5, 25, "TIME");
+            u8g2_DrawStr (&u8g2, 101, 25, buf);
+        }
+
+        u8g2_DrawStr (&u8g2, 5, 37, "BACK");
+    } else {
+        /* KOCH / SEQU: CHAR/GRP, WPM, GAP, TIME, BACK */
+        {
+            char buf[8];
+            if (train_info.chars_per_group == 0) {
+                CopyText (buf, " RAND");
+            } else {
+                FormatUnsigned (buf, train_info.chars_per_group);
+            }
+            u8g2_DrawStr (&u8g2, 5, 13, "CHAR/GRP");
+            u8g2_DrawStr (&u8g2, 101, 13, buf);
+        }
+
+        {
+            char buf[8];
+            if (train_setting_wpm_input) {
+                buf[0] = ' ';
+                if (train_setting_wpm_pos > 0)
+                    buf[1] = '0' + ((train_setting_wpm_val / 10) % 10);
+                else
+                    buf[1] = ' ';
+                buf[2] = '0' + (train_setting_wpm_val % 10);
+                buf[3] = '\0';
+            } else {
+                buf[0] = ' ';
+                buf[1] = '0' + (config.wpm / 10);
+                buf[2] = '0' + (config.wpm % 10);
+                buf[3] = '\0';
+            }
+            u8g2_DrawStr (&u8g2, 5, 25, "WPM");
+            u8g2_DrawStr (&u8g2, 101, 25, buf);
+            if (train_setting_wpm_input && curse_flash) {
+                u8g2_DrawLine (&u8g2,
+                    101 + train_setting_wpm_pos * 9, 25,
+                    101 + train_setting_wpm_pos * 9 + 7, 25);
+            }
+        }
+
+        {
+            char buf[8];
+            FormatUnsigned (buf, train_info.group_gap_spaces);
+            u8g2_DrawStr (&u8g2, 5, 37, "GAP");
+            u8g2_DrawStr (&u8g2, 101, 37, buf);
+        }
+
+        {
+            char buf[8];
+            buf[0] = ' ';
+            buf[1] = '0' + train_info.train_duration_min;
+            buf[2] = 'm';
+            buf[3] = 'i';
+            buf[4] = 'n';
+            buf[5] = '\0';
+            u8g2_DrawStr (&u8g2, 5, 49, "TIME");
+            u8g2_DrawStr (&u8g2, 101, 49, buf);
+        }
+
+        u8g2_DrawStr (&u8g2, 5, 61, "BACK");
+    }
+
+    /* Cursor box: snap if gap > 1 row (page re-entry), else animate */
+    target_y = 2 + train_setting_item * 12;
+    if (now_y != target_y) {
+        if (target_y > now_y + 12 || now_y > target_y + 12)
+            now_y = target_y;
+        else if (target_y > now_y)
+            now_y += 2;
+        else
+            now_y -= 2;
+    }
+    u8g2_DrawBox (&u8g2, 3, now_y, 86, 11);
+}
+#endif /* COMPARE_FOR_VERSION_WITH_EEPROM */
+
 void mode_0_word_disp()
 {
     int tail_line = (strlen(inputBuff) / 14);
@@ -697,6 +1053,10 @@ void dispf()
 #if COMPARE_FOR_VERSION_WITH_EEPROM
     else if(disp_train_menu)
         show_train_menu();
+    else if(disp_train_setting)
+        show_train_setting();
+    else if(disp_training)
+        show_training_page();
 #endif
     else
         show_main_page();

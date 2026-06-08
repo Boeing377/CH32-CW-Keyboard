@@ -28,6 +28,23 @@ uint8_t disp_confirm_reset = 0;
 #if COMPARE_FOR_VERSION_WITH_EEPROM
 uint8_t disp_train_menu = 0;
 uint8_t tain_menu_item = 0;
+uint8_t disp_training = 0;
+uint8_t disp_train_setting = 0;
+uint8_t train_setting_item = 0;
+uint8_t train_setting_wpm_input = 0;
+uint16_t train_setting_wpm_val = 0;
+uint8_t train_setting_wpm_pos = 0;
+char train_generated_text[INPUTZONE_SIZE];
+uint16_t train_text_len = 0;
+char train_buf[INPUTZONE_SIZE];
+uint16_t train_buf_size = 0;
+uint8_t train_phase = TRAIN_PHASE_IDLE;
+uint8_t train_beeper_saved = 0;
+uint8_t train_mode_saved = 0;
+uint8_t train_score_scroll = 0;
+char    train_align_user[256];
+uint8_t train_align_match[256];
+uint16_t train_align_len = 0;
 #endif
 uint8_t disp_repeat_conf = 0;
 uint8_t repeat_conf_item = 0;

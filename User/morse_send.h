@@ -13,6 +13,7 @@
 extern const char KochAplhaTable[];
 
 void TIM2_Init (uint16_t arr, uint16_t psc);
+void TIM2_ChangBase (uint16_t arr, uint16_t psc);
 void bufCovn (uint8_t theChar);
 uint8_t Morse_CanEncodeChar (uint8_t theChar);
 void add_wpm (int num);

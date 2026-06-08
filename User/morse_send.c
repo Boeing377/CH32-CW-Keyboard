@@ -386,6 +386,11 @@ void TIM2_IRQHandler (void) {
 
         if (bufCovnMark) {
             send_now = sendCount;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+            if (train_phase == TRAIN_PHASE_RUNNING) {
+                bufCovn (train_buf[sendCount++]);
+            } else
+#endif
             if (config.mode) {
                 bufCovn (outputBuff[sendCount++]);
             } else {
@@ -401,6 +406,15 @@ void TIM2_IRQHandler (void) {
                 GPIO_WriteBit (BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
                 
             send_now = sendCount;
+#if COMPARE_FOR_VERSION_WITH_EEPROM
+            if (train_phase == TRAIN_PHASE_RUNNING) {
+                if (sendCount < train_buf_size) {
+                    bufCovn (train_buf[sendCount++]);
+                } else {
+                    endSending();
+                }
+            } else
+#endif
             if (config.mode) {
                 if (sendCount < outputBuffSize) {
                     bufCovn (outputBuff[sendCount++]);

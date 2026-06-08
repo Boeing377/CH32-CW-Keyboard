@@ -21,7 +21,7 @@
 
 /* 定制版本的接收者（仅 FW_CUSTOM_VERSION=1 时生效） */
 #ifndef FW_CUSTOM_RECIPIENT
-#define FW_CUSTOM_RECIPIENT "F5GKW"
+#define FW_CUSTOM_RECIPIENT "OSHW Hub User"
 #endif
 
 /* 版本号由 tools/gen_version.ps1 自动生成，Git 提交后 BUILD 号自动递增 */
@@ -125,12 +125,29 @@ struct Config {
     struct Repeat_Config repeat_config;
 };
 
+/* Training method constants */
+#define TRAIN_METHOD_KOCH  0
+#define TRAIN_METHOD_SEQU  1
+#define TRAIN_METHOD_FREE  2
+#define TRAIN_METHOD_COUNT 3
+
+/* Training phases */
+#define TRAIN_PHASE_IDLE    0
+#define TRAIN_PHASE_READY   1  /* 1s pre-roll prompt before audio */
+#define TRAIN_PHASE_RUNNING 2  /* audio playing, user can type */
+#define TRAIN_PHASE_SCORING 3  /* show score comparison */
+
+/* Training setting item counts per method */
+#define TRAIN_SETTING_ITEMS_KOCH  5  /* CHAR/GRP, WPM, GAP, TIME, BACK */
+#define TRAIN_SETTING_ITEMS_FREE  3  /* WPM, TIME, BACK */
+
 #if COMPARE_FOR_VERSION_WITH_EEPROM
 struct Train_Info{
     uint8_t methon;
     uint8_t lesson;
-    uint8_t group_num;
-    uint8_t letter_num_per_group;
+    uint8_t chars_per_group;     /* default 5 */
+    uint8_t group_gap_spaces;    /* spaces between groups, default 1 */
+    uint8_t train_duration_min;  /* 1-5 minutes, default 2 */
 };
 #endif
 
@@ -145,6 +162,21 @@ extern uint8_t stge, bufCovnMark, keyboard_in, caps_lock_stg, saving, disp_menu,
     menu_item, disp_ver, disp_morse_conf, disp_button_func, morse_conf_item, button_conf_item ,curse_flash, disp_confirm_reset, disp_repeat_conf, repeat_conf_item, disp_repeat_input, repeat_input_target;
 #if COMPARE_FOR_VERSION_WITH_EEPROM
 extern uint8_t disp_train_menu, tain_menu_item;
+extern uint8_t disp_training, disp_train_setting, train_setting_item;
+extern uint8_t train_setting_wpm_input;
+extern uint16_t train_setting_wpm_val;
+extern uint8_t train_setting_wpm_pos;
+extern char train_generated_text[];
+extern uint16_t train_text_len;
+extern char train_buf[];
+extern uint16_t train_buf_size;
+extern uint8_t train_phase;
+extern uint8_t train_beeper_saved;
+extern uint8_t train_mode_saved;
+extern uint8_t train_score_scroll;
+extern char    train_align_user[];
+extern uint8_t train_align_match[];
+extern uint16_t train_align_len;
 #endif
 extern uint16_t repeat_input_value;
 extern uint8_t repeat_input_pos;
