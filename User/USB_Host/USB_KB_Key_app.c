@@ -60,7 +60,8 @@ static const struct KeyboardLayoutEntry qwerty_keymap[KEY_USAGE_MAP_SIZE] = {
     [0x3B] = {4, 16}, [0x3C] = {5, 17}, [0x3D] = {6, 18},
     [0x3E] = {7, 19}, [0x3F] = {8, 20}, [0x40] = {9, 21},
     [0x41] = {10, 22}, [0x42] = {11, 23}, [0x43] = {12, 24},
-    [0x44] = {13, 25}, [0x45] = {14, 26}, [0x4F] = {29, 29},
+    [0x44] = {13, 25}, [0x45] = {14, 26}, [0x49] = {30, 30},
+    [0x4C] = {126, 126}, [0x4F] = {29, 29},
     [0x50] = {28, 28}, [0x51] = {1, 1}, [0x52] = {2, 2},
     [0x54] = {'/', '/'}, [0x56] = {'-', '-'}, [0x57] = {'+', '+'},
     [0x58] = {31, 31}, [0x59] = {'1', '1'}, [0x5A] = {'2', '2'},
@@ -90,7 +91,8 @@ static const struct KeyboardLayoutEntry azerty_keymap[KEY_USAGE_MAP_SIZE] = {
     [0x3C] = {5, 17}, [0x3D] = {6, 18}, [0x3E] = {7, 19},
     [0x3F] = {8, 20}, [0x40] = {9, 21}, [0x41] = {10, 22},
     [0x42] = {11, 23}, [0x43] = {12, 24}, [0x44] = {13, 25},
-    [0x45] = {14, 26}, [0x4F] = {29, 29}, [0x50] = {28, 28},
+    [0x45] = {14, 26}, [0x49] = {30, 30}, [0x4C] = {126, 126},
+    [0x4F] = {29, 29}, [0x50] = {28, 28},
     [0x51] = {1, 1}, [0x52] = {2, 2}, [0x54] = {'/', '/'},
     [0x56] = {'-', '-'}, [0x57] = {'+', '+'}, [0x58] = {31, 31},
     [0x59] = {'1', '1'}, [0x5A] = {'2', '2'}, [0x5B] = {'3', '3'},
@@ -158,7 +160,9 @@ static uint8_t HandleCtrlShortcut (uint8_t usage) {
     }
 
     if (translated == 'm') {
+#if COMPARE_FOR_VERSION_WITH_EEPROM
         if (disp_training) return 1;  /* blocked during training */
+#endif
         disp_menu = 1 - disp_menu;
         return 1;
     }
@@ -554,8 +558,13 @@ static void HandleMenuKey (uint8_t key_value) {
                     config.repeat_config.repeat_interval_s--;
             }
         } else {
-            if (menu_item == 0)
+            if (menu_item == 0) {
                 config.mode = 1 - config.mode;
+                if (config.mode == 0) {
+                    cursor_edit_mode = 0;
+                    cursor_pos = 0;
+                }
+            }
             if (menu_item == 1)
                 config.beeper = 1 - config.beeper;
             if (menu_item == 5) {
@@ -608,8 +617,13 @@ static void HandleMenuKey (uint8_t key_value) {
                 disp_repeat_conf = 0;
             }
         } else {
-            if (menu_item == 0)
+            if (menu_item == 0) {
                 config.mode = 1 - config.mode;
+                if (config.mode == 0) {
+                    cursor_edit_mode = 0;
+                    cursor_pos = 0;
+                }
+            }
             if (menu_item == 1)
                 config.beeper = 1 - config.beeper;
             if (menu_item == 2)
@@ -713,6 +727,128 @@ static void HandleTextKey (uint8_t key_value) {
         return;
     }
 
+    /* ── Insert key toggles cursor edit mode (buffer & training only,
+     *    NOT direct-send mode) ─────────────────────────────── */
+    if (key_value == 30) {
+        /* Toggle only in buffer mode (config.mode == 1).
+         * In direct-send mode, Insert is ignored here; training
+         * mode toggling is handled in Train_HandleKey. */
+        if (config.mode == 1) {
+            cursor_edit_mode = 1 - cursor_edit_mode;
+            if (cursor_edit_mode) {
+                cursor_pos = inputBuffSize;
+            }
+        }
+        return;
+    }
+
+    /* ── Cursor edit mode (buffer only) ─────────────────── */
+    if (cursor_edit_mode && config.mode == 1) {
+        /* Direction arrows: move cursor */
+        if (key_value == 28) {
+            /* Left */
+            if (cursor_pos > 0) cursor_pos--;
+            return;
+        } else if (key_value == 29) {
+            /* Right */
+            if (cursor_pos < inputBuffSize) cursor_pos++;
+            return;
+        } else if (key_value == 0x1) {
+            /* Down → jump to end */
+            cursor_pos = inputBuffSize;
+            return;
+        } else if (key_value == 0x2) {
+            /* Up → jump to start */
+            cursor_pos = 0;
+            return;
+        }
+
+        /* Printable character: insert at cursor */
+        if (Morse_CanEncodeChar (key_value)) {
+            if (inputBuffSize < INPUTZONE_SIZE - 1) {
+                uint16_t i;
+                /* Shift chars right from cursor_pos */
+                for (i = inputBuffSize; i > cursor_pos; i--) {
+                    inputBuff[i] = inputBuff[i - 1];
+                }
+                inputBuff[cursor_pos] = key_value;
+                inputBuffSize++;
+                cursor_pos++;
+                inputBuff[inputBuffSize] = '\0';
+            }
+            return;
+        }
+
+        /* Backspace: delete char before cursor */
+        if (key_value == 127) {
+            if (cursor_pos > 0 && inputBuffSize > 0) {
+                uint16_t i;
+                for (i = cursor_pos - 1; i < inputBuffSize - 1; i++) {
+                    inputBuff[i] = inputBuff[i + 1];
+                }
+                inputBuffSize--;
+                cursor_pos--;
+                inputBuff[inputBuffSize] = '\0';
+            }
+            return;
+        }
+
+        /* Delete forward: delete char at cursor */
+        if (key_value == 126) {
+            if (cursor_pos < inputBuffSize) {
+                uint16_t i;
+                for (i = cursor_pos; i < inputBuffSize - 1; i++) {
+                    inputBuff[i] = inputBuff[i + 1];
+                }
+                inputBuffSize--;
+                inputBuff[inputBuffSize] = '\0';
+            }
+            return;
+        }
+
+        /* Enter: exit edit mode and send buffer */
+        if (key_value == 31) {
+            cursor_edit_mode = 0;
+            memset (outputBuff, '\0', BUFFSIZE);
+            memcpy (outputBuff, inputBuff, inputBuffSize);
+            outputBuffSize = inputBuffSize;
+            outputBuff[outputBuffSize] = '\0';
+            inputBuffSize = 0;
+            memset (inputBuff, '\0', BUFFSIZE);
+            cursor_pos = 0;
+            starSending();
+            return;
+        }
+
+        /* Escape: exit edit mode without sending */
+        if (key_value == 27) {
+            cursor_edit_mode = 0;
+            cursor_pos = 0;
+            return;
+        }
+
+        /* F1-F12: load saved message (still supported) */
+        if (key_value >= 3 && key_value <= 14) {
+            ReadSavedMsgEEPROM (key_value - 3);
+            cursor_edit_mode = 0;
+            cursor_pos = 0;
+            return;
+        }
+
+        /* Shift+F1-F12: save message (still supported) */
+        if (key_value >= 15 && key_value <= 26) {
+            WriteMsgEEPROM (key_value - 15);
+            inputBuffSize = 0;
+            sendCount = 0;
+            cursor_pos = 0;
+            memset (inputBuff, '\0', BUFFSIZE);
+            cursor_edit_mode = 0;
+            return;
+        }
+
+        return;
+    }
+
     if (Morse_CanEncodeChar (key_value)) {
         if (inputBuffSize < INPUTZONE_SIZE - 1) {
             inputBuff[inputBuffSize++] = key_value;
@@ -739,8 +875,16 @@ static void HandleTextKey (uint8_t key_value) {
         memset (inputBuff, '\0', BUFFSIZE);
         sendCount = 0;
     } else if (key_value == 127) {
-        if (inputBuffSize > 0)
+        if (inputBuffSize > 0) {
+            /* Direct mode: if deleting the character currently being
+             * sent, flag to append error-correction dots (......)
+             * after the current character finishes. */
+            if (config.mode == 0 && stge && sendCount > 0
+                && inputBuffSize == sendCount) {
+                send_correction_error = 1;
+            }
             inputBuffSize--;
+        }
         inputBuff[inputBuffSize] = '\0';
         if (config.mode == 0) {
             if (inputBuffSize < sendCount)

@@ -325,6 +325,7 @@ void starSending() {
 void endSending() {
     if (stge) {
         stge = 0;
+        send_correction_error = 0;
         NVIC_DisableIRQ (TIM2_IRQn);
         TIM_Cmd (TIM2, DISABLE);
         GPIO_WriteBit (KEY_OUT_PORT, KEY_OUT, Bit_RESET);
@@ -378,6 +379,18 @@ void bufCovn (uint8_t theChar) {
     sendBufLen = offset;
 }
 
+/* Encode 6-dot error/correction signal (......) into sendbuf.
+ * Standard ITU-R M.1677-1 specifies 8 dots (........); 6 dots also
+ * widely used in practice.  Change morse_error_dots.len to 8 for
+ * strict compliance. */
+void bufCovnErrorDots (void) {
+    static const struct MorseCodeMap morse_error_dots = {8, 0b00000000};
+
+    uint16_t offset = 0;
+    encode_pattern (&morse_error_dots, &offset);
+    sendBufLen = offset;
+}
+
 void TIM2_IRQHandler (void) {
     static int count = 0;
     if (TIM_GetITStatus (TIM2, TIM_IT_Update) != RESET) {
@@ -404,7 +417,16 @@ void TIM2_IRQHandler (void) {
             GPIO_WriteBit (KEY_OUT_PORT, KEY_OUT, Bit_RESET);
             if (config.beeper)
                 GPIO_WriteBit (BEEP_OUT_PORT, BEEP_OUT, Bit_RESET);
-                
+
+            /* ── Error correction: backspace on currently-sending char ── */
+            if (send_correction_error) {
+                send_correction_error = 0;
+                bufCovnErrorDots ();
+                /* Fall through to let ISR output the error dots;
+                 * sendCount / send_now already reflect the trimmed
+                 * buffer – after the dots finish, the normal "next
+                 * char" check will see no more chars → endSending(). */
+            } else {
             send_now = sendCount;
 #if COMPARE_FOR_VERSION_WITH_EEPROM
             if (train_phase == TRAIN_PHASE_RUNNING) {
@@ -430,6 +452,7 @@ void TIM2_IRQHandler (void) {
                 } else {
                     endSending();
                 }
+            }
             }
         }
 

@@ -16,12 +16,12 @@
 
 /* 固件版本类型：1=定制版本，0=通用版本 */
 #ifndef FW_CUSTOM_VERSION
-#define FW_CUSTOM_VERSION 0
+#define FW_CUSTOM_VERSION 1
 #endif
 
 /* 定制版本的接收者（仅 FW_CUSTOM_VERSION=1 时生效） */
 #ifndef FW_CUSTOM_RECIPIENT
-#define FW_CUSTOM_RECIPIENT "OSHW Hub User"
+#define FW_CUSTOM_RECIPIENT "BG7WG"
 #endif
 
 /* 版本号由 tools/gen_version.ps1 自动生成，Git 提交后 BUILD 号自动递增 */
@@ -192,6 +192,9 @@ extern uint16_t train_align_len;
 #endif
 extern uint16_t repeat_input_value;
 extern uint8_t repeat_input_pos;
+extern uint8_t cursor_edit_mode;
+extern uint16_t cursor_pos;
+extern uint8_t send_correction_error;
 extern char inputBuff[], outputBuff[];
 extern int sendCount, send_now;
 extern uint32_t inputBuffSize, outputBuffSize;

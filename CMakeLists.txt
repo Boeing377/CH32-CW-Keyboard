@@ -57,6 +57,9 @@ set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/Ld/Link.ld")
 set(OPENOCD_EXE "C:/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/OpenOCD/OpenOCD/bin/openocd.exe")
 set(OPENOCD_CFG "C:/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/OpenOCD/OpenOCD/bin/wch-riscv.cfg")
 
+set(STORAGE_USE_EEPROM "1" CACHE STRING "Use EEPROM storage: 1=EEPROM, 0=FLASH")
+set(OLED_TYPE "SH1106" CACHE STRING "OLED display type: SH1106 (1.3 inch) or SSD1306 (2.42 inch)")
+
 set(MCU_FLAGS
     -march=rv32imacxw
     -mabi=ilp32
@@ -104,11 +107,20 @@ target_include_directories(${PROJECT_NAME}.elf PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/User"
 )
 
+target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
+    U8G2_USE_LARGE_FONTS
+    COMPARE_FOR_VERSION_WITH_EEPROM=${STORAGE_USE_EEPROM}
+    OLED_TYPE=OLED_${OLED_TYPE}
+)
+
 target_compile_features(${PROJECT_NAME}.elf PRIVATE c_std_99)
 
 target_compile_options(${PROJECT_NAME}.elf PRIVATE
     ${MCU_FLAGS}
     -Os
+    -flto
+    -fmerge-all-constants
+    -fno-ident
     -ffunction-sections
     -fdata-sections
     -fno-common
@@ -118,11 +130,13 @@ target_compile_options(${PROJECT_NAME}.elf PRIVATE
 
 target_link_options(${PROJECT_NAME}.elf PRIVATE
     ${MCU_FLAGS}
+    -flto
     "-T${LINKER_SCRIPT}"
     -nostartfiles
     --specs=nano.specs
     --specs=nosys.specs
     -Wl,--gc-sections
+    -Wl,--relax
     -Wl,-Map=${PROJECT_NAME}.map
 )
 

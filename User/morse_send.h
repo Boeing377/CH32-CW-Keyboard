@@ -20,5 +20,6 @@ void add_wpm (int num);
 void sub_wpm (int num);
 void starSending();
 void endSending();
+void bufCovnErrorDots(void);
 
 #endif /* USER_MORSE_SEND_H_ */

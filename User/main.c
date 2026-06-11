@@ -72,14 +72,14 @@ s16 Calibrattion_Val = 0;
 #endif
 
 #if !COMPARE_FOR_VERSION_WITH_EEPROM
-/* ©¤©¤ Legacy upgrade detection ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+/* â”€â”€ Legacy upgrade detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Old no-EEPROM firmware stored struct Config at 0x0800CF00.          */
 /* If the binary fits below that address, ISP programming won't touch  */
-/* the page ¡ú old data survives ¡ú we can validate it at boot.          */
+/* the page â†’ old data survives â†’ we can validate it at boot.          */
 
 static uint8_t DetectLegacyUpgrade (void)
 {
-    /* We read the old config as raw bytes ¡ª NOT through struct Config.
+    /* We read the old config as raw bytes â€” NOT through struct Config.
      * Struct layouts can differ between compiler versions / ABIs,
      * so field-level validation at struct offsets is unreliable.     */
 
@@ -87,12 +87,12 @@ static uint8_t DetectLegacyUpgrade (void)
     uint8_t  header_ok;
     uint8_t  beeper, mode, wpm, startup;
 
-    /* ©¤©¤ Fast path: migration already done ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* â”€â”€ Fast path: migration already done â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     if (StorageBackend_IsMigrationValid ()) {
         return 1;
     }
 
-    /* ©¤©¤ Read raw old config at 0x0800CF00 ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* â”€â”€ Read raw old config at 0x0800CF00 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     memcpy (raw, (const void *)OLD_CONFIG_ADDR, sizeof (raw));
 
     beeper  = raw[0];
@@ -100,7 +100,7 @@ static uint8_t DetectLegacyUpgrade (void)
     wpm     = raw[2];
     startup = raw[3];
 
-    /* ©¤©¤ Header-only sanity check ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* â”€â”€ Header-only sanity check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     /* Only validate the first 4 bytes (beeper, mode, wpm,      */
     /* initial_startup).  These are at fixed offsets regardless  */
     /* of struct padding.  If the header is plausible we trust   */
@@ -128,7 +128,7 @@ static uint8_t DetectLegacyUpgrade (void)
         return 0;
     }
 
-    /* ©¤©¤ Valid old config ¡ú migrate & seal ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* â”€â”€ Valid old config â†’ migrate & seal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     raw[3] = STARUP_FLAG;   /* normalize to new magic */
 
     StorageBackend_WriteConfigRegion (raw, sizeof (raw));
@@ -196,15 +196,15 @@ int main (void) {
     show_welcome();
 
 #if !COMPARE_FOR_VERSION_WITH_EEPROM
-    /* ©¤©¤ Legacy upgrade detection ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* â”€â”€ Legacy upgrade detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     /* Probe the old firmware's Config at 0x0800CF00.  If the      */
     /* struct validates, this is an in-place upgrade.  Otherwise   */
-    /* the chip was flashed from blank ¡ú refuse to run.            */
-    /* ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+    /* the chip was flashed from blank â†’ refuse to run.            */
+    /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     if (!DetectLegacyUpgrade()) {
         show_piracy_warning();
         while (1) {
-            /* Halt ¡ª firmware must be installed as an upgrade */
+            /* Halt â€” firmware must be installed as an upgrade */
         }
     }
 #endif
@@ -433,7 +433,7 @@ void ReadConfigEEPROM(){
 
     StorageBackend_ReadConfigRegion ((uint8_t *)&savedConfig,
                                      sizeof (struct Config));
-    if (savedConfig.initial_startup != STARUP_FLAG)  // È·ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë´ï¿½Î?ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    if (savedConfig.initial_startup != STARUP_FLAG)  // ç¡®é”Ÿæ–¤æ‹·é”Ÿè§’å‡¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·èˆœé”Ÿè½¿?é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
     {
         config.initial_startup = STARUP_FLAG;
         config.mode = 0;

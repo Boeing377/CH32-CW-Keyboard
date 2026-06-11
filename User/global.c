@@ -55,6 +55,9 @@ uint8_t repeat_input_pos = 0;
 
 int sendCount = 0, send_now;
 uint8_t curse_flash = 0;
+uint8_t cursor_edit_mode = 0;
+uint16_t cursor_pos = 0;
+uint8_t send_correction_error = 0;
 #if COMPARE_FOR_VERSION_WITH_EEPROM
 uint16_t bat_adc_val;
 #endif

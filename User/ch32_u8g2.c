@@ -7,7 +7,7 @@
 #define I2C_Addr 0x00
 
 void I2C_init() {
-    /*PB0£ºSCL   PB11£ºSDA*/
+    /*PB0ï¿½ï¿½SCL   PB11ï¿½ï¿½SDA*/
     I2C_InitTypeDef I2C_initstruct;
     GPIO_InitTypeDef GPIO_initstruct;
     RCC_APB1PeriphClockCmd (RCC_APB1Periph_I2C2, ENABLE);
@@ -83,7 +83,7 @@ uint8_t u8x8_byte_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_p
     case U8X8_MSG_BYTE_INIT:
     {
         /* add your custom code to init i2c subsystem */
-        // MX_I2C1_Init(); //I2C³õÊ¼»¯
+        // MX_I2C1_Init(); //I2Cï¿½ï¿½Ê¼ï¿½ï¿½
         I2C_init();
     }
     break;
@@ -169,22 +169,24 @@ uint8_t u8x8_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *ar
     return 1;
 }
  
-//U8g2µÄ³õÊ¼»¯£¬ĞèÒªµ÷ÓÃÏÂÃæÕâ¸öu8g2_Setup_ssd1306_128x64_noname_fº¯Êı£¬¸Ãº¯ÊıµÄ4¸ö²ÎÊıº¬Òå£º
-//u8g2£º´«ÈëµÄU8g2½á¹¹Ìå
-//U8G2_R0£ºÄ¬ÈÏÊ¹ÓÃU8G2_R0¼´¿É£¨ÓÃÓÚÅäÖÃÆÁÄ»ÊÇ·ñÒªĞı×ª£©
-//u8x8_byte_sw_i2c£ºÊ¹ÓÃÈí¼şIICÇı¶¯£¬¸Ãº¯ÊıÓÉU8g2Ô´ÂëÌá¹©
-//u8x8_gpio_and_delay£º¾ÍÊÇÉÏÃæÎÒÃÇĞ´µÄÅäÖÃº¯Êı
+//U8g2ï¿½Ä³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½u8g2_Setup_ssd1306_128x64_noname_fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½å£º
+//u8g2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½U8g2ï¿½á¹¹ï¿½ï¿½
+//U8G2_R0ï¿½ï¿½Ä¬ï¿½ï¿½Ê¹ï¿½ï¿½U8G2_R0ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½Ç·ï¿½Òªï¿½ï¿½×ªï¿½ï¿½
+//u8x8_byte_sw_i2cï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IICï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½U8g2Ô´ï¿½ï¿½ï¿½á¹©
+//u8x8_gpio_and_delayï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
  
 void u8g2Init(u8g2_t *u8g2)
 {
-#if COMPARE_FOR_VERSION_WITH_EEPROM
+#if OLED_TYPE == OLED_SH1106
+    /* 1.3 å‹ OLEDï¼ŒSH1106 é©±åŠ¨ IC */
     u8g2_Setup_sh1106_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay);
 #else
-    u8g2_Setup_ssd1306_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay); // ³õÊ¼»¯u8g2 ½á¹¹Ìå
+    /* 2.42 å‹ OLEDï¼ŒSSD1306 é©±åŠ¨ IC */
+    u8g2_Setup_ssd1306_i2c_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_hw_i2c, u8x8_gpio_and_delay);
 #endif
-    u8g2_InitDisplay(u8g2);                                                              // ³õÊ¼»¯ÏÔÊ¾Æ÷
+    u8g2_InitDisplay(u8g2);                                                              // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½
 	u8g2_SetPowerSave(u8g2, 0);                                                          // wake up display from sleep mode
-    u8g2_SetContrast(u8g2,128);                                                          // ÉèÖÃ¶Ô±È¶È£¬·¶Î§ÊÇ0-255£¬Ä¬ÈÏÊÇ128
+    u8g2_SetContrast(u8g2,128);                                                          // ï¿½ï¿½ï¿½Ã¶Ô±È¶È£ï¿½ï¿½ï¿½Î§ï¿½ï¿½0-255ï¿½ï¿½Ä¬ï¿½ï¿½ï¿½ï¿½128
 	u8g2_ClearBuffer(u8g2);
 }
  
@@ -193,9 +195,9 @@ void draw(u8g2_t *u8g2)
 {
 	u8g2_ClearBuffer(u8g2); 
 	
-    u8g2_SetFontMode(u8g2, 1); /*×ÖÌåÄ£Ê½Ñ¡Ôñ*/
-    u8g2_SetFontDirection(u8g2, 0); /*×ÖÌå·½ÏòÑ¡Ôñ*/
-    u8g2_SetFont(u8g2, u8g2_font_inb24_mf); /*×Ö¿âÑ¡Ôñ*/
+    u8g2_SetFontMode(u8g2, 1); /*ï¿½ï¿½ï¿½ï¿½Ä£Ê½Ñ¡ï¿½ï¿½*/
+    u8g2_SetFontDirection(u8g2, 0); /*ï¿½ï¿½ï¿½å·½ï¿½ï¿½Ñ¡ï¿½ï¿½*/
+    u8g2_SetFont(u8g2, u8g2_font_inb24_mf); /*ï¿½Ö¿ï¿½Ñ¡ï¿½ï¿½*/
     u8g2_DrawStr(u8g2, 0, 20, "U");
     
     u8g2_SetFontDirection(u8g2, 1);
@@ -220,7 +222,7 @@ void draw(u8g2_t *u8g2)
     Delay_Ms(1000);
 }
  
-//»­µãÌî³ä
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 void testDrawPixelToFillScreen(u8g2_t *u8g2)
 {
 //   int t = 1000;

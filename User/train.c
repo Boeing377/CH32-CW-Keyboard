@@ -55,6 +55,10 @@ void Train_Start (void) {
     config.beeper = 1;
     config.mode   = 0;
 
+    /* Reset cursor edit state */
+    cursor_edit_mode = 0;
+    cursor_pos = 0;
+
     /* Copy generated text to dedicated train_buf (ISR reads it in PLAYING) */
     memcpy (train_buf, train_generated_text, train_text_len);
     train_buf_size = train_text_len;
@@ -82,6 +86,10 @@ void Train_Exit (void) {
     memset (inputBuff, 0, BUFFSIZE);
     inputBuffSize = 0;
     sendCount = 0;
+
+    /* Reset cursor edit state */
+    cursor_edit_mode = 0;
+    cursor_pos = 0;
 
     train_phase = TRAIN_PHASE_IDLE;
     disp_training = 0;
@@ -122,6 +130,104 @@ void Train_HandleKey (uint8_t key_value) {
     }
 
     if (train_phase == TRAIN_PHASE_RUNNING) {
+        /* ── Insert key toggles cursor edit mode ─────────── */
+        if (key_value == 30) {
+            cursor_edit_mode = 1 - cursor_edit_mode;
+            if (cursor_edit_mode) {
+                cursor_pos = inputBuffSize;
+            }
+            return;
+        }
+
+        /* ── Cursor edit mode ──────────────────────────── */
+        if (cursor_edit_mode) {
+            /* Direction arrows: move cursor */
+            if (key_value == 28) {
+                /* Left */
+                if (cursor_pos > 0) cursor_pos--;
+                return;
+            } else if (key_value == 29) {
+                /* Right */
+                if (cursor_pos < inputBuffSize) cursor_pos++;
+                return;
+            } else if (key_value == 0x1) {
+                /* Down → jump to end */
+                cursor_pos = inputBuffSize;
+                return;
+            } else if (key_value == 0x2) {
+                /* Up → jump to start */
+                cursor_pos = 0;
+                return;
+            }
+
+            /* Printable character: insert at cursor */
+            if (Morse_CanEncodeChar (key_value)) {
+                if (inputBuffSize < INPUTZONE_SIZE - 1) {
+                    uint16_t i;
+                    for (i = inputBuffSize; i > cursor_pos; i--) {
+                        inputBuff[i] = inputBuff[i - 1];
+                    }
+                    inputBuff[cursor_pos] = key_value;
+                    inputBuffSize++;
+                    cursor_pos++;
+                    inputBuff[inputBuffSize] = '\0';
+                }
+                return;
+            }
+
+            /* Backspace: delete char before cursor */
+            if (key_value == 127) {
+                if (cursor_pos > 0 && inputBuffSize > 0) {
+                    uint16_t i;
+                    for (i = cursor_pos - 1; i < inputBuffSize - 1; i++) {
+                        inputBuff[i] = inputBuff[i + 1];
+                    }
+                    inputBuffSize--;
+                    cursor_pos--;
+                    inputBuff[inputBuffSize] = '\0';
+                }
+                return;
+            }
+
+            /* Delete forward: delete char at cursor */
+            if (key_value == 126) {
+                if (cursor_pos < inputBuffSize) {
+                    uint16_t i;
+                    for (i = cursor_pos; i < inputBuffSize - 1; i++) {
+                        inputBuff[i] = inputBuff[i + 1];
+                    }
+                    inputBuffSize--;
+                    inputBuff[inputBuffSize] = '\0';
+                }
+                return;
+            }
+
+            /* Enter: exit edit mode and submit */
+            if (key_value == 31) {
+                cursor_edit_mode = 0;
+                cursor_pos = 0;
+                train_score_scroll = 0;
+                inputBuffSize  = Train_NormalizeSpaces (
+                    inputBuff, inputBuffSize, inputBuff);
+                train_text_len = Train_NormalizeSpaces (
+                    train_generated_text, train_text_len, train_generated_text);
+                Train_Align (train_generated_text, train_text_len,
+                             inputBuff, inputBuffSize);
+                train_phase = TRAIN_PHASE_SCORING;
+                return;
+            }
+
+            /* Escape: exit edit mode */
+            if (key_value == 27) {
+                cursor_edit_mode = 0;
+                cursor_pos = 0;
+                return;
+            }
+
+            return;
+        }
+
+        /* ── Normal (non-edit) mode ────────────────────── */
         /* Printable characters: append to input buffer */
         if (Morse_CanEncodeChar (key_value)) {
             if (inputBuffSize < INPUTZONE_SIZE - 1) {

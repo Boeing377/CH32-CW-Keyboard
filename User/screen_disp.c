@@ -655,11 +655,16 @@ void show_training_page (void)
         else
             method = "FREE";
 
-        buf[0] = 'W'; buf[1] = 'P'; buf[2] = 'M'; buf[3] = ':';
-        buf[4] = '0' + (config.wpm / 10);
-        buf[5] = '0' + (config.wpm % 10);
-        buf[6] = ' ';
-        buf[7] = 'L';
+        if (cursor_edit_mode) {
+            buf[0] = 'e'; buf[1] = 'd'; buf[2] = 'i'; buf[3] = 't';
+            buf[4] = ' '; buf[5] = 'L'; buf[6] = ' '; buf[7] = ' ';
+        } else {
+            buf[0] = 'W'; buf[1] = 'P'; buf[2] = 'M'; buf[3] = ':';
+            buf[4] = '0' + (config.wpm / 10);
+            buf[5] = '0' + (config.wpm % 10);
+            buf[6] = ' ';
+            buf[7] = 'L';
+        }
         {
             char *p = buf + 8;
             p = AppendUnsigned (p, train_info.lesson);
@@ -684,9 +689,26 @@ void show_training_page (void)
     } else {
         /* RUNNING: 3 lines input + status bar at bottom */
         uint16_t len = inputBuffSize;
+        uint16_t cur_pos = cursor_edit_mode ? cursor_pos : inputBuffSize;
         const char *src = inputBuff;
-        int total_lines = (len > 0) ? ((len - 1) / chars_per_line) + 1 : 0;
-        int start_line = (total_lines > 3) ? (total_lines - 3) : 0;
+        uint16_t max_chars = (cur_pos > len) ? cur_pos : len;
+        int total_lines = (max_chars > 0)
+            ? ((int)(max_chars - 1) / chars_per_line) + 1 : 1;
+        int cur_line = (cur_pos > 0) ? (int)(cur_pos / chars_per_line) : 0;
+        int start_line;
+
+        /* Compute visible start line */
+        if (total_lines <= 3) {
+            start_line = 0;
+        } else if (cursor_edit_mode) {
+            /* Edit mode: keep cursor in the visible 3-line window */
+            if (cur_line < 1) start_line = 0;
+            else if (cur_line > total_lines - 2) start_line = total_lines - 3;
+            else start_line = cur_line - 1;
+        } else {
+            /* Normal: anchor to bottom */
+            start_line = total_lines - 3;
+        }
 
         /* 3 input lines (scroll when > 3 lines) */
         u8g2_SetFont (&u8g2, u8g2_font_profont17_tr);
@@ -709,8 +731,8 @@ void show_training_page (void)
 
         /* Blinking cursor: always in the visible area */
         if (curse_flash) {
-            int cur_line = (len > 0) ? (int)(len / chars_per_line) : 0;
-            int cur_col  = (len > 0) ? (int)(len % chars_per_line) : 0;
+            int cur_line = (cur_pos > 0) ? (int)(cur_pos / chars_per_line) : 0;
+            int cur_col  = (cur_pos > 0) ? (int)(cur_pos % chars_per_line) : 0;
             int vis_line = cur_line - start_line;
             if (vis_line >= 0 && vis_line < 3) {
                 u8g2_SetDrawColor (&u8g2, 1);
@@ -860,51 +882,64 @@ void show_train_setting (void)
 
 void mode_0_word_disp()
 {
-    int tail_line = (strlen(inputBuff) / 14);
-    int tail_num = (strlen(inputBuff) % 14);
+    /* Use cursor_pos in edit mode, otherwise append position */
+    uint16_t cur_pos = cursor_edit_mode ? cursor_pos : (uint16_t)strlen(inputBuff);
+    uint32_t total_chars = (uint32_t)strlen(inputBuff);
+    if (cur_pos > total_chars) total_chars = cur_pos;
+    int total_lines = (total_chars > 0) ? ((int)(total_chars - 1) / 14) + 1 : 1;
+    int cur_line = (int)(cur_pos / 14);
+    int cur_col  = (int)(cur_pos % 14);
+    int start_line;
+
+    /* Compute visible start line */
+    if (total_lines <= 4) {
+        start_line = 0;
+    } else if (cursor_edit_mode) {
+        /* Edit mode: keep cursor in the visible 4-line window */
+        if (cur_line < 1) start_line = 0;
+        else if (cur_line > total_lines - 3) start_line = total_lines - 4;
+        else start_line = cur_line - 1;
+    } else {
+        /* Normal: anchor to bottom, cursor at end */
+        start_line = total_lines - 4;
+    }
 
     int send_line = ((send_now) / 14);
     int send_num = ((send_now) % 14) + 1;
-
     int i;
 
     u8g2_SetDrawColor(&u8g2, 2);
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
 
-    if(tail_line > 3)
-    {
-        for(i = 3; i >= 0; i --)
-        {
-            strncpy(str_buff, inputBuff + (tail_line - i) * 14,  14);
-            u8g2_DrawStr(&u8g2, 1, 21 + (3 - i) * 13, str_buff);
-        }
-
-        u8g2_SetDrawColor(&u8g2, 1);
-        if(curse_flash)
-            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 50, 2 + 9 * tail_num, 61);
-
-        if(stge && ((tail_line - send_line) < 4))
-        {
-            u8g2_SetDrawColor(&u8g2, 2);
-            u8g2_DrawBox(&u8g2, 9*send_num -8, 9+13*(send_line + 3 - tail_line), 9, 13);
-        }
-    }
-    else
-    {
-        for(i = 0; i < 4; i ++)
-        {
-            strncpy(str_buff, inputBuff + i * 14,  14);
+    /* Draw 4 visible lines */
+    for (i = 0; i < 4; i++) {
+        int src_line = start_line + i;
+        if (src_line * 14 < (int)strlen(inputBuff)) {
+            strncpy(str_buff, inputBuff + src_line * 14, 14);
             u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
         }
+    }
 
-        u8g2_SetDrawColor(&u8g2, 1);
-        if(curse_flash)
-            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 10 + tail_line * 13 , 2 + 9 * tail_num, 21 + tail_line * 13);
+    /* Blinking cursor */
+    {
+        int vis_line = cur_line - start_line;
+        if (vis_line >= 0 && vis_line < 4 && curse_flash) {
+            u8g2_SetDrawColor(&u8g2, 1);
+            u8g2_DrawLine(&u8g2,
+                2 + 9 * cur_col, 10 + vis_line * 13,
+                2 + 9 * cur_col, 21 + vis_line * 13);
+        }
+    }
 
-        if(stge)
-        {
+    /* Send-progress highlight */
+    if (stge) {
+        int send_vis = send_line - start_line;
+        if (send_vis >= 0 && send_vis < 4) {
             u8g2_SetDrawColor(&u8g2, 2);
-            u8g2_DrawBox(&u8g2, 9*send_num -8, 9+13*send_line, 9, 13);
+            u8g2_DrawBox(&u8g2,
+                9 * send_num - 8,
+                9 + 13 * send_vis,
+                9, 13);
         }
     }
 }
@@ -913,63 +948,77 @@ void mode_1_word_disp()
 {
     u8g2_DrawLine(&u8g2, 64, 10, 64, 63);
 
-    int tail_line = (strlen(inputBuff) / 7);
-    int tail_num = (strlen(inputBuff) % 7);
+    /* Use cursor_pos in edit mode, otherwise append position */
+    uint16_t cur_pos = cursor_edit_mode ? cursor_pos : (uint16_t)strlen(inputBuff);
+    uint32_t total_chars = (uint32_t)strlen(inputBuff);
+    if (cur_pos > total_chars) total_chars = cur_pos;
+    int total_lines = (total_chars > 0) ? ((int)(total_chars - 1) / 7) + 1 : 1;
+    int cur_line = (int)(cur_pos / 7);
+    int cur_col  = (int)(cur_pos % 7);
+    int start_line;
+
+    /* Compute visible start line */
+    if (total_lines <= 4) {
+        start_line = 0;
+    } else if (cursor_edit_mode) {
+        /* Edit mode: keep cursor in the visible 4-line window */
+        if (cur_line < 1) start_line = 0;
+        else if (cur_line > total_lines - 3) start_line = total_lines - 4;
+        else start_line = cur_line - 1;
+    } else {
+        /* Normal: anchor to bottom, cursor at end */
+        start_line = total_lines - 4;
+    }
 
     int send_line = ((send_now) / 7);
     int send_num = ((send_now) % 7) + 1;
-
     int i;
 
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
 
-    if(tail_line > 3)
-    {
-        for(i = 3; i >=0; i --)
-        {
-            strncpy(str_buff, inputBuff + (tail_line - i) * 7,  7);
-            u8g2_DrawStr(&u8g2, 1, 21 + (3 - i) * 13, str_buff);
-        }
-        u8g2_SetDrawColor(&u8g2, 1);
-        if(curse_flash)
-            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 49, 2 + 9 * tail_num, 60);
-    }
-    else {
-        for(i = 0; i < 4; i ++)
-        {
-            strncpy(str_buff, inputBuff + i * 7,  7);
+    /* Draw 4 visible lines (left pane: input) */
+    for (i = 0; i < 4; i++) {
+        int src_line = start_line + i;
+        if (src_line * 7 < (int)strlen(inputBuff)) {
+            strncpy(str_buff, inputBuff + src_line * 7, 7);
             u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
         }
-        u8g2_SetDrawColor(&u8g2, 1);
-        if(curse_flash)
-            u8g2_DrawLine(&u8g2, 2 + 9 * tail_num, 10 + tail_line * 13 , 2 + 9 * tail_num, 21 + tail_line * 13);
     }
 
-    if(stge){
-        if(send_line > 3){
-            for(i = 3; i >= 0; i --)
-            {
-                strncpy(str_buff, outputBuff + (send_line - i) * 7,  7);
-                u8g2_DrawStr(&u8g2, 65, 21 + (3 - i) * 13, str_buff);
-            }
-
-            if(stge)
-            {
-                u8g2_SetDrawColor(&u8g2, 2);
-                u8g2_DrawBox(&u8g2, 9*send_num +56, 48, 9, 13);
-            }
+    /* Blinking cursor (left pane) */
+    {
+        int vis_line = cur_line - start_line;
+        if (vis_line >= 0 && vis_line < 4 && curse_flash) {
+            u8g2_SetDrawColor(&u8g2, 1);
+            u8g2_DrawLine(&u8g2,
+                2 + 9 * cur_col, 10 + vis_line * 13,
+                2 + 9 * cur_col, 21 + vis_line * 13);
         }
-        else {
-            for(i = 0; i < 4; i ++)
-            {
-                strncpy(str_buff, outputBuff + i * 7,  7);
+    }
+
+    /* Right pane: output / send progress */
+    if (stge) {
+        uint32_t out_chars = (uint32_t)strlen(outputBuff);
+        int out_lines = (out_chars > 0) ? ((int)(out_chars - 1) / 7) + 1 : 1;
+        int out_start = (out_lines > 4) ? (out_lines - 4) : 0;
+
+        for (i = 0; i < 4; i++) {
+            int src_line = out_start + i;
+            if (src_line * 7 < (int)out_chars) {
+                strncpy(str_buff, outputBuff + src_line * 7, 7);
                 u8g2_DrawStr(&u8g2, 65, 21 + i * 13, str_buff);
             }
+        }
 
-            if(stge)
-            {
+        /* Send-progress highlight (right pane) */
+        {
+            int send_vis = send_line - out_start;
+            if (send_vis >= 0 && send_vis < 4) {
                 u8g2_SetDrawColor(&u8g2, 2);
-                u8g2_DrawBox(&u8g2, 9*send_num +56, 9+13*send_line, 9, 13);
+                u8g2_DrawBox(&u8g2,
+                    9 * send_num + 56,
+                    9 + 13 * send_vis,
+                    9, 13);
             }
         }
     }
@@ -989,8 +1038,12 @@ void show_main_page(void) {
 
     u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
 
-    FormatWpmText (str_buff, config.wpm);
-    u8g2_DrawStr(&u8g2, 2, 7, str_buff);
+    if (cursor_edit_mode) {
+        u8g2_DrawStr(&u8g2, 2, 7, "edit");
+    } else {
+        FormatWpmText (str_buff, config.wpm);
+        u8g2_DrawStr(&u8g2, 2, 7, str_buff);
+    }
 
     if (repeat_active) {
         /* Compact repeat display: "R1/3 5s" or infinite "R123 5s" */

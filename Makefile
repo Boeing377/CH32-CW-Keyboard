@@ -12,6 +12,7 @@ TARGET_LST := $(TARGET_NAME).lst
 
 BUILD_DIR ?= build-make
 STORAGE_USE_EEPROM ?= 1
+OLED_TYPE ?= SH1106
 LINKER_SCRIPT ?= Ld/Link.ld
 
 # Toolchain settings
@@ -43,7 +44,7 @@ EXCLUDED_C_SRCS := User/u8g2/u8x8_d_ssd1309.c \
 C_SRCS := $(filter-out $(EXCLUDED_C_SRCS),$(C_SRCS))
 
 ifeq ($(strip $(STORAGE_USE_EEPROM)),0)
-C_SRCS := $(filter-out User/i2c_eeprom.c,$(C_SRCS))
+C_SRCS := $(filter-out User/i2c_eeprom.c User/train.c,$(C_SRCS))
 LINKER_SCRIPT := Ld/Link_flash.ld
 endif
 
@@ -58,16 +59,16 @@ OBJS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SRCS)) \
 DEPS := $(OBJS:.o=.d)
 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CPP_DEFS ?= -DU8G2_USE_LARGE_FONTS -DCOMPARE_FOR_VERSION_WITH_EEPROM=$(STORAGE_USE_EEPROM) -DDEFAULT_KEYBOARD=KEYBOARD_LAYOUT_$(DEFAULT_KEYBOARD)
+CPP_DEFS ?= -DU8G2_USE_LARGE_FONTS -DCOMPARE_FOR_VERSION_WITH_EEPROM=$(STORAGE_USE_EEPROM) -DOLED_TYPE=OLED_$(OLED_TYPE) -DDEFAULT_KEYBOARD=KEYBOARD_LAYOUT_$(DEFAULT_KEYBOARD)
 
 RISCV_ABI ?= ilp32
 MCU_FLAGS ?= -march=rv32imacxw -mabi=$(RISCV_ABI) -msmall-data-limit=8 -msave-restore
 
-COMMON_FLAGS ?= $(MCU_FLAGS) -Os -flto -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g
+COMMON_FLAGS ?= $(MCU_FLAGS) -Os -flto -fmerge-all-constants -fno-ident -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fno-common -Wunused -Wuninitialized -g
 CFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -std=gnu99 -MMD -MP
 CXXFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -MMD -MP
 ASFLAGS ?= $(COMMON_FLAGS) $(INC_FLAGS) $(CPP_DEFS) -x assembler-with-cpp -MMD -MP
-LDFLAGS ?= $(MCU_FLAGS) -Os -flto -T $(LINKER_SCRIPT) -nostartfiles -Wl,--gc-sections -Wl,-Map,$(BUILD_DIR)/$(TARGET_NAME).map --specs=nano.specs --specs=nosys.specs
+LDFLAGS ?= $(MCU_FLAGS) -Os -flto -T $(LINKER_SCRIPT) -nostartfiles -Wl,--gc-sections -Wl,--relax -Wl,-Map,$(BUILD_DIR)/$(TARGET_NAME).map --specs=nano.specs --specs=nosys.specs
 
 .PHONY: all clean size gen_version
 
