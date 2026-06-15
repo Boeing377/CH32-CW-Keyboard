@@ -3,7 +3,7 @@
  
 /* Includes ------------------------------------------------------------------*/
 // #include "main.h"
-#include "u8g2/u8g2.h"
+#include "u8g2.h"
 #include "global.h"
 /* USER CODE BEGIN Includes */
  

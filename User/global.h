@@ -8,7 +8,7 @@
 #ifndef USER_GLOBAL_H_
 #define USER_GLOBAL_H_
 #include "ch32v20x.h"
-#include "u8g2/u8g2.h"
+#include "u8g2.h"
 
 #ifndef COMPARE_FOR_VERSION_WITH_EEPROM
 #define COMPARE_FOR_VERSION_WITH_EEPROM 1

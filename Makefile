@@ -30,16 +30,16 @@ OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
 SIZE := $(CROSS_COMPILE)size
 
-SRC_DIRS := Core Debug Peripheral/src User User/USB_Host User/u8g2
-INC_DIRS := Startup Debug Core User Peripheral/inc
+SRC_DIRS := Core Debug Peripheral/src User User/USB_Host Thirdpart/u8g2/csrc
+INC_DIRS := Startup Debug Core User Peripheral/inc Thirdpart/u8g2/csrc
 
 C_SRCS := $(foreach d,$(SRC_DIRS),$(wildcard $(d)/*.c))
 CPP_SRCS := $(foreach d,$(SRC_DIRS),$(wildcard $(d)/*.cpp))
 
-EXCLUDED_C_SRCS := User/u8g2/u8x8_d_ssd1309.c \
-	User/u8g2/u8x8_d_sh1106_72x40.c \
-	User/u8g2/u8x8_d_sh1106_64x32.c \
-	User/u8g2/u8x8_fonts.c
+EXCLUDED_C_SRCS := Thirdpart/u8g2/csrc/u8x8_d_ssd1309.c \
+	Thirdpart/u8g2/csrc/u8x8_d_sh1106_72x40.c \
+	Thirdpart/u8g2/csrc/u8x8_d_sh1106_64x32.c \
+	Thirdpart/u8g2/csrc/u8x8_fonts.c
 
 C_SRCS := $(filter-out $(EXCLUDED_C_SRCS),$(C_SRCS))
 

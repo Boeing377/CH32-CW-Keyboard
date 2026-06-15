@@ -73,14 +73,14 @@ file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/Peripheral/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/User/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/User/USB_Host/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/User/u8g2/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc/*.c"
 )
 
 set(EXCLUDED_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/User/u8g2/u8x8_d_ssd1309.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/User/u8g2/u8x8_d_sh1106_72x40.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/User/u8g2/u8x8_d_sh1106_64x32.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/User/u8g2/u8x8_fonts.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc/u8x8_d_ssd1309.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc/u8x8_d_sh1106_72x40.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc/u8x8_d_sh1106_64x32.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc/u8x8_fonts.c"
 )
 
 list(REMOVE_ITEM APP_SOURCES ${EXCLUDED_SOURCES})
@@ -105,6 +105,7 @@ target_include_directories(${PROJECT_NAME}.elf PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/Debug"
     "${CMAKE_CURRENT_SOURCE_DIR}/Peripheral/inc"
     "${CMAKE_CURRENT_SOURCE_DIR}/User"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Thirdpart/u8g2/csrc"
 )
 
 target_compile_definitions(${PROJECT_NAME}.elf PRIVATE
