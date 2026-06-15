@@ -16,7 +16,7 @@
 
 /* 固件版本类型：1=定制版本，0=通用版本 */
 #ifndef FW_CUSTOM_VERSION
-#define FW_CUSTOM_VERSION 1
+#define FW_CUSTOM_VERSION 0
 #endif
 
 /* 定制版本的接收者（仅 FW_CUSTOM_VERSION=1 时生效） */
