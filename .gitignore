@@ -1,12 +1,18 @@
+# Build output directories
 obj/
 build/
 build-cmake/
+build-make/
+build-make-flashprep/
+build-make-ssd1306/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 build.ninja
 .ninja_deps
 .ninja_log
+
+# Build artifacts
 *.elf
 *.bin
 *.hex
@@ -16,5 +22,15 @@ build.ninja
 *.obj
 *.d
 compile_commands.json
-.DS_Store
 build_commands.txt
+
+# MounRiver Studio / Eclipse IDE
+.cproject
+.project
+.settings/
+.mrs/
+.template
+*.launch
+
+# OS
+.DS_Store
