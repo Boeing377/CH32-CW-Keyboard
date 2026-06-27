@@ -4,9 +4,13 @@
 
 A CW (Morse code) keyboard keyer based on the WCH CH32V203 RISC-V microcontroller.
 
-> 📖 **用户手册 / User Manual**：[USER_MANUAL.md](./USER_MANUAL.md)
+> 📖 **用户手册**：[USER_MANUAL_zh.md](./USER_MANUAL_zh.md) | **User Manual**: [USER_MANUAL_en.md](./USER_MANUAL_en.md)
 
 ---
+## 硬件设计 / Hardware Designed
+你可以在如下URL中找到我的硬件原理图和工程文件（需要使用JLC EDA）
+You can find my hardware design with fellow URL (JLC EDA is need)
+https://oshwhub.com/boeing_377/usb_keyboard_key
 
 ## 功能特性 / Features
 
@@ -131,9 +135,11 @@ Or use WCH ISP Tool via USART1 to flash the `.hex` file.
 ├── tools/              # 构建脚本 / build scripts
 ├── Makefile            # GNU Make 构建
 ├── CMakeLists.txt      # CMake 构建
-└── USER_MANUAL.md      # 用户手册 (中英双语)
+├── USER_MANUAL_zh.md   # 用户手册 (中文)
+├── USER_MANUAL_en.md   # User Manual (English)
+└── USER_MANUAL.md      # 用户手册 (中英双语，原始版本)
 ```
 
 ## 许可证 / License
 
-[Apache License 2.0](./LICENSE)
+[GNU General Public License v3.0](./LICENSE)
