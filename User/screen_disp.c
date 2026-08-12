@@ -67,8 +67,30 @@ static void FormatWpmText (char *dst, uint8_t wpm)
 
 static void FormatMsgLenText (char *dst, uint32_t msg_len)
 {
-    memcpy (dst, "MsgLen:", 7);
-    AppendUnsigned (dst + 7, msg_len);
+    memcpy (dst, "MsgL:", 5);
+    AppendUnsigned (dst + 5, msg_len);
+}
+
+static void DrawMorseText (const char *source, uint16_t start,
+                           uint8_t length, uint8_t x, uint8_t y)
+{
+    char text[15];
+    uint8_t index;
+
+    for (index = 0; index < length && source[start + index] != '\0'; index++) {
+        uint8_t character = (uint8_t)source[start + index];
+        text[index] = ((character >= 1) && (character <= 10))
+            ? (char)('0' + character - 1) : (char)character;
+    }
+    text[index] = '\0';
+    u8g2_DrawStr (&u8g2, x, y, text);
+
+    for (index = 0; index < length && source[start + index] != '\0'; index++) {
+        uint8_t character = (uint8_t)source[start + index];
+        if ((character >= 1) && (character <= 10)) {
+            u8g2_DrawHLine (&u8g2, x + index * 9, y + 1, 8);
+        }
+    }
 }
 
 #if COMPARE_FOR_VERSION_WITH_EEPROM
@@ -340,11 +362,14 @@ void menu_page_morse()
     u8g2_DrawStr(&u8g2, 74, 49, str_buff);
     
     switch (config.morse_config.word_break_len) {
-        case 7:
+        case 5:
             CopyText (str_buff, "Short");
             break;
-        case 10:
+        case 7:
             CopyText (str_buff, "Mid");
+            break;
+        case 10:
+            CopyText (str_buff, "Mid Long");
             break;
         case 14:
             CopyText (str_buff, "Long");
@@ -915,8 +940,7 @@ void mode_0_word_disp()
     for (i = 0; i < 4; i++) {
         int src_line = start_line + i;
         if (src_line * 14 < (int)strlen(inputBuff)) {
-            strncpy(str_buff, inputBuff + src_line * 14, 14);
-            u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
+            DrawMorseText (inputBuff, src_line * 14, 14, 1, 21 + i * 13);
         }
     }
 
@@ -980,19 +1004,18 @@ void mode_1_word_disp()
     for (i = 0; i < 4; i++) {
         int src_line = start_line + i;
         if (src_line * 7 < (int)strlen(inputBuff)) {
-            strncpy(str_buff, inputBuff + src_line * 7, 7);
-            u8g2_DrawStr(&u8g2, 1, 21 + i * 13, str_buff);
+            DrawMorseText (inputBuff, src_line * 7, 7, 1, 21 + i * 13);
         }
     }
 
-    /* Blinking cursor (left pane) */
+    /* Blinking cursor (left pane): XOR the full cell so it stays
+     * visible even on glyphs with a vertical stroke, such as H. */
     {
         int vis_line = cur_line - start_line;
         if (vis_line >= 0 && vis_line < 4 && curse_flash) {
-            u8g2_SetDrawColor(&u8g2, 1);
-            u8g2_DrawLine(&u8g2,
-                2 + 9 * cur_col, 10 + vis_line * 13,
-                2 + 9 * cur_col, 21 + vis_line * 13);
+            u8g2_SetDrawColor(&u8g2, 2);
+            u8g2_DrawBox(&u8g2,
+                1 + 9 * cur_col, 9 + vis_line * 13, 8, 13);
         }
     }
 
@@ -1005,8 +1028,7 @@ void mode_1_word_disp()
         for (i = 0; i < 4; i++) {
             int src_line = out_start + i;
             if (src_line * 7 < (int)out_chars) {
-                strncpy(str_buff, outputBuff + src_line * 7, 7);
-                u8g2_DrawStr(&u8g2, 65, 21 + i * 13, str_buff);
+                DrawMorseText (outputBuff, src_line * 7, 7, 65, 21 + i * 13);
             }
         }
 
@@ -1069,7 +1091,10 @@ void show_main_page(void) {
         u8g2_DrawStr(&u8g2, 35, 7, rpt_buf);
     } else {
         FormatMsgLenText (str_buff, strlen(inputBuff));
-        u8g2_DrawStr(&u8g2, 35, 7, str_buff);
+        u8g2_DrawStr(&u8g2, 32, 7, str_buff);
+        if (cut_number_input && (config.morse_config.cut_num != 0)) {
+            u8g2_DrawStr(&u8g2, 76, 7, "CN");
+        }
     }
 
 #if UI_SHOW_BATTERY_ICON

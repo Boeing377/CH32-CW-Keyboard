@@ -34,6 +34,12 @@ void WriteConfig();
 #define KEY_USAGE_MAP_SIZE 104
 #define KEY_MODIFIER_CTRL_MASK 0x11
 #define KEY_MODIFIER_SHIFT_MASK 0x22
+#define KEY_F1 0x80
+#define KEY_SHIFT_F1 0x90
+#define KEY_TAB 0xA0
+#define KEY_ARROW_DOWN 0xA1
+#define KEY_ARROW_UP 0xA2
+#define KEY_USAGE_INSERT 0x49
 
 struct KeyboardLayoutEntry {
     uint8_t normal;
@@ -54,15 +60,25 @@ static const struct KeyboardLayoutEntry qwerty_keymap[KEY_USAGE_MAP_SIZE] = {
     [0x22] = {'5', 0}, [0x23] = {'6', 0}, [0x24] = {'7', '&'},
     [0x25] = {'8', 0}, [0x26] = {'9', '('}, [0x27] = {'0', ')'},
     [0x28] = {31, 31}, [0x29] = {27, 27}, [0x2A] = {127, 127},
+    [0x2B] = {KEY_TAB, KEY_TAB},
     [0x2C] = {' ', ' '}, [0x2D] = {'-', '_'}, [0x2E] = {'=', '+'},
-    [0x33] = {';', ':'}, [0x34] = {'\'', '"'}, [0x36] = {',', 0},
-    [0x37] = {'.', 0}, [0x38] = {'/', '?'}, [0x3A] = {3, 15},
-    [0x3B] = {4, 16}, [0x3C] = {5, 17}, [0x3D] = {6, 18},
-    [0x3E] = {7, 19}, [0x3F] = {8, 20}, [0x40] = {9, 21},
-    [0x41] = {10, 22}, [0x42] = {11, 23}, [0x43] = {12, 24},
-    [0x44] = {13, 25}, [0x45] = {14, 26}, [0x49] = {30, 30},
+    [0x2F] = {'[', 0}, [0x30] = {']', 0}, [0x33] = {';', ':'},
+    [0x34] = {'\'', '"'}, [0x36] = {',', '<'}, [0x37] = {'.', '>'},
+    [0x38] = {'/', '?'}, [0x3A] = {KEY_F1, KEY_SHIFT_F1},
+    [0x3B] = {KEY_F1 + 1, KEY_SHIFT_F1 + 1},
+    [0x3C] = {KEY_F1 + 2, KEY_SHIFT_F1 + 2},
+    [0x3D] = {KEY_F1 + 3, KEY_SHIFT_F1 + 3},
+    [0x3E] = {KEY_F1 + 4, KEY_SHIFT_F1 + 4},
+    [0x3F] = {KEY_F1 + 5, KEY_SHIFT_F1 + 5},
+    [0x40] = {KEY_F1 + 6, KEY_SHIFT_F1 + 6},
+    [0x41] = {KEY_F1 + 7, KEY_SHIFT_F1 + 7},
+    [0x42] = {KEY_F1 + 8, KEY_SHIFT_F1 + 8},
+    [0x43] = {KEY_F1 + 9, KEY_SHIFT_F1 + 9},
+    [0x44] = {KEY_F1 + 10, KEY_SHIFT_F1 + 10},
+    [0x45] = {KEY_F1 + 11, KEY_SHIFT_F1 + 11}, [0x49] = {30, 30},
     [0x4C] = {126, 126}, [0x4F] = {29, 29},
-    [0x50] = {28, 28}, [0x51] = {1, 1}, [0x52] = {2, 2},
+    [0x50] = {28, 28}, [0x51] = {KEY_ARROW_DOWN, KEY_ARROW_DOWN},
+    [0x52] = {KEY_ARROW_UP, KEY_ARROW_UP},
     [0x54] = {'/', '/'}, [0x56] = {'-', '-'}, [0x57] = {'+', '+'},
     [0x58] = {31, 31}, [0x59] = {'1', '1'}, [0x5A] = {'2', '2'},
     [0x5B] = {'3', '3'}, [0x5C] = {'4', '4'}, [0x5D] = {'5', '5'},
@@ -84,21 +100,30 @@ static const struct KeyboardLayoutEntry azerty_keymap[KEY_USAGE_MAP_SIZE] = {
     [0x22] = {'(', '5'}, [0x23] = {'-', '6'}, [0x24] = {0, '7'},
     [0x25] = {'_', '8'}, [0x26] = {0, '9'}, [0x27] = {0, '0'},
     [0x28] = {31, 31}, [0x29] = {27, 27}, [0x2A] = {127, 127},
+    [0x2B] = {KEY_TAB, KEY_TAB},
     [0x2C] = {' ', ' '}, [0x2D] = {')', '='}, [0x2E] = {'=', '+'},
     [0x33] = {'m', 'M'}, [0x34] = {'\'', '"'}, [0x36] = {';', '.'},
-    [0x37] = {':', '/'}, [0x38] = {'!', '?'}, [0x3A] = {3, 15},
-    [0x3B] = {4, 16},
-    [0x3C] = {5, 17}, [0x3D] = {6, 18}, [0x3E] = {7, 19},
-    [0x3F] = {8, 20}, [0x40] = {9, 21}, [0x41] = {10, 22},
-    [0x42] = {11, 23}, [0x43] = {12, 24}, [0x44] = {13, 25},
-    [0x45] = {14, 26}, [0x49] = {30, 30}, [0x4C] = {126, 126},
+    [0x37] = {':', '/'}, [0x38] = {'!', '?'}, [0x3A] = {KEY_F1, KEY_SHIFT_F1},
+    [0x3B] = {KEY_F1 + 1, KEY_SHIFT_F1 + 1},
+    [0x3C] = {KEY_F1 + 2, KEY_SHIFT_F1 + 2},
+    [0x3D] = {KEY_F1 + 3, KEY_SHIFT_F1 + 3},
+    [0x3E] = {KEY_F1 + 4, KEY_SHIFT_F1 + 4},
+    [0x3F] = {KEY_F1 + 5, KEY_SHIFT_F1 + 5},
+    [0x40] = {KEY_F1 + 6, KEY_SHIFT_F1 + 6},
+    [0x41] = {KEY_F1 + 7, KEY_SHIFT_F1 + 7},
+    [0x42] = {KEY_F1 + 8, KEY_SHIFT_F1 + 8},
+    [0x43] = {KEY_F1 + 9, KEY_SHIFT_F1 + 9},
+    [0x44] = {KEY_F1 + 10, KEY_SHIFT_F1 + 10},
+    [0x45] = {KEY_F1 + 11, KEY_SHIFT_F1 + 11}, [0x49] = {30, 30}, [0x4C] = {126, 126},
     [0x4F] = {29, 29}, [0x50] = {28, 28},
-    [0x51] = {1, 1}, [0x52] = {2, 2}, [0x54] = {'/', '/'},
+    [0x51] = {KEY_ARROW_DOWN, KEY_ARROW_DOWN},
+    [0x52] = {KEY_ARROW_UP, KEY_ARROW_UP}, [0x54] = {'/', '/'},
     [0x56] = {'-', '-'}, [0x57] = {'+', '+'}, [0x58] = {31, 31},
     [0x59] = {'1', '1'}, [0x5A] = {'2', '2'}, [0x5B] = {'3', '3'},
     [0x5C] = {'4', '4'}, [0x5D] = {'5', '5'}, [0x5E] = {'6', '6'},
     [0x5F] = {'7', '7'}, [0x60] = {'8', '8'}, [0x61] = {'9', '9'},
     [0x62] = {'0', '0'},
+    [0x64] = {'<', '>'},
 };
 
 static const struct KeyboardLayoutEntry *GetActiveKeyboardLayout (void) {
@@ -124,6 +149,10 @@ static uint8_t IsAlphabetEntry (const struct KeyboardLayoutEntry *entry) {
     return entry->shifted == (entry->normal - ('a' - 'A'));
 }
 
+static uint8_t IsAzertyNumberRowUsage (uint8_t usage) {
+    return usage >= 0x1E && usage <= 0x27;
+}
+
 static uint8_t TranslateKeyUsage (uint8_t modifier, uint8_t usage,
                                   uint8_t *translated) {
     const struct KeyboardLayoutEntry *keymap = GetActiveKeyboardLayout ();
@@ -137,7 +166,10 @@ static uint8_t TranslateKeyUsage (uint8_t modifier, uint8_t usage,
     entry = &keymap[usage];
     shift_active = IsModifierActive (modifier, KEY_MODIFIER_SHIFT_MASK);
 
-    if (IsAlphabetEntry (entry) && caps_lock_stg) {
+    if (config.keyboard_layout == KEYBOARD_LAYOUT_AZERTY && caps_lock_stg &&
+        IsAzertyNumberRowUsage (usage)) {
+        *translated = shift_active ? entry->normal : entry->shifted;
+    } else if (IsAlphabetEntry (entry) && caps_lock_stg) {
         *translated = shift_active ? entry->normal : entry->shifted;
     } else {
         *translated = shift_active ? entry->shifted : entry->normal;
@@ -152,6 +184,10 @@ static uint8_t HandleCtrlShortcut (uint8_t usage) {
 
     if (usage >= KEY_USAGE_MAP_SIZE) {
         return 0;
+    }
+
+    if (cursor_edit_mode) {
+        return 1;
     }
 
     translated = keymap[usage].normal;
@@ -234,11 +270,47 @@ static uint8_t WasPressedInLastReport (uint8_t usage) {
     return 0;
 }
 
+static uint8_t CountPressedUsages (void) {
+    uint8_t count = 0;
+    int i;
+
+    for (i = 2; i < 8; i++) {
+        if (Com_Buf[i] != 0) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+static uint8_t IsCommandKeyValue (uint8_t key_value) {
+    if (key_value == 1 || key_value == 2 || key_value == 27 ||
+        key_value == 28 || key_value == 29 || key_value == 30 ||
+        key_value == 31 || key_value == 126 || key_value == 127) {
+        return 1;
+    }
+
+    return key_value >= KEY_F1;
+}
+
+static uint8_t IsInsertHeld (void) {
+    int i;
+
+    for (i = 2; i < 8; i++) {
+        if (Com_Buf[i] == KEY_USAGE_INSERT) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 static int CollectNewPressedKeys (uint8_t *new_pressed) {
     int i;
     int new_pressed_num = 0;
     uint8_t usage;
     uint8_t translated;
+    uint8_t is_standalone = CountPressedUsages () == 1;
 
     for (i = 2; i < 8; i++) {
         usage = Com_Buf[i];
@@ -247,27 +319,23 @@ static int CollectNewPressedKeys (uint8_t *new_pressed) {
         }
 
         if (usage == DEF_KEY_CAPS) {
-            caps_lock_stg = 1 - caps_lock_stg;
-            /* Sync keyboard CapsLock LED via SetReport */
-            {
-                uint8_t idx = DEF_USBFS_PORT_INDEX;
-                uint8_t n;
-                for (n = 0; n < HostCtl[idx].InterfaceNum; n++) {
-                    if (HostCtl[idx].Interface[n].Type == DEC_KEY) {
-                        HostCtl[idx].Interface[n].SetReport_Value =
-                            caps_lock_stg ? 0x02 : 0x00;
-                        HostCtl[idx].Interface[n].SetReport_Flag = 1;
-                    }
-                }
+            if (is_standalone && Com_Buf[0] == 0) {
+                caps_lock_stg = 1 - caps_lock_stg;
             }
+            continue;
         }
 
-        if (IsModifierActive (Com_Buf[0], KEY_MODIFIER_CTRL_MASK) &&
-            HandleCtrlShortcut (usage)) {
+        if (IsModifierActive (Com_Buf[0], KEY_MODIFIER_CTRL_MASK)) {
+            if (is_standalone) {
+                HandleCtrlShortcut (usage);
+            }
             continue;
         }
 
         if (TranslateKeyUsage (Com_Buf[0], usage, &translated)) {
+            if (!is_standalone && IsCommandKeyValue (translated)) {
+                continue;
+            }
             new_pressed[new_pressed_num++] = translated;
         }
     }
@@ -313,13 +381,13 @@ static void HandleMenuKey (uint8_t key_value) {
     if (disp_train_menu) {
         const uint8_t is_free = (train_info.methon == TRAIN_METHOD_FREE);
 
-        if (key_value == 0x1) {
+        if (key_value == KEY_ARROW_DOWN) {
             /* Down arrow: move cursor down */
             if (is_free && tain_menu_item == 0)
                 tain_menu_item = 2;  /* skip LESSON in FREE mode */
             else if (tain_menu_item < 4)
                 tain_menu_item++;
-        } else if (key_value == 0x2) {
+        } else if (key_value == KEY_ARROW_UP) {
             /* Up arrow: move cursor up */
             if (is_free && tain_menu_item == 2)
                 tain_menu_item = 0;  /* skip LESSON in FREE mode */
@@ -416,11 +484,11 @@ static void HandleMenuKey (uint8_t key_value) {
             return;
         }
 
-        if (key_value == 0x1) {
+        if (key_value == KEY_ARROW_DOWN) {
             /* Down */
             if (train_setting_item < max_item)
                 train_setting_item++;
-        } else if (key_value == 0x2) {
+        } else if (key_value == KEY_ARROW_UP) {
             /* Up */
             if (train_setting_item > 0)
                 train_setting_item--;
@@ -491,7 +559,7 @@ static void HandleMenuKey (uint8_t key_value) {
     }
 #endif /* COMPARE_FOR_VERSION_WITH_EEPROM */
 
-    if (key_value == 0x1) {
+    if (key_value == KEY_ARROW_DOWN) {
         if (disp_ver) {
             disp_ver = 0;
         } else if (disp_morse_conf) {
@@ -505,7 +573,7 @@ static void HandleMenuKey (uint8_t key_value) {
                 repeat_conf_item++;
         } else if (menu_item < 8)
             menu_item++;
-    } else if (key_value == 0x2) {
+    } else if (key_value == KEY_ARROW_UP) {
         if (disp_ver) {
             disp_ver = 0;
         } else if (disp_morse_conf) {
@@ -524,12 +592,14 @@ static void HandleMenuKey (uint8_t key_value) {
             disp_ver = 0;
         } else if (disp_morse_conf) {
             if (morse_conf_item == 0) {
-                if (config.morse_config.word_break_len == 10)
+                if (config.morse_config.word_break_len == 7)
+                    config.morse_config.word_break_len = 5;
+                else if (config.morse_config.word_break_len == 10)
                     config.morse_config.word_break_len = 7;
                 else if (config.morse_config.word_break_len == 14)
                     config.morse_config.word_break_len = 10;
                 else
-                    config.morse_config.word_break_len = 7;
+                    config.morse_config.word_break_len = 14;
             }
             if (morse_conf_item == 1) {
                 if (config.morse_config.cut_num > 0)
@@ -577,12 +647,14 @@ static void HandleMenuKey (uint8_t key_value) {
             disp_ver = 0;
         } else if (disp_morse_conf) {
             if (morse_conf_item == 0) {
-                if (config.morse_config.word_break_len == 7)
+                if (config.morse_config.word_break_len == 5)
+                    config.morse_config.word_break_len = 7;
+                else if (config.morse_config.word_break_len == 7)
                     config.morse_config.word_break_len = 10;
                 else if (config.morse_config.word_break_len == 10)
                     config.morse_config.word_break_len = 14;
                 else
-                    config.morse_config.word_break_len = 14;
+                    config.morse_config.word_break_len = 5;
             }
             if (morse_conf_item == 1) {
                 if (config.morse_config.cut_num < 3)
@@ -727,6 +799,22 @@ static void HandleTextKey (uint8_t key_value) {
         return;
     }
 
+    if (config.morse_config.cut_num == 0) {
+        cut_number_input = 0;
+    }
+
+    if (key_value == KEY_TAB) {
+        if (config.morse_config.cut_num != 0) {
+            cut_number_input = 1 - cut_number_input;
+        }
+        return;
+    }
+
+    if (cut_number_input && (config.morse_config.cut_num != 0) &&
+        (key_value >= '0') && (key_value <= '9')) {
+        key_value = (key_value - '0') + 1;
+    }
+
     /* ── Insert key toggles cursor edit mode (buffer & training only,
      *    NOT direct-send mode) ─────────────────────────────── */
     if (key_value == 30) {
@@ -753,13 +841,20 @@ static void HandleTextKey (uint8_t key_value) {
             /* Right */
             if (cursor_pos < inputBuffSize) cursor_pos++;
             return;
-        } else if (key_value == 0x1) {
-            /* Down → jump to end */
-            cursor_pos = inputBuffSize;
+        } else if (key_value == KEY_ARROW_DOWN) {
+            uint16_t next_row_start =
+                (uint16_t)((cursor_pos / 7 + 1) * 7);
+
+            if (cursor_pos + 7 <= inputBuffSize) {
+                cursor_pos += 7;
+            } else if (next_row_start < inputBuffSize) {
+                cursor_pos = inputBuffSize;
+            }
             return;
-        } else if (key_value == 0x2) {
-            /* Up → jump to start */
-            cursor_pos = 0;
+        } else if (key_value == KEY_ARROW_UP) {
+            if (cursor_pos >= 7) {
+                cursor_pos -= 7;
+            }
             return;
         }
 
@@ -828,16 +923,18 @@ static void HandleTextKey (uint8_t key_value) {
         }
 
         /* F1-F12: load saved message (still supported) */
-        if (key_value >= 3 && key_value <= 14) {
-            ReadSavedMsgEEPROM (key_value - 3);
-            cursor_edit_mode = 0;
-            cursor_pos = 0;
+        if (key_value >= KEY_F1 && key_value < KEY_F1 + 12) {
+            uint16_t insert_at = cursor_pos;
+            uint16_t inserted;
+
+            inserted = InsertSavedMsgEEPROM (key_value - KEY_F1, insert_at);
+            cursor_pos = insert_at + inserted;
             return;
         }
 
         /* Shift+F1-F12: save message (still supported) */
-        if (key_value >= 15 && key_value <= 26) {
-            WriteMsgEEPROM (key_value - 15);
+        if (key_value >= KEY_SHIFT_F1 && key_value < KEY_SHIFT_F1 + 12) {
+            WriteMsgEEPROM (key_value - KEY_SHIFT_F1);
             inputBuffSize = 0;
             sendCount = 0;
             cursor_pos = 0;
@@ -890,18 +987,25 @@ static void HandleTextKey (uint8_t key_value) {
             if (inputBuffSize < sendCount)
                 sendCount = inputBuffSize;
         }
-    } else if (key_value == 0x1) {
+    } else if (key_value == KEY_ARROW_DOWN) {
         sub_wpm (1);
-    } else if (key_value == 0x2) {
+    } else if (key_value == KEY_ARROW_UP) {
         add_wpm (1);
     } else if (key_value == 28) {
         sub_wpm (5);
     } else if (key_value == 29) {
         add_wpm (5);
-    } else if (key_value >= 3 && key_value <= 14) {
-        ReadSavedMsgEEPROM (key_value - 3);
-    } else if (key_value >= 15 && key_value <= 26) {
-        WriteMsgEEPROM (key_value - 15);
+    } else if (key_value >= KEY_F1 && key_value < KEY_F1 + 12) {
+        if (config.mode == 0 && IsInsertHeld ()) {
+            InsertSavedMsgEEPROM (key_value - KEY_F1, inputBuffSize);
+            if (!stge) {
+                starSending ();
+            }
+        } else {
+            ReadSavedMsgEEPROM (key_value - KEY_F1);
+        }
+    } else if (key_value >= KEY_SHIFT_F1 && key_value < KEY_SHIFT_F1 + 12) {
+        WriteMsgEEPROM (key_value - KEY_SHIFT_F1);
         inputBuffSize = 0;
         sendCount = 0;
         memset (inputBuff, '\0', BUFFSIZE);
@@ -2078,6 +2182,7 @@ void KB_AnalyzeKeyValue (uint8_t index, uint8_t intf_num, uint8_t *pbuf,
     uint8_t i;
     uint8_t value;
     uint8_t bit_pos = 0x00;
+    uint8_t caps_led_mask = 0;
 
     value = HostCtl[index].Interface[intf_num].SetReport_Value;
 
@@ -2089,12 +2194,10 @@ void KB_AnalyzeKeyValue (uint8_t index, uint8_t intf_num, uint8_t *pbuf,
                                                                        << bit_pos);
             }
         } else if (i == 0x02) {
+            caps_led_mask = (uint8_t)(1 << bit_pos);
             if (memchr (pbuf, DEF_KEY_CAPS, len)) {
                 HostCtl[index].Interface[intf_num].SetReport_Value ^= (1
                                                                        << bit_pos);
-                //  caps_lock_stg =
-                //          HostCtl[index].Interface[intf_num].SetReport_Value
-                //                  & 0x02;
             }
         } else if (i == 0x03) {
             if (memchr (pbuf, DEF_KEY_SCROLL, len)) {
@@ -2104,6 +2207,11 @@ void KB_AnalyzeKeyValue (uint8_t index, uint8_t intf_num, uint8_t *pbuf,
         }
 
         bit_pos++;
+    }
+
+    if (caps_led_mask != 0) {
+        caps_lock_stg = (HostCtl[index].Interface[intf_num].SetReport_Value &
+                         caps_led_mask) != 0;
     }
 
     if (value != HostCtl[index].Interface[intf_num].SetReport_Value) {

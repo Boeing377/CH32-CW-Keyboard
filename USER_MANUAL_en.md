@@ -329,7 +329,7 @@ Standard Morse digits are 5 elements each — long. Cut Num uses fewer elements 
 | Scheme | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **OFF**(Standard) | −−−−− | ·−−−− | ··−−− | ···−− | ····− | ····· | −···· | −−··· | −−−·· | −−−−· |
-| **Mod A** | − | ·− | ··− | ···− | ····− | ····· | −···· | −−··· | −·· | −· |
+| **Mod A** | − | ·− | ··− | ···−− | ····− | ····· | −···· | −−··· | −·· | −· |
 | **Mod B** | − | ·− | ··− | ···− | ····− | · | −···· | −··· | −·· | −· |
 | **Mod C** | − | ·− | ··− | ·−− | ···− | ··· | −··· | −−· | −·· | −· |
 
@@ -743,6 +743,10 @@ After reset, these defaults are restored:
   Punctuation:
    ?  !  .  ,  ;  :  +  -  /  =  '  "  &  @  $  _  (  )
 ```
+
+### Compound Symbols
+
+Wrap multiple characters in `<...>` or `[...]` to send them as one continuous Morse symbol. The delimiters are not sent and no letter gap is inserted between enclosed characters. For example, `<AS>` and `[AS]` both send `.-...`, which is useful for procedural signals.
 
 ---
 

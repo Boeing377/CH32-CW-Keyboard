@@ -533,6 +533,45 @@ void ReadSavedMsgEEPROM(uint8_t sn) {
     }
 }
 
+uint16_t InsertSavedMsgEEPROM (uint8_t sn, uint16_t position)
+{
+    uint8_t buff[MSG_ZONE_SIZE];
+    uint32_t saved_size;
+    uint32_t available;
+
+    if (position > inputBuffSize) {
+        position = inputBuffSize;
+    }
+
+    if (msg[sn] == 0xcd) {
+        StorageBackend_ReadMsgSlot (sn, buff, MSG_ZONE_SIZE);
+        saved_size = *(uint32_t *)(buff + MAXSAVEBUFSIZE);
+        if (saved_size > MAXSAVEBUFSIZE) {
+            saved_size = MAXSAVEBUFSIZE;
+        }
+    } else {
+        static const char no_saved_msg[] = "no saved msg";
+
+        saved_size = sizeof (no_saved_msg) - 1;
+        memcpy (buff, no_saved_msg, saved_size);
+    }
+
+    available = (INPUTZONE_SIZE - 1) - inputBuffSize;
+    if (saved_size > available) {
+        saved_size = available;
+    }
+
+    if (saved_size > 0) {
+        memmove (inputBuff + position + saved_size, inputBuff + position,
+                 inputBuffSize - position);
+        memcpy (inputBuff + position, buff, saved_size);
+        inputBuffSize += saved_size;
+        inputBuff[inputBuffSize] = '\0';
+    }
+
+    return (uint16_t)saved_size;
+}
+
 void WriteMsgEEPROM (uint8_t sn)
 {
     uint8_t buff[MSG_ZONE_SIZE] = {0};

@@ -8,6 +8,21 @@
 #include "morse_send.h"
 #include "string.h"
 
+#define TRAIN_KEY_F1         0x80
+#define TRAIN_KEY_ARROW_DOWN 0xA1
+#define TRAIN_KEY_ARROW_UP   0xA2
+
+static void Train_MoveCursorDown (void)
+{
+    uint16_t next_row_start = (uint16_t)((cursor_pos / 14 + 1) * 14);
+
+    if (cursor_pos + 14 <= inputBuffSize) {
+        cursor_pos += 14;
+    } else if (next_row_start < inputBuffSize) {
+        cursor_pos = inputBuffSize;
+    }
+}
+
 /* ── simple LCG random ─────────────────────────────────── */
 static uint32_t train_rand_seed = 0xDEADBEEF;
 
@@ -150,13 +165,21 @@ void Train_HandleKey (uint8_t key_value) {
                 /* Right */
                 if (cursor_pos < inputBuffSize) cursor_pos++;
                 return;
-            } else if (key_value == 0x1) {
-                /* Down → jump to end */
-                cursor_pos = inputBuffSize;
+            } else if (key_value == TRAIN_KEY_ARROW_DOWN) {
+                Train_MoveCursorDown ();
                 return;
-            } else if (key_value == 0x2) {
-                /* Up → jump to start */
-                cursor_pos = 0;
+            } else if (key_value == TRAIN_KEY_ARROW_UP) {
+                if (cursor_pos >= 14) {
+                    cursor_pos -= 14;
+                }
+                return;
+            }
+
+            if (key_value >= TRAIN_KEY_F1 && key_value < TRAIN_KEY_F1 + 12) {
+                uint16_t inserted = InsertSavedMsgEEPROM (
+                    key_value - TRAIN_KEY_F1, cursor_pos);
+
+                cursor_pos += inserted;
                 return;
             }
 

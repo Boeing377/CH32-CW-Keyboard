@@ -13,6 +13,7 @@ void WriteConfig();
 
 uint32_t sendBufLen = 0;
 uint8_t sendbuf[256];  // max for 6 dash 6*20+5*20+20
+static uint8_t compound_group_end = 0;
 
 #define SEND_BUF_CAPACITY ((uint16_t)sizeof (sendbuf))
 
@@ -186,16 +187,8 @@ static const struct MorseCodeMap *find_symbol_pattern (uint8_t theChar) {
 }
 
 static const struct MorseCodeMap *select_pattern (uint8_t theChar) {
-    if ((theChar >= 'a') && (theChar <= 'z')) {
-        return &morse_code_map[theChar - 'a'];
-    }
-
-    if ((theChar >= 'A') && (theChar <= 'Z')) {
-        return &morse_code_map[theChar - 'A'];
-    }
-
-    if ((theChar >= '0') && (theChar <= '9')) {
-        uint8_t digit = theChar - '0';
+    if ((theChar >= 1) && (theChar <= 10)) {
+        uint8_t digit = theChar - 1;
 
         if (config.morse_config.cut_num == 1) {
             return &morse_num_cut_A[digit];
@@ -210,10 +203,24 @@ static const struct MorseCodeMap *select_pattern (uint8_t theChar) {
         return &morse_code_map[digit + 26];
     }
 
+    if ((theChar >= 'a') && (theChar <= 'z')) {
+        return &morse_code_map[theChar - 'a'];
+    }
+
+    if ((theChar >= 'A') && (theChar <= 'Z')) {
+        return &morse_code_map[theChar - 'A'];
+    }
+
+    if ((theChar >= '0') && (theChar <= '9')) {
+        uint8_t digit = theChar - '0';
+        return &morse_code_map[digit + 26];
+    }
+
     return find_symbol_pattern (theChar);
 }
 
 static uint8_t encode_pattern (const struct MorseCodeMap *pattern,
+                               uint8_t append_letter_break,
                                uint16_t *offset) {
     uint8_t j;
 
@@ -229,12 +236,17 @@ static uint8_t encode_pattern (const struct MorseCodeMap *pattern,
         }
     }
 
+    if (!append_letter_break) {
+        return 1;
+    }
+
     *offset -= config.morse_config.break_len;
     return append_signal (0, config.morse_config.letter_break_len, offset);
 }
 
 uint8_t Morse_CanEncodeChar (uint8_t theChar) {
-    if (theChar == ' ') {
+    if ((theChar == ' ') || (theChar == '<') || (theChar == '>') ||
+        (theChar == '[') || (theChar == ']')) {
         return 1;
     }
 
@@ -242,6 +254,24 @@ uint8_t Morse_CanEncodeChar (uint8_t theChar) {
 }
 
 void TIM2_IRQHandler (void) __attribute__ ((interrupt ("WCH-Interrupt-fast")));
+
+static void restore_compound_group_state (void) {
+    uint16_t index;
+
+    compound_group_end = 0;
+    if (config.mode) {
+        return;
+    }
+
+    for (index = 0; (index < (uint16_t)sendCount) &&
+                    (index < inputBuffSize); index++) {
+        if ((inputBuff[index] == '<') || (inputBuff[index] == '[')) {
+            compound_group_end = (inputBuff[index] == '<') ? '>' : ']';
+        } else if (inputBuff[index] == compound_group_end) {
+            compound_group_end = 0;
+        }
+    }
+}
 
 void TIM2_Init (uint16_t arr, uint16_t psc) {
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure = {0};
@@ -312,6 +342,7 @@ void sub_wpm (int num) {
 void starSending() {
     if (!stge) {
         stge = 1;
+        restore_compound_group_state ();
         bufCovnMark = 1;
         if (config.mode) {
             send_now = sendCount = 0;
@@ -358,6 +389,30 @@ void bufCovn (uint8_t theChar) {
     uint16_t offset = 0;
     const struct MorseCodeMap *pattern;
 
+    if ((theChar == '<') || (theChar == '[')) {
+        compound_group_end = (theChar == '<') ? '>' : ']';
+        sendBufLen = 0;
+        return;
+    }
+
+    if ((compound_group_end != 0) && (theChar == compound_group_end)) {
+        compound_group_end = 0;
+        if (config.morse_config.letter_break_len >=
+            config.morse_config.break_len) {
+            append_signal (0,
+                           config.morse_config.letter_break_len -
+                               config.morse_config.break_len,
+                           &offset);
+        }
+        sendBufLen = offset;
+        return;
+    }
+
+    if ((theChar == '>') || (theChar == ']')) {
+        sendBufLen = 0;
+        return;
+    }
+
     if (theChar == ' ') {
         if (config.morse_config.word_break_len >=
             config.morse_config.letter_break_len) {
@@ -371,7 +426,8 @@ void bufCovn (uint8_t theChar) {
     }
 
     pattern = select_pattern (theChar);
-    if ((pattern == 0) || !encode_pattern (pattern, &offset)) {
+    if ((pattern == 0) ||
+        !encode_pattern (pattern, compound_group_end == 0, &offset)) {
         sendBufLen = 0;
         return;
     }
@@ -387,7 +443,7 @@ void bufCovnErrorDots (void) {
     static const struct MorseCodeMap morse_error_dots = {8, 0b00000000};
 
     uint16_t offset = 0;
-    encode_pattern (&morse_error_dots, &offset);
+    encode_pattern (&morse_error_dots, 1, &offset);
     sendBufLen = offset;
 }
 
