@@ -33,7 +33,7 @@
 
 <br/>
 
-**Firmware Version: 1.1.9**
+**Firmware coverage**. This manual retains the v1.1.9-era instructions. Section 6 also covers the cut-number workflow introduced in v1.2.5 and checked against v1.2.6. Press **Ctrl+M** and select **Version** to check your firmware.
 
 **Designed by DeVolt Elec**
 
@@ -121,7 +121,7 @@ The main screen after boot — this is where you'll spend most of your time.
 
 ```
      ┌──────────────────────────────────────────────────┐
-     │ WPM:20  MsgLen:0          ♫  ▓▓▓▓▓▓▓▓▓  ▲  4.0V │  ← Status bar
+     │ WPM:20  MsgL:0  CN        ♫  ▓▓▓▓▓▓▓▓▓  ▲  4.0V │  ← Status bar
      ├──────────────────────────────────────────────────┤
      │                                                  │
      │   H E L L O   W O R L D _ │                      │  ← Input area
@@ -138,7 +138,8 @@ The main screen after boot — this is where you'll spend most of your time.
 | ▓▓▓ | Battery icon (EEPROM only) |
 | ▲ | Caps Lock ON |
 | 4.0V | Battery voltage (EEPROM only) |
-| MsgLen:0 | Characters typed so far |
+| MsgL:0 | Characters typed so far |
+| **CN** | From v1.2.5, this status indicator means new digits will be marked as cut numbers. Underlined digits in the input area already carry that marking. |
 
 > **The 3.5mm jack always outputs a straight-key keying signal** (active low). Connect to radio CW KEY with a standard audio cable. The built-in buzzer provides local monitoring and can be toggled in the menu.
 
@@ -148,10 +149,11 @@ The main screen after boot — this is where you'll spend most of your time.
 |---|---|
 | **Ctrl+M** | Open/close main menu |
 | **Ctrl+T** | Open/close training menu (EEPROM only) |
+| **Tab** | From v1.2.5, toggle between standard and cut digits on the main screen after selecting Mod A/B/C in Cut Num |
 | **Ctrl+R** | Start repeat sending |
 | **Esc** | Stop repeat (when active) |
 
-> These shortcuts work on the main screen and in menus — the fastest way to operate.
+> Use **Ctrl+M** to select a cut-number scheme, then return to the main screen to toggle digit input with **Tab**.
 
 ---
 
@@ -240,6 +242,7 @@ The fastest way to operate — press key combos directly on the main screen:
 | **Backspace** | Delete one character |
 | **Esc** | Exit menu / Clear buffer / Stop repeat |
 | **Caps Lock** | Toggle case (▲ icon) |
+| **Tab** | From v1.2.5, toggle between standard and cut digits on the main screen after selecting a cut-number scheme |
 | **↑ ↓** | Navigate menu |
 | **← →** | Adjust values in menu |
 | **0–9** | Jump to menu item / Enter numbers |
@@ -333,7 +336,16 @@ Standard Morse digits are 5 elements each — long. Cut Num uses fewer elements 
 | **Mod B** | − | ·− | ··− | ···− | ····− | · | −···· | −··· | −·· | −· |
 | **Mod C** | − | ·− | ··− | ·−− | ···− | ··· | −··· | −−· | −·· | −· |
 
-> Cut Num only affects digits 0-9. Letters and punctuation are unaffected.
+**v1.2.4 and earlier (including v1.1.9).** Press **Ctrl+M**, open **Morse Cfg → Cut Num**, and use the left or right arrow to select **Mod A**, **Mod B**, or **Mod C**. This global setting applies to every digit you send without pressing **Tab**. Select **OFF** to send standard Morse digits again.
+
+**From v1.2.5 (checked through v1.2.6).** Select **Mod A**, **Mod B**, or **Mod C** in the same menu, then return to the main screen in DIR or BUF mode.
+
+1. Press **Tab**. The status bar shows **CN**. Digits entered from that point appear underlined and are sent using the selected scheme.
+2. Press **Tab** again. **CN** disappears, and new digits are sent in standard Morse. Previously entered digits keep their original markings.
+
+For example, in **BUF** mode with **Mod B** selected, type `5` with **CN** off, press **Tab**, type `99`, then press **Enter**. The message sends a standard `5` and two cut `9`s (`····· −· −·`).
+
+An underlined digit takes one character of storage, just like a standard digit. Saved messages retain the cut-number markings and use the current scheme when resent. With **Cut Num** set to **OFF**, marked digits send as standard Morse. Letters and punctuation are unaffected by the cut-number setting.
 
 ---
 
@@ -677,7 +689,7 @@ Menu → **Version** to view.
    │                                     │
    │            VERSION                   │
    │                                     │
-   │             v1.1.9                  │  ← Firmware version
+   │             v1.1.9                  │  ← Example firmware version
    │                                     │
    │     BG6VSK Provided to              │  ← (Custom version)
    │           BG7WG                     │
@@ -776,7 +788,7 @@ Wrap multiple characters in `<...>` or `[...]` to send them as one continuous Mo
 
 <br/>
 
-**CH32-CW-Keyboard v1.1.9**
+**CH32-CW-Keyboard**
 
 Based on CH32V203 RISC-V MCU
 
