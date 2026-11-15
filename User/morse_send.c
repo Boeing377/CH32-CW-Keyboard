@@ -34,6 +34,8 @@ struct MorseSymbolMap {
     uint8_t pattern_index;
 };
 
+static const struct MorseCodeMap morse_error_dots = {8, 0b00000000};
+
 static const struct MorseCodeMap morse_code_map[] = {
     {2, 0b01000000}, //  a  1 .-
     {4, 0b10000000}, //  b  2 -...
@@ -88,7 +90,8 @@ static const struct MorseCodeMap morse_code_map[] = {
     {6, 0b00010010}, //  $  51 ...-..-
     {6, 0b00110100}, //  _  52 ..--.-
     {5, 0b10110000}, //  (  53 -.--.
-    {6, 0b10110100}  //  )  54 -.--.-
+    {6, 0b10110100}, //  )  54 -.--.-
+    {5, 0b00100000}  //  custom ?  55 ..-..
 };
 
 static const struct MorseCodeMap morse_num_cut_A[] = {
@@ -149,6 +152,7 @@ static const struct MorseSymbolMap morse_symbol_map[] = {
     {'_', 51},
     {'(', 52},
     {')', 53},
+    {MORSE_CHAR_CUSTOM_QUESTION, 54},
 };
 
 static uint8_t append_signal (uint8_t level, uint8_t repeat, uint16_t *offset) {
@@ -214,6 +218,10 @@ static const struct MorseCodeMap *select_pattern (uint8_t theChar) {
     if ((theChar >= '0') && (theChar <= '9')) {
         uint8_t digit = theChar - '0';
         return &morse_code_map[digit + 26];
+    }
+
+    if (theChar == MORSE_CHAR_UMLAUT_U) {
+        return &morse_error_dots;
     }
 
     return find_symbol_pattern (theChar);
@@ -435,13 +443,8 @@ void bufCovn (uint8_t theChar) {
     sendBufLen = offset;
 }
 
-/* Encode 6-dot error/correction signal (......) into sendbuf.
- * Standard ITU-R M.1677-1 specifies 8 dots (........); 6 dots also
- * widely used in practice.  Change morse_error_dots.len to 8 for
- * strict compliance. */
+/* Encode the eight-dot error/correction signal into sendbuf. */
 void bufCovnErrorDots (void) {
-    static const struct MorseCodeMap morse_error_dots = {8, 0b00000000};
-
     uint16_t offset = 0;
     encode_pattern (&morse_error_dots, 1, &offset);
     sendBufLen = offset;

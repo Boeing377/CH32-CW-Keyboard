@@ -10,6 +10,10 @@
 
 #include "global.h"
 
+/* Single-byte codes stored in message buffers, after the cut-number codes. */
+#define MORSE_CHAR_UMLAUT_U 0x0B
+#define MORSE_CHAR_CUSTOM_QUESTION 0x0C
+
 extern const char KochAplhaTable[];
 
 void TIM2_Init (uint16_t arr, uint16_t psc);

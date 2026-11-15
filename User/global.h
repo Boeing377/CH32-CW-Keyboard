@@ -16,12 +16,12 @@
 
 /* 固件版本类型：1=定制版本，0=通用版本 */
 #ifndef FW_CUSTOM_VERSION
-#define FW_CUSTOM_VERSION 0
+#define FW_CUSTOM_VERSION 1
 #endif
 
 /* 定制版本的接收者（仅 FW_CUSTOM_VERSION=1 时生效） */
 #ifndef FW_CUSTOM_RECIPIENT
-#define FW_CUSTOM_RECIPIENT "BD4TIE"
+#define FW_CUSTOM_RECIPIENT "归零啊"
 #endif
 
 /* 版本号由 tools/gen_version.ps1 自动生成，Git 提交后 BUILD 号自动递增 */

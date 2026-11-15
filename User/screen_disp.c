@@ -1,4 +1,5 @@
 #include "screen_disp.h"
+#include "morse_send.h"
 #include "string.h"
 
 #if COMPARE_FOR_VERSION_WITH_EEPROM
@@ -23,6 +24,17 @@ static const uint8_t image_Battery_bits[] ={
  0xfe,0xff,0x7f,0x00,0x00,0x00,0x00,0x00};
 #endif
 static const uint8_t image_Pin_arrow_up_bits[] = {0x08,0x1c,0x3e,0x7f,0x1c,0x1c,0x1c,0x1c,0x1c};
+
+#if FW_CUSTOM_VERSION
+/* WenQuanYi Bitmap Song 12px, GPL v2 with font embedding exception.
+ * Copyright (C) 2004-2010 WenQuanYi Project Board of Trustees and Qianqian Fang.
+ * From wenquanyi_9pt.bdf using bdfconv -f 1 -m 21834,24402,38646. */
+static const uint8_t customer_recipient_font[106] U8G2_FONT_SECTION("customer_recipient_font") =
+  "\3\0\2\2\4\4\2\1\5\13\13\0\377\10\376\12\377\0\0\0\0\0\2\0\0\0\4\377\377UJ\33"
+  "\273\342\256\61T\206\252\206J.\325\245\272FJKmXS\61S\61\303\1_R\31\272\343g:\215"
+  "\231\241\314Pf(\323\230\31\312\14k\234\342\30\231\14\226\366\27\273\342\215\33g\70\236\251\314hcS"
+  "g\71F\246\63\265Y\32\0";
+#endif
 
 char str_buff[64];
 
@@ -72,22 +84,34 @@ static void FormatMsgLenText (char *dst, uint32_t msg_len)
 }
 
 static void DrawMorseText (const char *source, uint16_t start,
-                           uint8_t length, uint8_t x, uint8_t y)
+                           uint8_t length, uint8_t x, uint8_t y,
+                           uint8_t show_cut_numbers)
 {
     char text[15];
     uint8_t index;
 
     for (index = 0; index < length && source[start + index] != '\0'; index++) {
         uint8_t character = (uint8_t)source[start + index];
-        text[index] = ((character >= 1) && (character <= 10))
-            ? (char)('0' + character - 1) : (char)character;
+        if (character == MORSE_CHAR_UMLAUT_U) {
+            text[index] = 'u';
+        } else if (character == MORSE_CHAR_CUSTOM_QUESTION) {
+            text[index] = '?';
+        } else if (show_cut_numbers && (character >= 1) && (character <= 10)) {
+            text[index] = '0' + character - 1;
+        } else {
+            text[index] = (char)character;
+        }
     }
     text[index] = '\0';
     u8g2_DrawStr (&u8g2, x, y, text);
 
     for (index = 0; index < length && source[start + index] != '\0'; index++) {
         uint8_t character = (uint8_t)source[start + index];
-        if ((character >= 1) && (character <= 10)) {
+        if (character == MORSE_CHAR_UMLAUT_U) {
+            /* Match the diaeresis in the full ProFont17 glyph. */
+            u8g2_DrawBox (&u8g2, x + index * 9 + 1, y - 11, 2, 2);
+            u8g2_DrawBox (&u8g2, x + index * 9 + 5, y - 11, 2, 2);
+        } else if (show_cut_numbers && (character >= 1) && (character <= 10)) {
             u8g2_DrawHLine (&u8g2, x + index * 9, y + 1, 8);
         }
     }
@@ -128,8 +152,8 @@ void show_ver()
 {
 #if FW_CUSTOM_VERSION
     // Layer 1 - 标题用小号字体
-    u8g2_SetFont(&u8g2, u8g2_font_profont12_tr);
-    u8g2_DrawStr(&u8g2, 43, 11, "VERSION");
+    u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
+    u8g2_DrawStr(&u8g2, 29, 11, "CUSTOM VERSION");
 
     // Layer 2 - 版本号用大字体
     u8g2_SetFont(&u8g2, u8g2_font_profont17_tr);
@@ -140,7 +164,13 @@ void show_ver()
     u8g2_DrawStr(&u8g2, 3, 41, "BG6VSK Provided to");
 
     // Layer 4 - 接收者独立一行，右偏移形成错落感
-    u8g2_DrawStr(&u8g2, 48, 52, FW_CUSTOM_RECIPIENT);
+    if ((uint8_t)FW_CUSTOM_RECIPIENT[0] < 0x80) {
+        u8g2_DrawStr(&u8g2, 48, 52, FW_CUSTOM_RECIPIENT);
+    } else {
+        u8g2_SetFont(&u8g2, customer_recipient_font);
+        u8g2_DrawUTF8(&u8g2, 48, 53, FW_CUSTOM_RECIPIENT);
+        u8g2_SetFont(&u8g2, u8g2_font_profont10_tr);
+    }
 
     // Layer 5
     u8g2_DrawStr(&u8g2, 29, 63, "Press ENT Back");
@@ -627,22 +657,9 @@ void show_training_page (void)
                     uint16_t chunk_len = gl - (chunk_start - gs);
                     if (chunk_len > 7) chunk_len = 7;
 
-                    {
-                        char buf[8]; uint8_t i;
-                        for (i = 0; i < chunk_len; i++)
-                            buf[i] = user[chunk_start + i];
-                        buf[i] = '\0';
-                        u8g2_SetDrawColor (&u8g2, 2);
-                        u8g2_DrawStr (&u8g2, 1, y, buf);
-                    }
-                    {
-                        char buf[8]; uint8_t i;
-                        for (i = 0; i < chunk_len; i++)
-                            buf[i] = answer[chunk_start + i];
-                        buf[i] = '\0';
-                        u8g2_SetDrawColor (&u8g2, 2);
-                        u8g2_DrawStr (&u8g2, 65, y, buf);
-                    }
+                    u8g2_SetDrawColor (&u8g2, 2);
+                    DrawMorseText (user, chunk_start, chunk_len, 1, y, 0);
+                    DrawMorseText (answer, chunk_start, chunk_len, 65, y, 0);
                     /* Error boxes */
                     {
                         uint8_t i;
@@ -740,18 +757,15 @@ void show_training_page (void)
         u8g2_SetDrawColor (&u8g2, 2);
 
         for (line = 0; line < 3; line++) {
-            char line_buf[15];
             int src_line = start_line + line;
             uint16_t line_start = (uint16_t)src_line * chars_per_line;
-            uint8_t i;
+            uint16_t line_length;
 
             if (line_start >= len) break;
 
-            for (i = 0; i < chars_per_line && (line_start + i) < len; i++) {
-                line_buf[i] = src[line_start + i];
-            }
-            line_buf[i] = '\0';
-            u8g2_DrawStr (&u8g2, 1, 21 + line * 12, line_buf);
+            line_length = len - line_start;
+            if (line_length > chars_per_line) line_length = chars_per_line;
+            DrawMorseText (src, line_start, line_length, 1, 21 + line * 12, 0);
         }
 
         /* Blinking cursor: always in the visible area */
@@ -940,7 +954,7 @@ void mode_0_word_disp()
     for (i = 0; i < 4; i++) {
         int src_line = start_line + i;
         if (src_line * 14 < (int)strlen(inputBuff)) {
-            DrawMorseText (inputBuff, src_line * 14, 14, 1, 21 + i * 13);
+            DrawMorseText (inputBuff, src_line * 14, 14, 1, 21 + i * 13, 1);
         }
     }
 
@@ -1004,7 +1018,7 @@ void mode_1_word_disp()
     for (i = 0; i < 4; i++) {
         int src_line = start_line + i;
         if (src_line * 7 < (int)strlen(inputBuff)) {
-            DrawMorseText (inputBuff, src_line * 7, 7, 1, 21 + i * 13);
+            DrawMorseText (inputBuff, src_line * 7, 7, 1, 21 + i * 13, 1);
         }
     }
 
@@ -1028,7 +1042,7 @@ void mode_1_word_disp()
         for (i = 0; i < 4; i++) {
             int src_line = out_start + i;
             if (src_line * 7 < (int)out_chars) {
-                DrawMorseText (outputBuff, src_line * 7, 7, 65, 21 + i * 13);
+                DrawMorseText (outputBuff, src_line * 7, 7, 65, 21 + i * 13, 1);
             }
         }
 

@@ -175,6 +175,12 @@ static uint8_t TranslateKeyUsage (uint8_t modifier, uint8_t usage,
         *translated = shift_active ? entry->shifted : entry->normal;
     }
 
+    if (*translated == ';') {
+        *translated = MORSE_CHAR_UMLAUT_U;
+    } else if (*translated == '\'') {
+        *translated = MORSE_CHAR_CUSTOM_QUESTION;
+    }
+
     return *translated != 0;
 }
 

@@ -4,6 +4,12 @@
 
 A CW (Morse code) keyboard keyer based on the WCH CH32V203 RISC-V microcontroller.
 
+## 顾客定制版 · 归零啊
+
+- 分号键 `;` 输入 `ü`，发送 `........`。
+- 单引号键 `'` 输入显示为 `?` 的定制字符，发送 `..-..`。
+- 原问号键 `?` 仍发送 `..--..`。
+
 > 📖 **用户手册**：[USER_MANUAL_zh.md](./USER_MANUAL_zh.md) | **User Manual**: [USER_MANUAL_en.md](./USER_MANUAL_en.md)
 
 ---
